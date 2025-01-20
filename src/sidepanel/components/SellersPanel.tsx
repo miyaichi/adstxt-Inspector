@@ -67,7 +67,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({ analyzing, sellerAna
                   {analysis.sellersJson?.data.map((seller, index) => (
                     <div
                       key={`${seller.seller_id}-${index}`}
-                      className="p-3 rounded-lg border border-gray-200"
+                      className="p-3 rounded-lg border border-green-200 bg-green-50"
                     >
                       <div className="flex items-center justify-between">
                         <div>
