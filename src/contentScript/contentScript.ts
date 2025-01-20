@@ -1,4 +1,4 @@
-import { MessageHandler, MessagePayloads } from '../types/messages';
+import { MessageHandler } from '../types/messages';
 import { ConnectionManager } from '../utils/connectionManager';
 import { Logger } from '../utils/logger';
 
@@ -94,10 +94,6 @@ class ContentScript {
 
     // Implement other message handling here ...
     switch (message.type) {
-      case 'TEST_MESSAGE_FOR_CONTENTSCRIPT':
-        const payload = message.payload as MessagePayloads['TEST_MESSAGE_FOR_CONTENTSCRIPT'];
-        this.logger.debug('Received message:', payload.message);
-        break;
       default:
         this.logger.debug('Unknown message type:', message.type);
         break;

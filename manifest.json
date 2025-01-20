@@ -3,7 +3,7 @@
   "name": "AdsTxt Inspector",
   "version": "1.0",
   "description": "A Chrome extension for validating and analyzing ads.txt files and their corresponding sellers.json entries.",
-  "permissions": ["activeTab", "tabs", "sidePanel", "storage", "scripting"],
+  "permissions": ["activeTab", "tabs", "sidePanel", "storage", "unlimitedStorage", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"

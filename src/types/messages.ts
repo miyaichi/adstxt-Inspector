@@ -10,8 +10,7 @@ export interface TabInfo {
 
 // Message payloads type
 export interface MessagePayloads {
-  TEST_MESSAGE_FOR_SIDEPANEL: { message: string };
-  TEST_MESSAGE_FOR_CONTENTSCRIPT: { message: string };
+  MESSAGE_TYPE: void; // Dummy type
   // Add new message types here
 }
 

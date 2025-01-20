@@ -69,24 +69,27 @@ Robust state management system utilizing ConnectionManager:
 ```
 ├── src/
 │   ├── background/
-│   │   ├── background.ts
-│   │   ├── adsTxtScanner.ts
-│   │   └── sellersJsonFetcher.ts
+│   │   └── background.ts
 │   ├── contentScript/
-│   │   ├── contentScript.ts
-│   │   └── documentScanner.ts
+│   │   └── contentScript.ts
+|   ├── hooks/
+|   │   └── useAdsSellers.ts
 │   ├── sidepanel/
 │   │   ├── App.tsx
 │   │   ├── components/
+│   │   │   └─ ui/
 │   │   └── hooks/
+│   ├── styles/
 │   ├── types/
-│   │   ├── ads.ts
 │   │   ├── messages.ts
-│   │   └── sellers.ts
+│   │   └── types.ts
 │   └── utils/
 │       ├── connectionManager.ts
-│       ├── validator.ts
-│       └── logger.ts
+│       ├── fetchAdsTxt.ts
+│       ├── fetchSellersJson.ts
+│       ├── fetchWithTimeout.ts
+│       ├── logger.ts
+│       └── sellersJsonChece.ts
 ```
 
 ## Tech Stack
@@ -94,7 +97,6 @@ Robust state management system utilizing ConnectionManager:
 - TypeScript
 - React
 - TailwindCSS
-- shadcn/ui
 - Chrome Extensions API
 - Webpack
 

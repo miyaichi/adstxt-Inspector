@@ -2,9 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base styles */
 body {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+  @apply antialiased text-gray-900;
+}
+
+/* React Tabs styles */
+.react-tabs {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.react-tabs__tab-list {
+  @apply m-0 p-2 flex gap-2 border-b border-gray-200;
+}
+
+.react-tabs__tab {
+  @apply inline-block relative list-none px-4 py-3 cursor-pointer rounded-lg text-gray-600 font-medium transition-all;
+}
+
+.react-tabs__tab:hover {
+  @apply bg-gray-50 text-gray-800;
+}
+
+.react-tabs__tab--selected {
+  @apply bg-blue-50 text-blue-600;
+}
+
+.react-tabs__tab--disabled {
+  @apply text-gray-300 cursor-not-allowed;
+}
+
+.react-tabs__tab:focus {
+  @apply outline-none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+.react-tabs__tab-panel {
+  @apply hidden;
+}
+
+.react-tabs__tab-panel--selected {
+  @apply block;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Utility classes */
+.transition-all {
+  @apply transition duration-200 ease-in-out;
 }
