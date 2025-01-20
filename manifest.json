@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "AdsTxt Inspector",
+  "version": "1.0",
+  "description": "A Chrome extension for validating and analyzing ads.txt files and their corresponding sellers.json entries.",
+  "permissions": ["activeTab", "tabs", "sidePanel", "storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["contentScript.js"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
