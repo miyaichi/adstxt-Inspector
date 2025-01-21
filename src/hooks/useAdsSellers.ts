@@ -73,6 +73,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       const domain = new URL(url).hostname;
       const adsTxtResult = await fetchAdsTxt(domain);
       setAdsTxtData(adsTxtResult);
+      logger.info('Ads.txt:', adsTxtResult);
 
       // Analyze Sellers.json
       const sellerDomains = getUniqueDomains(adsTxtResult.data);

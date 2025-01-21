@@ -45,6 +45,11 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   // Sort domains alphabetically
   const sortedDomains = Object.keys(groupedEntries).sort();
 
+  // Check if any supported variables exist
+  const hasVariables =
+    adsTxtData.variables &&
+    Object.values(adsTxtData.variables).some((value) => value !== undefined);
+
   return (
     <div className="p-4 space-y-4">
       {/* Errors Section */}
@@ -72,7 +77,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         </div>
       )}
 
-      {/* Entries Section */}
+      {/* Ads.txt Section */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="border-b border-gray-200 p-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -91,6 +96,34 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             <ExternalLink />
           </a>
         </div>
+
+        {/* Supporter Variable Section */}
+        {hasVariables && (
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {adsTxtData.variables.contact && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                contact: {adsTxtData.variables.contact}
+              </div>
+            )}
+            {adsTxtData.variables.inventoryPartnerdomain && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                Inventory Partner Domain: {adsTxtData.variables.inventoryPartnerdomain}
+              </div>
+            )}
+            {adsTxtData.variables.managerDomain && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                Manager Domain: {adsTxtData.variables.managerDomain}
+              </div>
+            )}
+            {adsTxtData.variables.ownerDomain && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                Owner Domain: {adsTxtData.variables.ownerDomain}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Entries Section */}
         <div className="p-4 space-y-4">
           {sortedDomains.map((domain) => (
             <div key={domain} className="space-y-2">

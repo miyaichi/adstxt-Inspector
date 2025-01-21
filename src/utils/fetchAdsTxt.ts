@@ -14,9 +14,17 @@ export interface ErrorDetail {
   message: string;
 }
 
+export interface SupportedVariables {
+  contact?: string;
+  inventoryPartnerdomain?: string;
+  managerDomain?: string;
+  ownerDomain?: string;
+}
+
 export interface FetchAdsTxtResult {
   adsTxtUrl: string;
   data: AdsTxt[];
+  variables: SupportedVariables;
   errors: ErrorDetail[];
 }
 
@@ -72,6 +80,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
 
   const entries: AdsTxt[] = [];
   const errors: ErrorDetail[] = [];
+  const variables: SupportedVariables = {};
 
   try {
     const lines = adsTxtContent.split(/\r?\n/);
@@ -100,10 +109,20 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         return;
       }
 
-      // Skip fields that are not checked
-      const skipFields = ['contact=', 'inventorypartnerdomain=', 'managerdomain=', 'ownerdomain='];
-      if (skipFields.some((field) => trimmedLine.toLowerCase().startsWith(field))) {
-        return;
+      // Process supported variables
+      const variableMatches = {
+        contact: /^CONTACT=/i,
+        inventoryPartnerdomain: /^INVENTORYPARTNERDOMAIN=/i,
+        managerDomain: /^MANAGERDOMAIN=/i,
+        ownerDomain: /^OWNERDOMAIN=/i,
+      };
+
+      for (const [key, regex] of Object.entries(variableMatches)) {
+        if (regex.test(trimmedLine)) {
+          const value = trimmedLine.split('=')[1].trim();
+          variables[key as keyof SupportedVariables] = value;
+          return;
+        }
       }
 
       // Split fields by comma or whitespace
@@ -193,7 +212,6 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
       });
     }
   } catch (error) {
-    // Network errors and other errors are logged
     errors.push({
       line: 0,
       content: '',
@@ -201,14 +219,15 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
     });
   }
 
-  return { adsTxtUrl, data: entries.sort((a, b) => a.domain.localeCompare(b.domain)), errors };
+  return {
+    adsTxtUrl,
+    data: entries.sort((a, b) => a.domain.localeCompare(b.domain)),
+    variables,
+    errors,
+  };
 };
 
-/**
- * Gets the root domain from a given domain.
- * @param domain - The domain to get the root domain from.
- * @returns The root domain.
- */
+// Other utility functions remain unchanged
 export const getRootDomain = (domain: string): string => {
   const parsed = psl.parse(domain);
 
@@ -224,15 +243,9 @@ const isWithinScope = (targetDomain: string, rootDomain: string): boolean => {
 };
 
 const isValidDomain = (domain: string): boolean => {
-  const domainRegex = /^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
-  return domainRegex.test(domain);
+  return psl.isValid(domain);
 };
 
-/**
- * Returns a list of unique domains from the AdsTxt records.
- * @param adsTxtData - Array of AdsTxt records.
- * @returns Array of unique domains.
- */
 export const getUniqueDomains = (adsTxtData: AdsTxt[]): string[] => {
   const uniqueDomains = new Set<string>();
   adsTxtData.forEach((entry) => {
@@ -241,12 +254,6 @@ export const getUniqueDomains = (adsTxtData: AdsTxt[]): string[] => {
   return Array.from(uniqueDomains).sort();
 };
 
-/**
- * Filters AdsTxt records to include only those with a matching domain.
- * @param adsTxtArray - Array of AdsTxt records.
- * @param domain - The domain to match.
- * @returns Array of AdsTxt records with matching domain.
- */
 export const filterAdsTxtByDomain = (adsTxtArray: AdsTxt[], domain: string): AdsTxt[] => {
   return adsTxtArray.filter((record) => record.domain === domain);
 };
