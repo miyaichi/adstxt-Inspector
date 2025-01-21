@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react';
 import React from 'react';
 import type { SellerAnalysis } from '../../hooks/useAdsSellers';
 
@@ -26,14 +27,14 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({ analyzing, sellerAna
   }
 
   return (
-    <div className="p-4">
-      <div className="space-y-3">
+    <div className="p-4 space-y-4">
+      <div className="space-y-4">
         {sellerAnalysis.map((analysis) => (
           <div key={analysis.domain} className="bg-white rounded-lg shadow overflow-hidden">
             <div className="border-b border-gray-200 p-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="font-medium text-gray-900 px-3 py-2 bg-gray-50 rounded-lg">
-                  {analysis.domain}
+                  {analysis.domain} ({analysis.sellersJson?.data.length || 0} entries)
                 </div>
               </div>
               <a
@@ -43,14 +44,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({ analyzing, sellerAna
                 className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
               >
                 <span>View Raw</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
+                <ExternalLink />
               </a>
             </div>
             <div className="p-4">
@@ -63,7 +57,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({ analyzing, sellerAna
                   No matching entries found in sellers.json
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {analysis.sellersJson?.data.map((seller, index) => (
                     <div
                       key={`${seller.seller_id}-${index}`}
@@ -72,7 +66,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({ analyzing, sellerAna
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="font-medium text-gray-900">{seller.name}</div>
-                          <div className="text-gray-600">ID: {seller.seller_id}</div>
+                          <div className="text-gray-600">Seller ID: {seller.seller_id}</div>
                           {seller.domain && (
                             <div className="text-gray-500">Domain: {seller.domain}</div>
                           )}
@@ -80,7 +74,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({ analyzing, sellerAna
                         <div className="flex items-center space-x-2">
                           {seller.seller_type && (
                             <span className="px-2 py-1 rounded bg-gray-100 text-gray-800">
-                              {seller.seller_type}
+                              {seller.seller_type.toUpperCase()}
                             </span>
                           )}
                           {seller.is_confidential === 1 && (

@@ -15,6 +15,7 @@ export interface ErrorDetail {
 }
 
 export interface FetchAdsTxtResult {
+  adsTxtUrl: string;
   data: AdsTxt[];
   errors: ErrorDetail[];
 }
@@ -30,6 +31,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
   const isSubdomain = domain !== rootDomain && domain !== `www.${rootDomain}`;
   let isValidSubdmain: boolean = false;
   let adsTxtContent: string | null = null;
+  let adsTxtUrl = '';
 
   for (const url of adsTxtUrls) {
     try {
@@ -47,12 +49,14 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         if (finalDomain.startsWith('www.')) {
           isValidSubdmain = true;
         }
+        adsTxtUrl = finalUrl;
         break;
       } else if (response.status === 301 || response.status === 302) {
         if (finalDomain && isWithinScope(finalDomain, rootDomain)) {
           const redirectResponse = await fetch(finalUrl);
           if (redirectResponse.ok) {
             adsTxtContent = await redirectResponse.text();
+            adsTxtUrl = finalUrl;
             break;
           }
         }
@@ -197,7 +201,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
     });
   }
 
-  return { data: entries.sort((a, b) => a.domain.localeCompare(b.domain)), errors };
+  return { adsTxtUrl, data: entries.sort((a, b) => a.domain.localeCompare(b.domain)), errors };
 };
 
 const getRootDomain = (domain: string): string => {
