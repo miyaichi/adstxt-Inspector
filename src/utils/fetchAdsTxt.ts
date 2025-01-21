@@ -204,7 +204,12 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
   return { adsTxtUrl, data: entries.sort((a, b) => a.domain.localeCompare(b.domain)), errors };
 };
 
-const getRootDomain = (domain: string): string => {
+/**
+ * Gets the root domain from a given domain.
+ * @param domain - The domain to get the root domain from.
+ * @returns The root domain.
+ */
+export const getRootDomain = (domain: string): string => {
   const parsed = psl.parse(domain);
 
   if ('domain' in parsed) {
