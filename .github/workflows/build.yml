@@ -28,7 +28,7 @@ jobs:
         run: npm run build
 
       - name: Zip Build Artifact
-        run: zip -r dist/adstxt-inspector-build。zip dist/
+        run: zip -r dist/adstxt-inspector-build.zip dist/
 
       - name: Delete existing release and tag
         env:
