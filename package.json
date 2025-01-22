@@ -1,5 +1,5 @@
 {
-  "name": "chrome-extension-skeleton",
+  "name": "adstxt-inspector",
   "version": "1.0.0",
   "description": "Chrome Extension with Background, Content Script, and Side Panel",
   "main": "index.js",
