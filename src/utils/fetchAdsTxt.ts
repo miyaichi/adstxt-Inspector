@@ -129,11 +129,6 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         trimmedLine = trimmedLine.substring(0, commentIndex).trim();
       }
 
-      // Skip subdomain declarations as they've been processed
-      if (trimmedLine.toLowerCase().startsWith('subdomain=')) {
-        return;
-      }
-
       // Process supported variables
       const variableMatches = {
         contact: /^CONTACT=/i,

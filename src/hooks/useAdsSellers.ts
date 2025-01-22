@@ -49,7 +49,9 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         sellersJson: sellersJsonResult.data
           ? {
               data: sellersJsonResult.data.sellers.filter((seller) =>
-                adsTxtEntries.some((entry) => String(entry.publisherId) === String(seller.seller_id))
+                adsTxtEntries.some(
+                  (entry) => String(entry.publisherId) === String(seller.seller_id)
+                )
               ),
               error: sellersJsonResult.error,
             }
@@ -119,7 +121,6 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     const seller = currentSellerAnalysis?.sellersJson?.data.find(
       (s) => String(s.seller_id) === String(publisherId)
     );
-
 
     if (!seller) {
       return {

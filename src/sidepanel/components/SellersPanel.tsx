@@ -115,7 +115,8 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                           </div>
                         </div>
                         {seller.comment && <div className="text-gray-500">{seller.comment}</div>}
-                        {seller.domain === adsTxtData?.variables?.ownerDomain &&
+                        {seller.domain != null &&
+                          seller.domain === adsTxtData?.variables?.ownerDomain &&
                           (seller.seller_type?.toUpperCase() === 'PUBLISHER' ||
                             seller.seller_type?.toUpperCase() === 'BOTH') && (
                             <div className="flex items-center space-x-1 text-green-600">

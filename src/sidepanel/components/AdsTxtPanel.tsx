@@ -102,28 +102,31 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         {hasVariables && (
           <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             {adsTxtData.variables.contact && (
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="font-medium">Contact:</span> {adsTxtData.variables.contact}
               </div>
             )}
             {adsTxtData.variables.inventoryPartnerdomain && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="font-medium">Inventory Partner Domain:</span> {adsTxtData.variables.inventoryPartnerdomain}
+              <div className="bg-gray-50 p-2 rounded-lg">
+                <span className="font-medium">Inventory Partner Domain:</span>{' '}
+                {adsTxtData.variables.inventoryPartnerdomain}
               </div>
             )}
             {adsTxtData.variables.managerDomain && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="font-medium">Manager Domain:</span> {adsTxtData.variables.managerDomain}
+              <div className="bg-gray-50 p-2 rounded-lg">
+                <span className="font-medium">Manager Domain:</span>{' '}
+                {adsTxtData.variables.managerDomain}
               </div>
             )}
             {adsTxtData.variables.ownerDomain && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="font-medium">Owner Domain:</span> {adsTxtData.variables.ownerDomain}
+              <div className="bg-gray-50 p-2 rounded-lg">
+                <span className="font-medium">Owner Domain:</span>{' '}
+                {adsTxtData.variables.ownerDomain}
               </div>
             )}
             {adsTxtData.variables.subDomain && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="font-medium">Subdomain:</span> {adsTxtData.variables.subDomain}
+              <div className="bg-gray-50 p-2 rounded-lg">
+                <span className="font-medium">Sub Domain:</span> {adsTxtData.variables.subDomain}
               </div>
             )}
           </div>
@@ -142,9 +145,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                   return (
                     <div
                       key={`${domain}-${index}`}
-                      className={`p-3 rounded-lg border ${
-                        validity.isValid 
-                          ? 'border-green-200 bg-green-50' 
+                      className={`p-2 rounded-lg border ${
+                        validity.isValid
+                          ? 'border-green-200 bg-green-50'
                           : 'border-red-200 bg-red-50'
                       }`}
                     >
@@ -178,7 +181,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                         {!validity.isValid && validity.reasons.length > 0 && (
                           <div className="text-red-600 space-y-1">
                             {validity.reasons.map((reason, idx) => (
-                                <span>{reason}</span>
+                              <span>{reason}</span>
                             ))}
                           </div>
                         )}
