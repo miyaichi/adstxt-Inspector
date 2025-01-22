@@ -67,29 +67,33 @@ Robust state management system utilizing ConnectionManager:
 ## Project Structure
 
 ```
-├── src/
-│   ├── background/
-│   │   └── background.ts
-│   ├── contentScript/
-│   │   └── contentScript.ts
-|   ├── hooks/
-|   │   └── useAdsSellers.ts
-│   ├── sidepanel/
-│   │   ├── App.tsx
-│   │   ├── components/
-│   │   │   └─ ui/
-│   │   └── hooks/
-│   ├── styles/
-│   ├── types/
-│   │   ├── messages.ts
-│   │   └── types.ts
-│   └── utils/
-│       ├── connectionManager.ts
-│       ├── fetchAdsTxt.ts
-│       ├── fetchSellersJson.ts
-│       ├── fetchWithTimeout.ts
-│       ├── logger.ts
-│       └── sellersJsonChece.ts
+└── src/
+    ├── background/
+    │   └── background.ts
+    ├── contentScript/
+    │   └── contentScript.ts
+    ├── hooks/
+    │   └── useAdsSellers.ts
+    ├── sidepanel/
+    │   ├── App.tsx
+    │   ├── components/
+    │   │   ├── AdsTxtPanel.tsx
+    │   │   ├── SellerJsonPanel.tsx
+    │   │   └─ ui/
+    │   │       ├── Alert.tsx
+    │   │       └── Button.tsx
+    │   └── index.tsx
+    ├── styles/
+    ├── types/
+    │   ├── messages.ts
+    │   └── types.ts
+    └── utils/
+        ├── connectionManager.ts
+        ├── fetchAdsTxt.ts
+        ├── fetchSellersJson.ts
+        ├── fetchWithTimeout.ts
+        ├── logger.ts
+        └── sellersJsonChece.ts
 ```
 
 ## Tech Stack
@@ -99,6 +103,21 @@ Robust state management system utilizing ConnectionManager:
 - TailwindCSS
 - Chrome Extensions API
 - Webpack
+
+## Installation
+
+1. Download the latest release file (adstxt-inspector-build.zip
+) from the [Releases](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build) page.
+
+2. Unzip the file to a local directory.
+
+3. Open Chrome and navigate to `chrome://extensions/`.
+
+4. Enable Developer Mode by toggling the switch in the top right corner.
+
+5. Click on the `Load unpacked` button and select the unzipped directory.
+
+6. The extension should now be installed and visible in the Extensions menu.
 
 ## Development Setup
 
@@ -118,9 +137,14 @@ npm install
 npm run watch
 ```
 
-4. Build for production:
+4. Build for development:
 ```bash
 npm run build
+```
+
+if you want to build for production:
+```bash
+npm run build:prod
 ```
 
 ## Security Considerations
