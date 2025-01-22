@@ -28,7 +28,7 @@ jobs:
         run: npm run build
 
       - name: Zip Build Artifact
-        run: zip -r dist/adstxt-inspector-buildzip dist/
+        run: zip -r dist/adstxt-inspector-build。zip dist/
 
       - name: Delete existing release and tag
         env:
@@ -53,6 +53,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/adstxt-inspector-buildzip
-          asset_name: adstxt-inspector-buildzip
+          asset_path: ./dist/adstxt-inspector-build.zip
+          asset_name: adstxt-inspector-build.zip
           asset_content_type: application/zip
