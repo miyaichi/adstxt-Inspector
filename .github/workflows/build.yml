@@ -56,3 +56,5 @@ jobs:
           asset_path: ./dist/adstxt-inspector-build.zip
           asset_name: adstxt-inspector-build.zip
           asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
