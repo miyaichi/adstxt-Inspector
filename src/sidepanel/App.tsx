@@ -4,7 +4,6 @@ import { useAdsSellers } from '../hooks/useAdsSellers';
 import { BaseMessage, TabInfo } from '../types/messages';
 import { Context } from '../types/types';
 import { ConnectionManager } from '../utils/connectionManager';
-import { getRootDomain } from '../utils/fetchAdsTxt';
 import { Logger } from '../utils/logger';
 import { AdsTxtPanel } from './components/AdsTxtPanel';
 import { SellersPanel } from './components/SellersPanel';
@@ -93,7 +92,7 @@ export default function App() {
     }
   };
 
-  const domain = tabInfo?.url ? getRootDomain(new URL(tabInfo.url).hostname) : 'N/A';
+  const domain = tabInfo?.url ? new URL(tabInfo.url).hostname : 'N/A';
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -19,6 +19,7 @@ export interface SupportedVariables {
   inventoryPartnerdomain?: string;
   managerDomain?: string;
   ownerDomain?: string;
+  subDomain?: string;
 }
 
 export interface FetchAdsTxtResult {
@@ -36,11 +37,12 @@ export interface FetchAdsTxtResult {
 export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> => {
   const rootDomain = getRootDomain(domain);
   const adsTxtUrls = [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
-  const isSubdomain = domain !== rootDomain && domain !== `www.${rootDomain}`;
-  let isValidSubdmain: boolean = false;
+  const isSubdomainDomain = isSubdomain(domain, rootDomain);
   let adsTxtContent: string | null = null;
   let adsTxtUrl = '';
+  let subdomainDeclaration: string | null = null;
 
+  // First fetch root domain ads.txt
   for (const url of adsTxtUrls) {
     try {
       const response = await fetch(url, {
@@ -50,13 +52,10 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         },
       });
       const finalUrl = response.url;
-
       const finalDomain = new URL(finalUrl).hostname;
+
       if (response.ok && isWithinScope(finalDomain, rootDomain)) {
         adsTxtContent = await response.text();
-        if (finalDomain.startsWith('www.')) {
-          isValidSubdmain = true;
-        }
         adsTxtUrl = finalUrl;
         break;
       } else if (response.status === 301 || response.status === 302) {
@@ -76,6 +75,36 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
 
   if (!adsTxtContent) {
     throw new Error(`No valid ads.txt found for ${domain}`);
+  }
+
+  // If it's a subdomain, check for subdomain declaration in root domain ads.txt
+  if (isSubdomainDomain) {
+    const lines = adsTxtContent.split(/\r?\n/);
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.toLowerCase().startsWith('subdomain=')) {
+        const declaredSubdomain = trimmedLine.split('=')[1].trim();
+        if (declaredSubdomain === domain) {
+          subdomainDeclaration = declaredSubdomain;
+          break;
+        }
+      }
+    }
+
+    // If this is a declared subdomain, try to fetch its own ads.txt
+    if (subdomainDeclaration) {
+      try {
+        const subdomainResponse = await fetch(`https://${domain}/ads.txt`);
+        if (subdomainResponse.ok) {
+          // If subdomain has its own ads.txt, use that instead
+          adsTxtContent = await subdomainResponse.text();
+          adsTxtUrl = subdomainResponse.url;
+        }
+        // If subdomain ads.txt doesn't exist, continue with root domain ads.txt (no error)
+      } catch (error) {
+        // If fetching subdomain ads.txt fails, continue with root domain ads.txt (no error)
+      }
+    }
   }
 
   const entries: AdsTxt[] = [];
@@ -100,12 +129,8 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         trimmedLine = trimmedLine.substring(0, commentIndex).trim();
       }
 
-      // Check if the subdomain is valid
+      // Skip subdomain declarations as they've been processed
       if (trimmedLine.toLowerCase().startsWith('subdomain=')) {
-        const subdomain = trimmedLine.split('=')[1].trim();
-        if (subdomain === domain) {
-          isValidSubdmain = true;
-        }
         return;
       }
 
@@ -115,6 +140,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         inventoryPartnerdomain: /^INVENTORYPARTNERDOMAIN=/i,
         managerDomain: /^MANAGERDOMAIN=/i,
         ownerDomain: /^OWNERDOMAIN=/i,
+        subDomain: /^SUBDOMAIN=/i,
       };
 
       for (const [key, regex] of Object.entries(variableMatches)) {
@@ -203,19 +229,11 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         entries.push(entry);
       }
     });
-
-    if (isSubdomain && !isValidSubdmain) {
-      errors.push({
-        line: 0,
-        content: '',
-        message: `Subdomain "${domain}" not found in ads.txt file.`,
-      });
-    }
   } catch (error) {
     errors.push({
       line: 0,
       content: '',
-      message: `Error fetching ads.txt: ${(error as Error).message}`,
+      message: `Error parsing ads.txt: ${(error as Error).message}`,
     });
   }
 
@@ -240,6 +258,12 @@ export const getRootDomain = (domain: string): string => {
 
 const isWithinScope = (targetDomain: string, rootDomain: string): boolean => {
   return targetDomain === rootDomain || targetDomain.endsWith(`.${rootDomain}`);
+};
+
+const isSubdomain = (domain: string, rootDomain: string): boolean => {
+  if (domain === rootDomain) return false;
+  if (domain === `www.${rootDomain}`) return false;
+  return domain.endsWith(`.${rootDomain}`);
 };
 
 const isValidDomain = (domain: string): boolean => {

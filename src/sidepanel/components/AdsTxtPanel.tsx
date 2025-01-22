@@ -120,6 +120,11 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                 Owner Domain: {adsTxtData.variables.ownerDomain}
               </div>
             )}
+            {adsTxtData.variables.subDomain && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                Owner Domain: {adsTxtData.variables.subDomain}
+              </div>
+            )}
           </div>
         )}
 
