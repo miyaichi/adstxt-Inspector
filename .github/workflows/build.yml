@@ -27,11 +27,8 @@ jobs:
       - name: Build Chrome Extension
         run: npm run build
 
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: chrome-extension-build
-          path: dist/
+      - name: Zip Build Artifact
+        run: zip -r dist/adstxt-inspector-buildzip dist/
 
       - name: Create or Update GitHub Release
         id: create_release
@@ -48,6 +45,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/adstxt-inspector.zip
-          asset_name: adstxt-inspector.zip
+          asset_path: ./dist/adstxt-inspector-buildzip
+          asset_name: adstxt-inspector-buildzip
           asset_content_type: application/zip
