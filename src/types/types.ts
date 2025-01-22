@@ -13,7 +13,7 @@ export interface CacheEntry<T> {
 export interface Seller {
   seller_id: string;
   is_confidential?: 0 | 1;
-  seller_type?: 'PUBLISHER' | 'INTERMEDIARY';
+  seller_type: 'PUBLISHER' | 'INTERMEDIARY' | 'RESELLER' | 'BOTH';
   is_passthrough?: 0 | 1;
   name: string;
   domain: string;

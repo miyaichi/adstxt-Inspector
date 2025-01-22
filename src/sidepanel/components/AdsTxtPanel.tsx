@@ -1,11 +1,12 @@
-import { Check, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Check, ExternalLink } from 'lucide-react';
 import React from 'react';
+import { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 
 interface AdsTxtPanelProps {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
-  isValidEntry: (domain: string, publisherId: string) => boolean;
+  isValidEntry: (domain: string, publisherId: string) => ValidityResult;
 }
 
 interface GroupedEntries {
@@ -67,7 +68,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                   Line {error.line}: {error.message}
                 </div>
                 {error.content && (
-                  <div className="mt-2 font-mono text-sm bg-red-900 text-white p-2 rounded">
+                  <div className="mt-2 font-mono bg-red-900 text-white p-2 rounded">
                     {error.content}
                   </div>
                 )}
@@ -93,36 +94,36 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
           >
             <span>View Raw</span>
-            <ExternalLink />
+            <ExternalLink className="w-4 h-4" />
           </a>
         </div>
 
-        {/* Supporter Variable Section */}
+        {/* Supported Variables Section */}
         {hasVariables && (
           <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             {adsTxtData.variables.contact && (
               <div className="bg-gray-50 p-3 rounded-lg">
-                contact: {adsTxtData.variables.contact}
+                <span className="font-medium">Contact:</span> {adsTxtData.variables.contact}
               </div>
             )}
             {adsTxtData.variables.inventoryPartnerdomain && (
               <div className="bg-gray-50 p-3 rounded-lg">
-                Inventory Partner Domain: {adsTxtData.variables.inventoryPartnerdomain}
+                <span className="font-medium">Inventory Partner Domain:</span> {adsTxtData.variables.inventoryPartnerdomain}
               </div>
             )}
             {adsTxtData.variables.managerDomain && (
               <div className="bg-gray-50 p-3 rounded-lg">
-                Manager Domain: {adsTxtData.variables.managerDomain}
+                <span className="font-medium">Manager Domain:</span> {adsTxtData.variables.managerDomain}
               </div>
             )}
             {adsTxtData.variables.ownerDomain && (
               <div className="bg-gray-50 p-3 rounded-lg">
-                Owner Domain: {adsTxtData.variables.ownerDomain}
+                <span className="font-medium">Owner Domain:</span> {adsTxtData.variables.ownerDomain}
               </div>
             )}
             {adsTxtData.variables.subDomain && (
               <div className="bg-gray-50 p-3 rounded-lg">
-                Owner Domain: {adsTxtData.variables.subDomain}
+                <span className="font-medium">Subdomain:</span> {adsTxtData.variables.subDomain}
               </div>
             )}
           </div>
@@ -137,35 +138,50 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
               </div>
               <div className="space-y-2 ml-4">
                 {groupedEntries[domain].map((entry, index) => {
-                  const isValid = isValidEntry(domain, entry.publisherId);
+                  const validity = isValidEntry(domain, entry.publisherId);
                   return (
                     <div
                       key={`${domain}-${index}`}
                       className={`p-3 rounded-lg border ${
-                        isValid ? 'border-green-200 bg-green-50' : 'border-gray-200'
+                        validity.isValid 
+                          ? 'border-green-200 bg-green-50' 
+                          : 'border-red-200 bg-red-50'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-gray-600">Publisher ID: {entry.publisherId}</div>
-                          {entry.certificationAuthorityId && (
-                            <div className="text-gray-500">
-                              TAG-ID: {entry.certificationAuthorityId}
-                            </div>
-                          )}
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-gray-600">Publisher ID: {entry.publisherId}</div>
+                            {entry.certificationAuthorityId && (
+                              <div className="text-gray-500">
+                                TAG-ID: {entry.certificationAuthorityId}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className={`px-2 py-1 rounded ${
+                                entry.relationship === 'DIRECT'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {entry.relationship}
+                            </span>
+                            {validity.isValid ? (
+                              <Check className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <AlertTriangle className="w-5 h-5 text-red-500" />
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span
-                            className={`px-2 py-1 rounded ${
-                              entry.relationship === 'DIRECT'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {entry.relationship}
-                          </span>
-                          {isValid && <Check className="w-5 h-5 text-green-500" />}
-                        </div>
+                        {!validity.isValid && validity.reasons.length > 0 && (
+                          <div className="text-red-600 space-y-1">
+                            {validity.reasons.map((reason, idx) => (
+                                <span>{reason}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

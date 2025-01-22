@@ -124,7 +124,7 @@ export default function App() {
             </TabPanel>
 
             <TabPanel>
-              <SellersPanel analyzing={analyzing} sellerAnalysis={sellerAnalysis} />
+              <SellersPanel analyzing={analyzing} sellerAnalysis={sellerAnalysis} adsTxtData={adsTxtData} />
             </TabPanel>
           </Tabs>
         </div>
