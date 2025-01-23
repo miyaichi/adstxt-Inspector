@@ -7,6 +7,7 @@ import { ConnectionManager } from '../utils/connectionManager';
 import { Logger } from '../utils/logger';
 import { AdsTxtPanel } from './components/AdsTxtPanel';
 import { SellersPanel } from './components/SellersPanel';
+import { SummaryPanel } from './components/SummaryPanel';
 import { Button } from './components/ui/Button';
 
 const logger = new Logger('sidepanel');
@@ -111,9 +112,18 @@ export default function App() {
         <div className="bg-white rounded-lg shadow">
           <Tabs>
             <TabList>
+              <Tab>Summary</Tab>
               <Tab>Ads.txt</Tab>
               <Tab>Sellers</Tab>
             </TabList>
+
+            <TabPanel>
+              <SummaryPanel
+                analyzing={analyzing}
+                adsTxtData={adsTxtData}
+                sellerAnalysis={sellerAnalysis}
+              />
+            </TabPanel>
 
             <TabPanel>
               <AdsTxtPanel
