@@ -44,6 +44,9 @@
   "no_matching_entries_found": {
     "message": "Sellers.json に一致するエントリが見つかりません"
   },
+  "matches_owner_domain": {
+    "message": "OWNERDOMAIN と一致しています"
+  },
   "seller_not_found": {
     "message": "Sellers.json に Seller が見つかりません"
   },

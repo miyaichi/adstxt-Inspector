@@ -44,6 +44,9 @@
   "no_matching_entries_found": {
     "message": "No matching entries found in Sellers.json"
   },
+  "matches_owner_domain": {
+    "message": "Matches OWNERDOMAIN"
+  },
   "seller_not_found": {
     "message": "Seller not found in Sellers.json"
   },

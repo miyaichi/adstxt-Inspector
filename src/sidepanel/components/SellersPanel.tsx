@@ -123,7 +123,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                             seller.seller_type?.toUpperCase() === 'BOTH') && (
                             <div className="flex items-center space-x-1 text-green-600">
                               <Check className="w-4 h-4" />
-                              <span>Matches OWNERDOMAIN declaration</span>
+                              <span>{chrome.i18n.getMessage('matches_owner_domain')}</span>
                             </div>
                           )}
                       </div>
