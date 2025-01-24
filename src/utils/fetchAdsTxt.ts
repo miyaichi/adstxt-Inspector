@@ -109,7 +109,9 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
 
   const entries: AdsTxt[] = [];
   const errors: ErrorDetail[] = [];
-  const variables: SupportedVariables = {};
+  const variables: SupportedVariables = {
+    ownerDomain: rootDomain, // Default owner domain is the root domain
+  };
 
   try {
     const lines = adsTxtContent.split(/\r?\n/);
@@ -138,6 +140,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         subDomain: /^SUBDOMAIN=/i,
       };
 
+      // Check if the line is a variable declaration
       for (const [key, regex] of Object.entries(variableMatches)) {
         if (regex.test(trimmedLine)) {
           const value = trimmedLine.split('=')[1].trim();
