@@ -32,6 +32,9 @@
   "invalid_certification_authority_id": {
     "message": "無効な認証局 ID: $1"
   },
+  "duplicate_entries": {
+    "message": "エントリが重複しています"
+  },
   "analyzing_sellers_json": {
     "message": "Sellers.json を分析中..."
   },

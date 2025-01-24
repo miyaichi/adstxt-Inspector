@@ -32,6 +32,9 @@
   "invalid_certification_authority_id": {
     "message": "Invalid certification authority ID: $1."
   },
+  "duplicate_entries": {
+    "message": "Duplicate entries found."
+  },
   "analyzing_sellers_json": {
     "message": "Analyzing Sellers.json..."
   },
