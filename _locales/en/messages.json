@@ -44,6 +44,10 @@
   "seller_not_found": {
     "message": "Seller not found in Sellers.json"
   },
+  "seller_type_mismatch": {
+    "message": "seller_type is $1, so $2.",
+    "description": "Error message shown when the seller_type does not match the expected relationship type in ads.txt."
+  },
   "owner_domain_mismatch": {
     "message": "OWNERDOMAIN mismatch: Expected $1, found $2"
   },

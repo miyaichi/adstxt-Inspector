@@ -6,7 +6,7 @@ import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 interface AdsTxtPanelProps {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
-  isValidEntry: (domain: string, publisherId: string) => ValidityResult;
+  isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
 interface GroupedEntries {
@@ -145,7 +145,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
               </div>
               <div className="space-y-2 ml-4">
                 {groupedEntries[domain].map((entry, index) => {
-                  const validity = isValidEntry(domain, entry.publisherId);
+                  const validity = isValidEntry(domain, entry);
                   return (
                     <div
                       key={`${domain}-${index}`}

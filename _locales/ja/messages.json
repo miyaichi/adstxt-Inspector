@@ -44,6 +44,9 @@
   "seller_not_found": {
     "message": "Sellers.json に Seller が見つかりません"
   },
+  "seller_type_mismatch": {
+    "message": "seller_type が $1 なので $2 です"
+  },
   "owner_domain_mismatch": {
     "message": "OWNERDOMAIN の不一致: 期待値 $1, 実際の値 $2"
   },

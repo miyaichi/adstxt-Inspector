@@ -23,7 +23,7 @@ interface UseAdsSellersReturn {
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
   analyze: (url: string) => Promise<void>;
-  isValidEntry: (domain: string, publisherId: string) => ValidityResult;
+  isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
 export const useAdsSellers = (): UseAdsSellersReturn => {
@@ -114,12 +114,12 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     }
   };
 
-  const isValidEntry = (domain: string, publisherId: string): ValidityResult => {
+  const isValidEntry = (domain: string, entry: AdsTxt): ValidityResult => {
     const reasons: string[] = [];
 
     const currentSellerAnalysis = sellerAnalysis.find((analysis) => analysis.domain === domain);
     const seller = currentSellerAnalysis?.sellersJson?.data.find(
-      (s) => String(s.seller_id) === String(publisherId)
+      (s) => String(s.seller_id) === String(entry.publisherId)
     );
 
     if (!seller) {
@@ -127,6 +127,23 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         isValid: false,
         reasons: [chrome.i18n.getMessage('seller_not_found')],
       };
+    }
+
+    // Validate SELLER_TYPE
+    if (seller.seller_type === 'PUBLISHER') {
+      if (entry.relationship !== 'DIRECT') {
+        reasons.push(chrome.i18n.getMessage('seller_type_mismatch', [
+          seller.seller_type,
+          'DIRECT'
+        ]));
+      }
+    } else if (seller.seller_type === 'INTERMEDIARY') {
+      if (entry.relationship !== 'RESELLER') {
+        reasons.push(chrome.i18n.getMessage('seller_type_mismatch', [
+          seller.seller_type,
+          'RESELLER'
+        ]));
+      }
     }
 
     // Varidate OWNERDOMAIN
@@ -166,6 +183,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         reasons.push(chrome.i18n.getMessage('inventory_from_both_domains'));
       }
     }
+
     return {
       isValid: reasons.length === 0,
       reasons,
