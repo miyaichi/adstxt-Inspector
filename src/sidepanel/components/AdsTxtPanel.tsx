@@ -177,7 +177,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           </div>
                         </div>
                         {!validity.isValid && validity.reasons.length > 0 && (
-                          <div className="text-red-600 space-y-1">
+                          <div className="flex flex-col text-red-600 space-y-1">
                             {validity.reasons.map((reason, idx) => (
                               <span key={idx}>{reason}</span>
                             ))}
