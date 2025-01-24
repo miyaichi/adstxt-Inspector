@@ -224,6 +224,12 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         )
       ) {
         entries.push(entry);
+      } else {
+        errors.push({
+          line: lineNumber,
+          content: line,
+          message: chrome.i18n.getMessage('duplicate_entry', [line]),
+        });
       }
     });
   } catch (error) {
