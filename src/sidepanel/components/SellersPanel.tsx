@@ -73,7 +73,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-700">
                   <div className="flex items-center space-x-2">
                     <AlertTriangle className="w-5 h-5" />
-                    <span>No matching entries found in sellers.json</span>
+                    <span>{chrome.i18n.getMessage('no_matching_entries_found')}</span>
                   </div>
                 </div>
               ) : (

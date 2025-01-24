@@ -1,4 +1,3 @@
-import { Check } from 'lucide-react';
 import React from 'react';
 import type { SellerAnalysis } from '../../hooks/useAdsSellers';
 import type { FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
@@ -160,35 +159,6 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
                   </div>
                   <div className="bg-green-50 p-2 rounded">Both: {bothCount}</div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Integrity Check Section */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="border-b border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900">Integrity Check</h3>
-        </div>
-        <div className="p-4 space-y-4">
-          {sellerAnalysis.map((analysis) => {
-            const domainMatchesOwner = analysis.domain === ownerDomain;
-            const domainMatchesManager = analysis.domain === managerDomain;
-
-            return (
-              <div key={analysis.domain} className="bg-gray-50 p-4 rounded-lg">
-                <div className="font-medium text-gray-900">{analysis.domain}</div>
-                {domainMatchesOwner && (
-                  <div className="text-green-600">
-                    <Check className="w-4 h-4 inline mr-2" /> Matches OWNERDOMAIN
-                  </div>
-                )}
-                {domainMatchesManager && (
-                  <div className="text-blue-600">
-                    <Check className="w-4 h-4 inline mr-2" /> Matches MANAGERDOMAIN
-                  </div>
-                )}
               </div>
             );
           })}

@@ -21,16 +21,16 @@
     "message": "Insufficient number of fields. Expected at least 3 fields."
   },
   "invalid_relationship_type": {
-    "message": "Invalid relationship type: ${relationshipField}. Expected DIRECT or RESELLER."
+    "message": "Invalid relationship type: $1. Expected DIRECT or RESELLER."
   },
   "invalid_domain": {
-    "message": "Invalid domain format: ${domainField}. Expected a valid domain."
+    "message": "Invalid domain format: $1."
   },
   "invalid_publisher_id": {
-    "message": "Invalid publisher ID: ${publisherIdField}. Expected a valid publisher ID."
+    "message": "Invalid publisher ID: $1."
   },
   "invalid_certification_authority_id": {
-    "message": "Invalid certification authority ID: ${certificationAuthorityIdField}. Expected a valid certification authority ID."
+    "message": "Invalid certification authority ID: $1."
   },
   "analyzing_sellers_json": {
     "message": "Analyzing Sellers.json..."
@@ -38,14 +38,17 @@
   "no_seller_json_data": {
     "message": "No Sellers.json data available"
   },
+  "no_matching_entries_found": {
+    "message": "No matching entries found in Sellers.json"
+  },
   "seller_not_found": {
     "message": "Seller not found in Sellers.json"
   },
   "owner_domain_mismatch": {
-    "message": "OWNERDOMAIN mismatch: Expected ${ownerDomain}, found ${sellerDomain}"
+    "message": "OWNERDOMAIN mismatch: Expected $1, found $2"
   },
   "multiple_manager_domain_declarations": {
-    "message": "Multiple MANAGERDOMAIN declarations for country ${countryCode}"
+    "message": "Multiple MANAGERDOMAIN declarations for country $1"
   },
   "inventory_from_both_domains": {
     "message": "Inventory available from both OWNERDOMAIN and MANAGERDOMAIN sellers"
@@ -55,12 +58,6 @@
   },
   "summary_overview": {
     "message": "Summary Overview"
-  },
-  "total_ads_txt_entries": {
-    "message": "Total Ads.txt Entries:"
-  },
-  "total_sellers_json_entries": {
-    "message": "Total Sellers.json Entries:"
   },
   "transaction_summary": {
     "message": "Transaction Summary"

@@ -21,16 +21,16 @@
     "message": "フィールド数が不十分です。少なくとも3つのフィールドが必要です。"
   },
   "invalid_relationship_type": {
-    "message": "無効な関係タイプ: ${relationshipField}. DIRECT または RESELLER が期待されます。"
+    "message": "無効な関係タイプ: $1。 DIRECT または RESELLER です"
   },
   "invalid_domain": {
-    "message": "無効なドメイン: ${domainField}. 有効なドメインが期待されます。"
+    "message": "無効なドメイン: $1"
   },
   "invalid_publisher_id": {
-    "message": "無効な Publisher ID: ${publisherIdField}. 有効な Publisher ID が期待されます。"
+    "message": "無効な Publisher ID: $1"
   },
   "invalid_certification_authority_id": {
-    "message": "無効な認証局 ID: ${certificationAuthorityIdField}. 有効な認証局 ID が期待されます。"
+    "message": "無効な認証局 ID: $1"
   },
   "analyzing_sellers_json": {
     "message": "Sellers.json を分析中..."
@@ -38,14 +38,17 @@
   "no_seller_json_data": {
     "message": "Sellers.json データがありません"
   },
+  "no_matching_entries_found": {
+    "message": "Sellers.json に一致するエントリが見つかりません"
+  },
   "seller_not_found": {
     "message": "Sellers.json に Seller が見つかりません"
   },
   "owner_domain_mismatch": {
-    "message": "OWNERDOMAIN の不一致: 期待値 ${ownerDomain}, 実際の値 ${sellerDomain}"
+    "message": "OWNERDOMAIN の不一致: 期待値 $1, 実際の値 $2"
   },
   "multiple_manager_domain_declarations": {
-    "message": "国 ${countryCode} に複数の MANAGERDOMAIN 宣言があります"
+    "message": "国 $1 に複数の MANAGERDOMAIN 宣言があります"
   },
   "inventory_from_both_domains": {
     "message": "OWNERDOMAIN と MANAGERDOMAIN の両方の販売者から在庫が利用可能です"
@@ -55,12 +58,6 @@
   },
   "summary_overview": {
     "message": "概要"
-  },
-  "total_ads_txt_entries": {
-    "message": "Ads.txtエントリの合計:"
-  },
-  "total_sellers_json_entries": {
-    "message": "Sellers.jsonエントリの合計:"
   },
   "transaction_summary": {
     "message": "取引サマリー"
