@@ -56,19 +56,19 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     Object.values(adsTxtData.variables).some((value) => value !== undefined);
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="panel-container">
       {/* Errors Section */}
       {adsTxtData.errors.length > 0 && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="border-b border-gray-200 p-4">
-            <h3 className="text-lg font-medium text-red-600">
+        <div className="panel-section">
+          <div className="panel-header">
+            <h3 className="panel-header-title text-red-600">
               Errors Found ({adsTxtData.errors.length})
             </h3>
           </div>
-          <div className="p-4 space-y-2">
+          <div className="panel-content">
             {adsTxtData.errors.map((error, index) => (
-              <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="text-red-700">
+              <div key={index} className="alert alert-error">
+                <div>
                   Line {error.line}: {error.message}
                 </div>
                 {error.content && (
@@ -83,19 +83,17 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
       )}
 
       {/* Ads.txt Section */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="border-b border-gray-200 p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="font-medium text-gray-900 px-3 py-2 bg-gray-50 rounded-lg">
-              {adsTxtData.adsTxtUrl} ({sortedDomains.length} domains, {adsTxtData.data.length}{' '}
-              entries)
-            </div>
+      <div className="panel-section">
+        <div className="panel-header flex items-center justify-between">
+          <div className="info-item">
+            {adsTxtData.adsTxtUrl} ({sortedDomains.length} domains, {adsTxtData.data.length}{' '}
+            entries)
           </div>
           <a
             href={adsTxtData.adsTxtUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+            className="external-link"
           >
             <span>View Raw</span>
             <ExternalLink className="w-4 h-4" />
@@ -104,32 +102,32 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
 
         {/* Supported Variables Section */}
         {hasVariables && (
-          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="info-grid p-4">
             {adsTxtData.variables.contact && (
-              <div className="bg-gray-50 p-2 rounded-lg">
+              <div className="info-item">
                 <span className="font-medium">Contact:</span> {adsTxtData.variables.contact}
               </div>
             )}
             {adsTxtData.variables.inventoryPartnerdomain && (
-              <div className="bg-gray-50 p-2 rounded-lg">
+              <div className="info-item">
                 <span className="font-medium">Inventory Partner Domain:</span>{' '}
                 {adsTxtData.variables.inventoryPartnerdomain}
               </div>
             )}
             {adsTxtData.variables.managerDomain && (
-              <div className="bg-gray-50 p-2 rounded-lg">
+              <div className="info-item">
                 <span className="font-medium">Manager Domain:</span>{' '}
                 {adsTxtData.variables.managerDomain}
               </div>
             )}
             {adsTxtData.variables.ownerDomain && (
-              <div className="bg-gray-50 p-2 rounded-lg">
+              <div className="info-item">
                 <span className="font-medium">Owner Domain:</span>{' '}
                 {adsTxtData.variables.ownerDomain}
               </div>
             )}
             {adsTxtData.variables.subDomain && (
-              <div className="bg-gray-50 p-2 rounded-lg">
+              <div className="info-item">
                 <span className="font-medium">Sub Domain:</span> {adsTxtData.variables.subDomain}
               </div>
             )}
@@ -137,10 +135,10 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         )}
 
         {/* Entries Section */}
-        <div className="p-4 space-y-4">
+        <div className="panel-content">
           {sortedDomains.map((domain) => (
             <div key={domain} className="space-y-2">
-              <div className="font-medium text-gray-900 px-3 py-2 bg-gray-50 rounded-lg">
+              <div className="info-item">
                 {domain} ({groupedEntries[domain].length} entries)
               </div>
               <div className="space-y-2 ml-4">
@@ -149,14 +147,14 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                   return (
                     <div
                       key={`${domain}-${index}`}
-                      className={`p-2 rounded-lg border ${
+                      className={`entry-card ${
                         validity.isValid
                           ? 'border-green-200 bg-green-50'
                           : 'border-red-200 bg-red-50'
                       }`}
                     >
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center justify-between">
+                      <div className="entry-card-content">
+                        <div className="entry-card-header">
                           <div>
                             <div className="text-gray-600">Publisher ID: {entry.publisherId}</div>
                             {entry.certificationAuthorityId && (
@@ -167,11 +165,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           </div>
                           <div className="flex items-center space-x-2">
                             <span
-                              className={`px-2 py-1 rounded ${
-                                entry.relationship === 'DIRECT'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}
+                              className={`tag ${entry.relationship === 'DIRECT' ? 'tag-blue' : 'tag-gray'}`}
                             >
                               {entry.relationship}
                             </span>
@@ -185,7 +179,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                         {!validity.isValid && validity.reasons.length > 0 && (
                           <div className="text-red-600 space-y-1">
                             {validity.reasons.map((reason, idx) => (
-                              <span>{reason}</span>
+                              <span key={idx}>{reason}</span>
                             ))}
                           </div>
                         )}

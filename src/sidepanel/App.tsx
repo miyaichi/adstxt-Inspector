@@ -97,27 +97,31 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="p-4 space-y-4">
+      <div className="panel-container">
         {/* Header and Analyze Button */}
-        <div className="flex flex-col space-y-2 bg-white rounded-lg shadow p-4">
-          {/* Domain and Analyze Button */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              Domain: <span className="font-semibold">{domain}</span>
+        <div className="panel-section">
+          <div className="panel-content">
+            {/* Domain and Analyze Button */}
+            <div className="entry-card-header">
+              <div className="flex items-center space-x-2">
+                Domain: <span className="font-semibold">{domain}</span>
+              </div>
+              <Button onClick={handleAnalyze} disabled={!tabId || analyzing}>
+                {analyzing
+                  ? chrome.i18n.getMessage('analyzing')
+                  : chrome.i18n.getMessage('analyze')}
+              </Button>
             </div>
-            <Button onClick={handleAnalyze} disabled={!tabId || analyzing}>
-              {analyzing ? chrome.i18n.getMessage('analyzing') : chrome.i18n.getMessage('analyze')}
-            </Button>
-          </div>
 
-          {/* Explanation Message */}
-          <div className="text-sm text-gray-500">
-            {chrome.i18n.getMessage('analyse_button_description')}
+            {/* Explanation Message */}
+            <div className="text-sm text-gray-500">
+              {chrome.i18n.getMessage('analyse_button_description')}
+            </div>
           </div>
         </div>
 
         {/* Tabs Section */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="panel-section">
           <Tabs>
             <TabList>
               <Tab>Summary</Tab>

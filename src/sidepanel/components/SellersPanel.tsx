@@ -35,56 +35,49 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="panel-container">
       <div className="space-y-4">
         {sellerAnalysis.map((analysis) => (
-          <div key={analysis.domain} className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+          <div key={analysis.domain} className="panel-section">
+            <div className="panel-header flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="font-medium text-gray-900 px-3 py-2 bg-gray-50 rounded-lg">
+                <div className="info-item">
                   {analysis.domain} ({analysis.sellersJson?.data.length || 0} entries)
                 </div>
                 {analysis.domain === adsTxtData?.variables?.ownerDomain && (
-                  <div className="px-2 py-1 rounded bg-blue-100 text-blue-800">Owner Domain</div>
+                  <span className="tag tag-blue">Owner Domain</span>
                 )}
                 {analysis.domain === adsTxtData?.variables?.managerDomain?.split(',')[0] && (
-                  <div className="px-2 py-1 rounded bg-blue-100 text-blue-800">Manager Domain</div>
+                  <span className="tag tag-blue">Manager Domain</span>
                 )}
               </div>
               <a
                 href={`https://${analysis.domain}/sellers.json`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                className="external-link"
               >
                 <span>View Raw</span>
                 <ExternalLink className="w-4 h-4" />
               </a>
             </div>
-            <div className="p-4">
+            <div className="panel-content">
               {analysis.sellersJson?.error ? (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    <span>{analysis.sellersJson.error}</span>
-                  </div>
+                <div className="alert alert-error">
+                  <AlertTriangle className="w-5 h-5" />
+                  <span>{analysis.sellersJson.error}</span>
                 </div>
               ) : analysis.sellersJson?.data.length === 0 ? (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-700">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    <span>{chrome.i18n.getMessage('no_matching_entries_found')}</span>
-                  </div>
+                <div className="alert alert-warning">
+                  <AlertTriangle className="w-5 h-5" />
+                  <span>{chrome.i18n.getMessage('no_matching_entries_found')}</span>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {analysis.sellersJson?.data.map((seller, index) => (
-                    <div
-                      key={`${seller.seller_id}-${index}`}
-                      className="p-3 rounded-lg border border-gray-200"
-                    >
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center justify-between">
+                    <div key={`${seller.seller_id}-${index}`} className="entry-card">
+                      <div className="entry-card-content">
+                        <div className="entry-card-header">
                           <div>
                             <div className="font-medium text-gray-900">{seller.name}</div>
                             <div className="text-gray-600">Seller ID: {seller.seller_id}</div>
@@ -95,24 +88,20 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                           <div className="flex items-center space-x-2">
                             {seller.seller_type && (
                               <span
-                                className={`px-2 py-1 rounded ${
+                                className={`tag ${
                                   ['PUBLISHER', 'BOTH'].includes(seller.seller_type.toUpperCase())
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-gray-100 text-gray-800'
+                                    ? 'tag-blue'
+                                    : 'tag-gray'
                                 }`}
                               >
                                 {seller.seller_type.toUpperCase()}
                               </span>
                             )}
                             {seller.is_confidential === 1 && (
-                              <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                                Confidential
-                              </span>
+                              <span className="tag tag-yellow">Confidential</span>
                             )}
                             {seller.is_passthrough === 1 && (
-                              <span className="px-2 py-1 rounded bg-purple-100 text-purple-800">
-                                Passthrough
-                              </span>
+                              <span className="tag tag-purple">Passthrough</span>
                             )}
                           </div>
                         </div>

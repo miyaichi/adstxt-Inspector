@@ -58,77 +58,67 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="panel-container">
       {/* Basic Info Section */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="border-b border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            {chrome.i18n.getMessage('summary_overview')}
-          </h3>
+      <div className="panel-section">
+        <div className="panel-header">
+          <h3 className="panel-header-title">{chrome.i18n.getMessage('summary_overview')}</h3>
         </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 p-2 rounded-lg">
+        <div className="info-grid">
+          <div className="info-item">
             <span className="font-medium">Total Ads.txt Entries:</span> {totalAdsTxtEntries}
           </div>
-          <div className="bg-gray-50 p-2 rounded-lg">
+          <div className="info-item">
             <span className="font-medium">Total Sellers.json Entries:</span> {totalSellersEntries}
           </div>
-          <div className="bg-gray-50 p-2 rounded-lg">
+          <div className="info-item">
             <span className="font-medium">Owner Domain:</span> {ownerDomain}
           </div>
-          <div className="bg-gray-50 p-2 rounded-lg">
+          <div className="info-item">
             <span className="font-medium">Manager Domain:</span> {managerDomain}
           </div>
         </div>
       </div>
 
       {/* Transaction Summary Section */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="border-b border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            {chrome.i18n.getMessage('transaction_summary')}
-          </h3>
+      <div className="panel-section">
+        <div className="panel-header">
+          <h3 className="panel-header-title">{chrome.i18n.getMessage('transaction_summary')}</h3>
         </div>
-        <div className="p-4 space-y-4">
-          <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+        <div className="panel-content">
+          <div className="alert alert-success">
             <span className="font-medium">Direct Relationships:</span> {directEntries.length}
           </div>
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+          <div className="alert alert-warning">
             <span className="font-medium">Reseller Relationships:</span> {resellerEntries.length}
           </div>
         </div>
       </div>
 
       {/* Transaction Patterns Section */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="border-b border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            {chrome.i18n.getMessage('transaction_patterns')}
-          </h3>
+      <div className="panel-section">
+        <div className="panel-header">
+          <h3 className="panel-header-title">{chrome.i18n.getMessage('transaction_patterns')}</h3>
         </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="panel-content info-grid">
           <div className="space-y-2">
             <h4 className="font-medium">Owner Domain Transactions</h4>
-            <div className="bg-blue-50 p-2 rounded">Direct: {transactionPatterns.ownerDirect}</div>
-            <div className="bg-blue-50 p-2 rounded">
+            <div className="info-item bg-blue-50">Direct: {transactionPatterns.ownerDirect}</div>
+            <div className="info-item bg-blue-50">
               Reseller: {transactionPatterns.ownerReseller}
             </div>
           </div>
           <div className="space-y-2">
             <h4 className="font-medium">Manager Domain Transactions</h4>
-            <div className="bg-green-50 p-2 rounded">
-              Direct: {transactionPatterns.managerDirect}
-            </div>
-            <div className="bg-green-50 p-2 rounded">
+            <div className="info-item bg-green-50">Direct: {transactionPatterns.managerDirect}</div>
+            <div className="info-item bg-green-50">
               Reseller: {transactionPatterns.managerReseller}
             </div>
           </div>
           <div className="col-span-2 space-y-2">
             <h4 className="font-medium">Other Domain Transactions</h4>
-            <div className="bg-yellow-50 p-2 rounded">
-              Direct: {transactionPatterns.otherDirect}
-            </div>
-            <div className="bg-yellow-50 p-2 rounded">
+            <div className="info-item bg-yellow-50">Direct: {transactionPatterns.otherDirect}</div>
+            <div className="info-item bg-yellow-50">
               Reseller: {transactionPatterns.otherReseller}
             </div>
           </div>
@@ -136,13 +126,11 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       </div>
 
       {/* Seller Analysis Section */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="border-b border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            {chrome.i18n.getMessage('seller_type_analytics')}
-          </h3>
+      <div className="panel-section">
+        <div className="panel-header">
+          <h3 className="panel-header-title">{chrome.i18n.getMessage('seller_type_analytics')}</h3>
         </div>
-        <div className="p-4 space-y-4">
+        <div className="panel-content">
           {sellerAnalysis.map((analysis) => {
             const sellers = analysis.sellersJson?.data || [];
             const publisherCount = sellers.filter(
@@ -154,14 +142,12 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
             const bothCount = sellers.filter((s) => s.seller_type?.toUpperCase() === 'BOTH').length;
 
             return (
-              <div key={analysis.domain} className="bg-gray-50 p-4 rounded-lg">
+              <div key={analysis.domain} className="info-item">
                 <div className="font-medium">{analysis.domain}</div>
                 <div className="grid grid-cols-3 gap-2 mt-2">
-                  <div className="bg-blue-50 p-2 rounded">Publishers: {publisherCount}</div>
-                  <div className="bg-yellow-50 p-2 rounded">
-                    Intermediaries: {intermediaryCount}
-                  </div>
-                  <div className="bg-green-50 p-2 rounded">Both: {bothCount}</div>
+                  <div className="info-item bg-blue-50">Publishers: {publisherCount}</div>
+                  <div className="info-item bg-yellow-50">Intermediaries: {intermediaryCount}</div>
+                  <div className="info-item bg-green-50">Both: {bothCount}</div>
                 </div>
               </div>
             );
