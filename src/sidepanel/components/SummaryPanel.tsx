@@ -62,7 +62,9 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       {/* Basic Info Section */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="border-b border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900">{chrome.i18n.getMessage('summary_overview')}</h3>
+          <h3 className="text-lg font-medium text-gray-900">
+            {chrome.i18n.getMessage('summary_overview')}
+          </h3>
         </div>
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 p-2 rounded-lg">
@@ -136,7 +138,9 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       {/* Seller Analysis Section */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="border-b border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900">{chrome.i18n.getMessage('seller_type_analytics')}</h3>
+          <h3 className="text-lg font-medium text-gray-900">
+            {chrome.i18n.getMessage('seller_type_analytics')}
+          </h3>
         </div>
         <div className="p-4 space-y-4">
           {sellerAnalysis.map((analysis) => {

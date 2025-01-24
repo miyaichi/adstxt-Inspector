@@ -132,17 +132,15 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     // Validate SELLER_TYPE
     if (seller.seller_type === 'PUBLISHER') {
       if (entry.relationship !== 'DIRECT') {
-        reasons.push(chrome.i18n.getMessage('seller_type_mismatch', [
-          seller.seller_type,
-          'DIRECT'
-        ]));
+        reasons.push(
+          chrome.i18n.getMessage('seller_type_mismatch', [seller.seller_type, 'DIRECT'])
+        );
       }
     } else if (seller.seller_type === 'INTERMEDIARY') {
       if (entry.relationship !== 'RESELLER') {
-        reasons.push(chrome.i18n.getMessage('seller_type_mismatch', [
-          seller.seller_type,
-          'RESELLER'
-        ]));
+        reasons.push(
+          chrome.i18n.getMessage('seller_type_mismatch', [seller.seller_type, 'RESELLER'])
+        );
       }
     }
 

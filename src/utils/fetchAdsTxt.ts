@@ -197,7 +197,9 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         errors.push({
           line: lineNumber,
           content: line,
-          message: chrome.i18n.getMessage('invalid_certification_authority_id', [certificationAuthorityId]),
+          message: chrome.i18n.getMessage('invalid_certification_authority_id', [
+            certificationAuthorityId,
+          ]),
         });
         return;
       }
