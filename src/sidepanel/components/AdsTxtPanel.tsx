@@ -21,7 +21,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   if (analyzing) {
     return (
       <div className="p-4">
-        <div className="bg-blue-50 text-blue-700 p-4 rounded-lg">Analyzing Ads.txt...</div>
+        <div className="bg-blue-50 text-blue-700 p-4 rounded-lg">
+          {chrome.i18n.getMessage('analyzing_ads_txt')}
+        </div>
       </div>
     );
   }
@@ -29,7 +31,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   if (!adsTxtData) {
     return (
       <div className="p-4">
-        <div className="bg-gray-50 text-gray-600 p-4 rounded-lg">No Ads.txt data available</div>
+        <div className="bg-gray-50 text-gray-600 p-4 rounded-lg">
+          {chrome.i18n.getMessage('no_ads_txt_data')}
+        </div>
       </div>
     );
   }

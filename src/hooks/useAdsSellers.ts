@@ -125,7 +125,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     if (!seller) {
       return {
         isValid: false,
-        reasons: ['Seller not found in sellers.json'],
+        reasons: [chrome.i18n.getMessage('seller_not_found')],
       };
     }
 
@@ -135,7 +135,9 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
       if (seller.seller_type === 'PUBLISHER' || seller.seller_type === 'BOTH') {
         if (seller.domain !== ownerDomain) {
-          reasons.push(`OWNERDOMAIN mismatch: Expected ${ownerDomain}, found ${seller.domain}`);
+          reasons.push(
+            chrome.i18n.getMessage('owner_domain_mismatch', [ownerDomain, seller.domain])
+          );
         }
       }
     }
@@ -152,7 +154,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       ).length;
 
       if (managerDomains > 1) {
-        reasons.push(`Multiple MANAGERDOMAIN declarations for country ${countryCode}`);
+        reasons.push(chrome.i18n.getMessage('multiple_manager_domain_declarations', [countryCode]));
       }
 
       // Check if inventory is available from both
@@ -161,7 +163,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         sellerDomain === adsTxtData.variables.ownerDomain &&
         !['RESELLER'].includes(seller.seller_type)
       ) {
-        reasons.push('Inventory available from both OWNERDOMAIN and MANAGERDOMAIN sellers');
+        reasons.push(chrome.i18n.getMessage('inventory_from_both_domains'));
       }
     }
     return {

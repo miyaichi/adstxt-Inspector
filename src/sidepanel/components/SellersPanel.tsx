@@ -17,7 +17,9 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
   if (analyzing) {
     return (
       <div className="p-4">
-        <div className="bg-blue-50 text-blue-700 p-4 rounded-lg">Analyzing Sellers.json...</div>
+        <div className="bg-blue-50 text-blue-700 p-4 rounded-lg">
+          {chrome.i18n.getMessage('analyzing_sellers_json')}
+        </div>
       </div>
     );
   }
@@ -26,7 +28,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
     return (
       <div className="p-4">
         <div className="bg-gray-50 text-gray-600 p-4 rounded-lg">
-          No Sellers.json data available
+          {chrome.i18n.getMessage('no_seller_json_data')}
         </div>
       </div>
     );

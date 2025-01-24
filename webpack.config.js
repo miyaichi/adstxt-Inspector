@@ -37,6 +37,7 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         { from: 'manifest.json', to: '.' },
+        { from: '_locales', to: '_locales' },
         { from: 'src/assets/icons/build', to: 'icons' },
       ],
     }),

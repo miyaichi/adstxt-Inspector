@@ -1,0 +1,74 @@
+{
+  "app_description": {
+    "message": "Verify and analyze the Ads.txt and the corresponding Sellers.json entry."
+  },
+  "analyse_button_description": {
+    "message": "Press the Analyze button to analyze the Ads.txt file for this domain."
+  },
+  "analyzing": {
+    "message": "Analyzing..."
+  },
+  "analyze": {
+    "message": "Analyze"
+  },
+  "analyzing_ads_txt": {
+    "message": "Analyzing Ads.txt..."
+  },
+  "no_ads_txt_data": {
+    "message": "No Ads.txt data available"
+  },
+  "insufficient_fields": {
+    "message": "Insufficient number of fields. Expected at least 3 fields."
+  },
+  "invalid_relationship_type": {
+    "message": "Invalid relationship type: ${relationshipField}. Expected DIRECT or RESELLER."
+  },
+  "invalid_domain": {
+    "message": "Invalid domain format: ${domainField}. Expected a valid domain."
+  },
+  "invalid_publisher_id": {
+    "message": "Invalid publisher ID: ${publisherIdField}. Expected a valid publisher ID."
+  },
+  "invalid_certification_authority_id": {
+    "message": "Invalid certification authority ID: ${certificationAuthorityIdField}. Expected a valid certification authority ID."
+  },
+  "analyzing_sellers_json": {
+    "message": "Analyzing Sellers.json..."
+  },
+  "no_seller_json_data": {
+    "message": "No Sellers.json data available"
+  },
+  "seller_not_found": {
+    "message": "Seller not found in Sellers.json"
+  },
+  "owner_domain_mismatch": {
+    "message": "OWNERDOMAIN mismatch: Expected ${ownerDomain}, found ${sellerDomain}"
+  },
+  "multiple_manager_domain_declarations": {
+    "message": "Multiple MANAGERDOMAIN declarations for country ${countryCode}"
+  },
+  "inventory_from_both_domains": {
+    "message": "Inventory available from both OWNERDOMAIN and MANAGERDOMAIN sellers"
+  },
+  "no_data_available": {
+    "message": "No data available"
+  },
+  "summary_overview": {
+    "message": "Summary Overview"
+  },
+  "total_ads_txt_entries": {
+    "message": "Total Ads.txt Entries:"
+  },
+  "total_sellers_json_entries": {
+    "message": "Total Sellers.json Entries:"
+  },
+  "transaction_summary": {
+    "message": "Transaction Summary"
+  },
+  "transaction_patterns": {
+    "message": "Transaction Patterns"
+  },
+  "seller_type_analytics": {
+    "message": "Seller Type Analytics"
+  }
+}

@@ -154,7 +154,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         errors.push({
           line: lineNumber,
           content: line,
-          message: 'Insufficient number of fields. Expected at least 3 fields.',
+          message: chrome.i18n.getMessage('insufficient_fields'),
         });
         return;
       }
@@ -167,7 +167,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         errors.push({
           line: lineNumber,
           content: line,
-          message: `Invalid relationship type: "${relationshipField}". Expected "DIRECT" or "RESELLER".`,
+          message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
         });
         return;
       }
@@ -177,7 +177,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         errors.push({
           line: lineNumber,
           content: line,
-          message: `Invalid domain format: "${domainField}".`,
+          message: chrome.i18n.getMessage('invalid_domain', [domainField]),
         });
         return;
       }
@@ -187,7 +187,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         errors.push({
           line: lineNumber,
           content: line,
-          message: `Invalid publisher ID format: "${publisherId}".`,
+          message: chrome.i18n.getMessage('invalid_publisher_id', [publisherId]),
         });
         return;
       }
@@ -197,7 +197,7 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
         errors.push({
           line: lineNumber,
           content: line,
-          message: `Invalid certification authority ID format: "${certificationAuthorityId}".`,
+          message: chrome.i18n.getMessage('invalid_certification_authority_id', [certificationAuthorityId]),
         });
         return;
       }
