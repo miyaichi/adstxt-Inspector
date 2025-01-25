@@ -1,20 +1,37 @@
-remote_theme: jekyll/minima
+# Theme
+remote_theme: pages-themes/cayman
+
+# Site settings
 title: AdsTxt Inspector
 description: Chrome extension for ads.txt and sellers.json validation
-author:
-  name: Miyaichi
-  email: your-email@example.com
+baseurl: "/adstxt-Inspector"
+url: "https://miyaichi.github.io"
 
-minima:
-  skin: auto
-  social_links:
-    github: miyaichi/adstxt-Inspector
+# GitHub settings
+github:
+ repository_url: https://github.com/miyaichi/adstxt-Inspector
+ is_project_page: true
+ owner_url: https://github.com/miyaichi
+ owner_name: miyaichi
 
-header_pages:
-  - features.md
-  - usage.md
-  - reference.md
+# Theme settings
+show_downloads: true
 
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Plugins
 plugins:
-  - jekyll-remote-theme
-  - jekyll-seo-tag
+ - jekyll-remote-theme 
+ - jekyll-include-cache
+ - jekyll-seo-tag
+
+exclude:
+ - Gemfile
+ - Gemfile.lock
+ - node_modules
+ - vendor/bundle/
+ - vendor/cache/
+ - vendor/gems/
+ - vendor/ruby/
