@@ -75,7 +75,8 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ### Sellers.json Specification
 - [IAB Tech Lab Sellers.json Specification 1.0](https://www.pier1.co.jp/wp-content/uploads/2024/02/Sellers.json_Final-ja.pdf) (日本語)
-- [FAQforSellers.jsonandSupplyChainObject](https://www.pier1.co.jp/wp-content/uploads/2024/02/FAQ-for-Sellers.json_supplychain-objec-ja.pdf) (日本語)
+- [FAQforSellers.jsonandSupplyChainObject](https://www.pier1.co.jp/wp-content/uploads/2024/02/FAQ-for-sellers.json_supplychain-objec-ja.pdf) (日本語)
+- [Sellers.json Validator](https://www.aditude.com/tools/sellers-json-validator)
 
 ## Installation
 

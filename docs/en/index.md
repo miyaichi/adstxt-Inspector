@@ -76,6 +76,7 @@ The extension provides three main views:
 ### Sellers.json Specification
 - [IAB Tech Lab Sellers.json Specification 1.0](https://iabtechlab.com/wp-content/uploads/2019/07/Sellers.json_Final.pdf)
 - [FAQforSellers.jsonandSupplyChainObject](https://iabtechlab.com/wp-content/uploads/2019/07/Sellers.json_Final.pdf)
+- [Sellers.json Validator](https://www.aditude.com/tools/sellers-json-validator)
 
 ## Installation
 
