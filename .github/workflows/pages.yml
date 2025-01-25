@@ -14,7 +14,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:
@@ -23,10 +23,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
-      
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -34,21 +34,23 @@ jobs:
           bundler-cache: true
           cache-version: 0
           working-directory: './docs'
-      
+
       - name: Install dependencies
         run: |
           cd docs
           bundle install
-      
+
       - name: Build site
         run: |
           cd docs
           bundle exec jekyll build
         env:
           JEKYLL_ENV: production
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_site
 
   deploy:
     environment:
