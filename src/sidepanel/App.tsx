@@ -124,9 +124,9 @@ export default function App() {
         <div className="panel-section">
           <Tabs>
             <TabList>
-              <Tab>Summary</Tab>
-              <Tab>Ads.txt</Tab>
-              <Tab>Sellers</Tab>
+              <Tab>Summary View</Tab>
+              <Tab>Ads.txt Details</Tab>
+              <Tab>Sellers Analysis</Tab>
             </TabList>
 
             <TabPanel>
