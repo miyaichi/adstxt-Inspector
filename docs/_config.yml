@@ -35,3 +35,18 @@ exclude:
  - vendor/cache/
  - vendor/gems/
  - vendor/ruby/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+  - scope:
+      path: "en"
+    values:
+      lang: en
+  - scope:
+      path: "ja"
+    values:
+      lang: ja
