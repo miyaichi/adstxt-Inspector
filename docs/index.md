@@ -1,7 +1,7 @@
 ---
-layout: default
+layout: home
 title: AdsTxt Inspector
-description: A Chrome extension for validating and analyzing ads.txt files and sellers.json entries
+list_title: News & Updates
 ---
 
 # AdsTxt Inspector

@@ -1,4 +1,20 @@
-theme: jekyll-theme-minimal
+remote_theme: jekyll/minima
 title: AdsTxt Inspector
 description: Chrome extension for ads.txt and sellers.json validation
-destination: ./_site
+author:
+  name: Miyaichi
+  email: your-email@example.com
+
+minima:
+  skin: auto
+  social_links:
+    github: miyaichi/adstxt-Inspector
+
+header_pages:
+  - features.md
+  - usage.md
+  - reference.md
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
