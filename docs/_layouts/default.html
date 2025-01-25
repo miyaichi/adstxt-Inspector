@@ -1,10 +1,12 @@
-{%- if site.active_lang == "ja" or page.lang == "ja" -%}
-  {%- assign active_lang = "ja" -%}
-{%- else -%}
-  {%- assign active_lang = "en" -%}
-{%- endif -%}
 <!DOCTYPE html>
 <html lang="{{ active_lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+  <title>{{ page.title }}</title>
+</head>
+<body>
   {{ content }}
   <script>
     if (window.navigator.language.startsWith('ja') && window.location.pathname.indexOf('/ja/') === -1) {
@@ -14,5 +16,5 @@
       window.location.href = '{{ site.baseurl }}/en/';
     }
   </script>
-  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+</body>
 </html>
