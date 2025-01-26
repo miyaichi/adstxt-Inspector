@@ -95,7 +95,7 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 - [FAQ for Sellers.json and SupplyChain Object](https://www.pier1.co.jp/wp-content/uploads/2024/02/FAQ-for-sellers.json_supplychain-objec-ja.pdf) (日本語)
 - [Sellers.json Validator](https://www.aditude.com/tools/sellers-json-validator)
 
-## Installation
+## インストール <a id="installation"></a>
 
 1. [adstxt-inspector-build.zip](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build)をダウンロードします。
 2. ローカルディレクトリに解凍します。
@@ -113,3 +113,9 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 ## 貢献
 
 ソースコードは[GitHub](https://github.com/miyaichi/adstxt-Inspector)にあります。貢献を歓迎します！
+
+## 謝辞
+
+* [IAB Tech Lab](https://iabtechlab.com/) - Ads.txtとSellers.jsonの規格策定
+* [Adstxt.guru](https://adstxt.guru/)、[Aditude](https://www.aditude.com/) - Ads.txtとSellers.jsonの検証ツール
+* [Ryota Yamauchi](https://www.facebook.com/ryotayamauchiwj)、[Shinji Kawarano ](https://www.facebook.com/kawarano) - デバッグとアドバイス

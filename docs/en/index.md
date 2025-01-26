@@ -113,3 +113,9 @@ The extension provides three main views:
 ## Contributing
 
 Source code is available on [GitHub](https://github.com/miyaichi/adstxt-Inspector). Contributions are welcome!
+
+## Acknowledgements
+
+* [IAB Tech Lab](https://iabtechlab.com/) - Ads.txt and Sellers.json specifications
+* [Adstxt.guru](https://adstxt.guru/)、[Aditude](https://www.aditude.com/) - Validation tools for Ads.txt and Sellers.json
+* [Ryota Yamauchi](https://www.facebook.com/ryotayamauchiwj), [Shinji Kawarano ](https://www.facebook.com/kawarano) - Debugging and advice
