@@ -38,7 +38,7 @@ AdsTxt Inspector is a Chrome extension that helps you validate and analyze Ads.t
 
 ## How to Use
 
-1. Install the extension from Chrome Web Store (or [below](#installation))
+1. Install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/bgojlbkldapcmiimeafldjghcnbgcjha) (or [below](#installation))
 2. Navigate to any website you want to analyze
 3. Click the extension icon to open the side panel
 4. Press "Analyze" to scan Ads.txt and Sellers.json
