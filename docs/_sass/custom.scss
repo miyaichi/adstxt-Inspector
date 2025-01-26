@@ -1,23 +1,99 @@
-.site-header {
-  border-top: 5px solid #424242;
+// Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+// Variables
+$primary-color: #4CAF50;
+$secondary-color: #212121;
+$background-color: #f4f4f9;
+$text-color: #333;
+$link-hover-color: #388E3C;
+
+// Global Styles
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: $background-color;
+  color: $text-color;
+  line-height: 1.6;
+  margin: 0 0 0 1rem;
+  padding: 0;
 }
 
-.post-content {
+a {
+  color: $primary-color;
+  text-decoration: none;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: $link-hover-color;
+  }
+}
+
+// Header
+header {
+  background-color: $primary-color;
+  color: #fff;
+  padding: 1rem 0;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  h1 {
+    margin: 0;
+    font-weight: 600;
+  }
+}
+
+// Container
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+// Cards
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+  padding: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+  }
+
   h2 {
-    margin-top: 2em;
+    margin-top: 0;
+    font-size: 1.5rem;
   }
 
-  h3 {
-    margin-top: 1.5em;
+  p {
+    margin-bottom: 0;
   }
 }
 
-.feature-list {
-  margin-bottom: 1.5em;
+// Footer
+footer {
+  background-color: $secondary-color;
+  color: #fff;
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 2rem;
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
 }
 
-.reference-links {
-  background: #f9f9f9;
-  padding: 1em;
-  border-radius: 4px;
+// Responsive Design
+@media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
 }
