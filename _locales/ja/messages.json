@@ -2,6 +2,12 @@
   "app_description": {
     "message": "Ads.txt とそれに対応する Sellers.json エントリを検証し分析します。"
   },
+  "new_version_available": {
+    "message": "新しいバージョン $1 が利用可能です (現在: $2)"
+  },
+  "update_now": {
+    "message": "Chrome ウェブストアでアップデート"
+  },
   "analyse_button_description": {
     "message": "このドメインの Ads.txt を分析するには、分析ボタンを押してください。"
   },

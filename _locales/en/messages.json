@@ -2,6 +2,12 @@
   "app_description": {
     "message": "Verify and analyze the Ads.txt and the corresponding Sellers.json entry."
   },
+  "new_version_available": {
+    "message": "New version $1 is available (current: $2)"
+  },
+  "update_now": {
+    "message": "Update via Chrome Web Store"
+  },
   "analyse_button_description": {
     "message": "Press the Analyze button to analyze the Ads.txt file for this domain."
   },

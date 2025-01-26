@@ -8,9 +8,37 @@ import { Logger } from '../utils/logger';
 import { AdsTxtPanel } from './components/AdsTxtPanel';
 import { SellersPanel } from './components/SellersPanel';
 import { SummaryPanel } from './components/SummaryPanel';
+import { Alert } from './components/ui/Alert';
 import { Button } from './components/ui/Button';
 
 const logger = new Logger('sidepanel');
+
+interface UpdateInfo {
+  version: string;
+  store_url: string;
+}
+
+const UpdateNotification: React.FC<{ currentVersion: string; latestVersion: string; storeUrl: string }> = ({
+  currentVersion,
+  latestVersion,
+  storeUrl,
+}) => (
+  <Alert type="info">
+    <div className="flex items-center justify-between">
+      <div>
+        {chrome.i18n.getMessage('new_version_available', [latestVersion, currentVersion])}
+      </div>
+      <a
+        href={storeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-800 underline"
+      >
+        {chrome.i18n.getMessage('update_now')}
+      </a>
+    </div>
+  </Alert>
+);
 
 export default function App() {
   const [tabId, setTabId] = useState<number | null>(null);
@@ -19,6 +47,29 @@ export default function App() {
   const [contentScriptContext, setContentScriptContext] = useState<Context>('undefined');
   const { analyzing, adsTxtData, sellerAnalysis, analyze, isValidEntry } = useAdsSellers();
   const initialized = React.useRef(false);
+  
+  const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const [storeUrl, setStoreUrl] = useState<string | null>(null);
+  const currentVersion = chrome.runtime.getManifest().version;
+
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const response = await fetch('https://miyaichi.github.io/adstxt-Inspector/version.json');
+        const data: UpdateInfo = await response.json();
+        if (data.version > currentVersion) {
+          setLatestVersion(data.version);
+          setStoreUrl(data.store_url);
+        }
+      } catch (error) {
+        logger.error('Failed to check for updates:', error);
+      }
+    };
+
+    checkForUpdates();
+    const interval = setInterval(checkForUpdates, 24 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [currentVersion]);
 
   useEffect(() => {
     if (initialized.current) {
@@ -99,6 +150,14 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       <div className="panel-container">
         {/* Header and Analyze Button */}
+        {latestVersion && storeUrl && (
+          <UpdateNotification
+            currentVersion={currentVersion}
+            latestVersion={latestVersion}
+            storeUrl={storeUrl}
+          />
+        )}
+
         <div className="panel-section">
           <div className="panel-content">
             {/* Domain and Analyze Button */}
