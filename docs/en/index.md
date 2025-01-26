@@ -13,10 +13,10 @@ AdsTxt Inspector is a Chrome extension that helps you validate and analyze Ads.t
 ## Key Features
 
 ### Real-time Validation
-- Automatic scanning of Ads.txt files on publisher websites
 <!--
 - Immediate detection of syntax errors and duplicate entries
 -->
+- Automatic scanning of Ads.txt files on publisher websites
 - Immediate detection of syntax errors
 - Verification of seller IDs against Sellers.json files
 - Cross-validation of publisher-seller relationships
@@ -98,3 +98,7 @@ The extension provides three main views:
 - No data sent to external servers.
 - Only analyzes publicly available Ads.txt and Sellers.json files.
 - No tracking or analytics collection.
+
+## Contributing
+
+Source code is available on [GitHub](https://github.com/miyaichi/adstxt-Inspector). Contributions are welcome!
