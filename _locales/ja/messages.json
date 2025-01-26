@@ -60,7 +60,7 @@
     "message": "国 $1 に複数の MANAGERDOMAIN 宣言があります"
   },
   "inventory_from_both_domains": {
-    "message": "OWNERDOMAIN と MANAGERDOMAIN の両方の販売者から在庫が利用可能です"
+    "message": "OWNERDOMAIN と MANAGERDOMAIN の両方のセラーから在庫が利用可能です"
   },
   "no_data_available": {
     "message": "データがありません"

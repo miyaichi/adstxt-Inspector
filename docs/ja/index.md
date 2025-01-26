@@ -8,7 +8,7 @@ description: Chrome拡張機能 - Ads.txtとSellers.jsonの検証・分析ツー
 
 # AdsTxt Inspector
 
-AdsTxt Inspectorは、プログラマティック広告の透明性とコンプライアンスを確保するために、Ads.txtやSellers.jsonファイルを検証・分析するChrome拡張機能です。これらのファイルを自動的にスキャンし、問題を検出、出版社と販売者の関係を検証し、詳細なレポートを提供します。
+AdsTxt Inspectorは、プログラマティック広告の透明性とコンプライアンスを確保するために、Ads.txtやSellers.jsonファイルを検証・分析するChrome拡張機能です。これらのファイルを自動的にスキャンし、問題を検出、パブリッシャーとセラーの関係を検証し、詳細なレポートを提供します。
 
 ## 主な特徴
 
