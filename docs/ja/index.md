@@ -83,13 +83,13 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ## 参考ドキュメント
 
-### Ads.txt Specification
+### Ads.txt 規格
 
 - [IAB Tech Lab Ads.txt Specification 1.1](https://www.pier1.co.jp/wp-content/uploads/2024/02/Ads.txt-1.1-ja.pdf) (日本語)
 - [IAB Tech Lab Ads.txt Implementation Guide](https://www.pier1.co.jp/wp-content/uploads/2024/02/Ads.txt-1.1-Implementation-Guide-ja.pdf) (日本語)
 - [Ads.txt Validator](https://adstxt.guru/validator/)
 
-### Sellers.json Specification
+### Sellers.json 規格
 
 - [IAB Tech Lab Sellers.json Specification 1.0](https://www.pier1.co.jp/wp-content/uploads/2024/02/Sellers.json_Final-ja.pdf) (日本語)
 - [FAQ for Sellers.json and SupplyChain Object](https://www.pier1.co.jp/wp-content/uploads/2024/02/FAQ-for-sellers.json_supplychain-objec-ja.pdf) (日本語)
