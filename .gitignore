@@ -1,2 +1,32 @@
-dist
-node_modules
+# Build artifacts
+dist/
+node_modules/
+_site/
+.sass-cache/
+
+# Dependency management
+vendor/
+Gemfile.lock
+
+# Editor/IDE config
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Cache
+npm-cache/
+yarn.lock
+
+# Misc
+.tmp*
+*.swp
+test/results
+
+# Virtual environments
+venv/
+.venv/
+

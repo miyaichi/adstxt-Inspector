@@ -88,7 +88,7 @@ The extension provides three main views:
 
 ## Privacy & Security
 
-- Works entirely in your browser
-- No data sent to external servers
-- Only analyzes publicly available Ads.txt and Sellers.json files
-- No tracking or analytics collection
+- Works entirely in your browser.
+- No data sent to external servers.
+- Only analyzes publicly available Ads.txt and Sellers.json files.
+- No tracking or analytics collection.
