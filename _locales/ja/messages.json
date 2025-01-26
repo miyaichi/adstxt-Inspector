@@ -11,6 +11,9 @@
   "analyse_button_description": {
     "message": "このドメインの Ads.txt を分析するには、分析ボタンを押してください。"
   },
+  "duplicate_check": {
+    "message": "重複チェック"
+  },
   "analyzing": {
     "message": "分析中..."
   },

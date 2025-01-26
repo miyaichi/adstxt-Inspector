@@ -14,12 +14,8 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ### リアルタイム検証
 
-<!--
-- 文法エラーや重複エントリを検出
--->
-
 - パブリッシャーウェブサイト上のAds.txtファイルを自動スキャン
-- 文法エラーを検出
+- 文法エラーや重複エントリ（オプション）を検出
 - Sellers.jsonファイルと照合してセラーIDを検証
 - パブリッシャーとセラーの関係をクロス検証
 
@@ -101,7 +97,7 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 2. ローカルディレクトリに解凍します。
 3. `chrome://extensions/` を開きます。
 4. デベロッパーモードを有効にします。
-5. `デベロッパーモードを有効にする` をクリックし、ローカルディレクトリを選択します。
+5. `パッケージ化されていない拡張機能を読み込む` をクリックし、ローカルディレクトリを選択します。
 
 ## プライバシーとセキュリティ
 
@@ -116,6 +112,6 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ## 謝辞
 
-* [IAB Tech Lab](https://iabtechlab.com/) - Ads.txtとSellers.jsonの規格策定
-* [Adstxt.guru](https://adstxt.guru/)、[Aditude](https://www.aditude.com/) - Ads.txtとSellers.jsonの検証ツール
-* [Ryota Yamauchi](https://www.facebook.com/ryotayamauchiwj)、[Shinji Kawarano ](https://www.facebook.com/kawarano) - デバッグとアドバイス
+- [IAB Tech Lab](https://iabtechlab.com/) - Ads.txtとSellers.jsonの規格策定
+- [Adstxt.guru](https://adstxt.guru/)、[Aditude](https://www.aditude.com/) - Ads.txtとSellers.jsonの検証ツール
+- [Ryota Yamauchi](https://www.facebook.com/ryotayamauchiwj)、[Shinji Kawarano ](https://www.facebook.com/kawarano) - デバッグとアドバイス

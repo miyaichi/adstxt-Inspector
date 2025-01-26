@@ -44,11 +44,11 @@ export default function App() {
   const [connectionManager, setConnectionManager] = useState<ConnectionManager | null>(null);
   const [contentScriptContext, setContentScriptContext] = useState<Context>('undefined');
   const { analyzing, adsTxtData, sellerAnalysis, analyze, isValidEntry } = useAdsSellers();
-  const initialized = React.useRef(false);
-
+  const [duplicateCheck, setDuplicateCheck] = useState<boolean>(false);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [storeUrl, setStoreUrl] = useState<string | null>(null);
   const currentVersion = chrome.runtime.getManifest().version;
+  const initialized = React.useRef(false);
 
   useEffect(() => {
     const checkForUpdates = async () => {
@@ -136,7 +136,7 @@ export default function App() {
     if (!tabInfo || !tabInfo.isScriptInjectionAllowed || analyzing) return;
 
     try {
-      await analyze(tabInfo.url);
+      await analyze(tabInfo.url, duplicateCheck);
     } catch (error) {
       logger.error('Analysis failed:', error);
     }
@@ -160,10 +160,20 @@ export default function App() {
           <div className="panel-content">
             {/* Domain and Analyze Button */}
             <div className="entry-card-header">
-              <div className="flex items-center space-x-2">
-                Domain: <span className="font-semibold">{domain}</span>
+              <div className="flex flex-col space-y-2">
+                <div>
+                  Domain: <span className="font-semibold">{domain}</span>
+                </div>
+                <label className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    checked={duplicateCheck}
+                    onChange={(e) => setDuplicateCheck(e.target.checked)}
+                  />
+                  <span>{chrome.i18n.getMessage('duplicate_check')}</span>
+                </label>
               </div>
-              <Button onClick={handleAnalyze} disabled={!tabId || analyzing}>
+              <Button onClick={handleAnalyze} disabled={!tabId || analyzing} className="ml-auto">
                 {analyzing
                   ? chrome.i18n.getMessage('analyzing')
                   : chrome.i18n.getMessage('analyze')}

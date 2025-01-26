@@ -11,6 +11,9 @@
   "analyse_button_description": {
     "message": "Press the Analyze button to analyze the Ads.txt file for this domain."
   },
+  "duplicate_check": {
+    "message": "Duplicate Check"
+  },
   "analyzing": {
     "message": "Analyzing..."
   },

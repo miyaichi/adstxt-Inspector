@@ -103,34 +103,29 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         {/* Supported Variables Section */}
         {hasVariables && (
           <div className="info-grid p-4">
-            {adsTxtData.variables.contact && (
-              <div className="info-item">
-                <span className="font-medium">Contact:</span> {adsTxtData.variables.contact}
-              </div>
-            )}
-            {adsTxtData.variables.inventoryPartnerdomain && (
-              <div className="info-item">
-                <span className="font-medium">Inventory Partner Domain:</span>{' '}
-                {adsTxtData.variables.inventoryPartnerdomain}
-              </div>
-            )}
-            {adsTxtData.variables.managerDomain && (
-              <div className="info-item">
-                <span className="font-medium">Manager Domain:</span>{' '}
-                {adsTxtData.variables.managerDomain}
-              </div>
-            )}
-            {adsTxtData.variables.ownerDomain && (
-              <div className="info-item">
-                <span className="font-medium">Owner Domain:</span>{' '}
-                {adsTxtData.variables.ownerDomain}
-              </div>
-            )}
-            {adsTxtData.variables.subDomain && (
-              <div className="info-item">
-                <span className="font-medium">Sub Domain:</span> {adsTxtData.variables.subDomain}
-              </div>
-            )}
+            <div className="flex flex-col space-y-2">
+              {adsTxtData.variables.contact && (
+                <span className="font-medium">Contact: {adsTxtData.variables.contact}</span>
+              )}
+              {adsTxtData.variables.inventoryPartnerdomain && (
+                <span className="font-medium">
+                  Inventory Partner Domain: {adsTxtData.variables.inventoryPartnerdomain}
+                </span>
+              )}
+              {adsTxtData.variables.managerDomain && (
+                <span className="font-medium">
+                  Manager Domain: {adsTxtData.variables.managerDomain}
+                </span>
+              )}
+              {adsTxtData.variables.ownerDomain && (
+                <span className="font-medium">
+                  Owner Domain: {adsTxtData.variables.ownerDomain}
+                </span>
+              )}
+              {adsTxtData.variables.subDomain && (
+                <span className="font-medium">Sub Domain: {adsTxtData.variables.subDomain}</span>
+              )}
+            </div>
           </div>
         )}
 

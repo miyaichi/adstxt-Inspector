@@ -22,7 +22,7 @@ interface UseAdsSellersReturn {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
-  analyze: (url: string) => Promise<void>;
+  analyze: (url: string, duplicateCheck: boolean) => Promise<void>;
   isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
@@ -89,7 +89,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     return analysis;
   };
 
-  const analyze = async (url: string) => {
+  const analyze = async (url: string, duplicateCheck = false) => {
     if (analyzing) return;
 
     setAnalyzing(true);
@@ -98,7 +98,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
     try {
       const domain = new URL(url).hostname;
-      const adsTxtResult = await fetchAdsTxt(domain);
+      const adsTxtResult = await fetchAdsTxt(domain, duplicateCheck);
       setAdsTxtData(adsTxtResult);
       logger.info('Ads.txt:', adsTxtResult);
 
