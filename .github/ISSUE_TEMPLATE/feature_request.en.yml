@@ -1,0 +1,39 @@
+name: 💡 Feature Request
+description: Template for suggesting new features or improvements
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature. Please fill in the fields below.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to Solve
+      description: Please describe the problem or challenge this feature would address
+      placeholder: Example) It takes too long to find past records with the current search functionality
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Please describe what features or improvements would solve this problem
+      placeholder: Example) Add date range filter to the search functionality
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Please describe any alternative solutions you've considered
+      placeholder: Example) Considered adding a calendar view, but search filtering would be more flexible
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Please add any reference information or screenshots

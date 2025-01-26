@@ -1,0 +1,31 @@
+name: ❓ Question
+description: Template for questions about usage or specifications
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check existing issues and documentation before asking questions.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: Please describe your question in detail
+      placeholder: Example) What is the expiration time for API authentication tokens?
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Background/Purpose
+      description: Please explain the reason or context for your question
+      placeholder: Example) Planning token refresh timing for batch processing implementation
+
+  - type: textarea
+    id: research
+    attributes:
+      label: Prior Research
+      description: Please describe what documentation or issues you've already checked
+      placeholder: Example) Checked the Authentication section in the official documentation

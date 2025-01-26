@@ -1,0 +1,58 @@
+name: 🐛 バグ報告
+description: バグの報告用テンプレート
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグ報告ありがとうございます。可能な限り以下の項目を埋めてください。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 発生している問題
+      description: 何が起きているか、具体的に説明してください
+      placeholder: 例）ログイン画面でパスワードを入力しても、エラーが表示されて進めない
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce-steps
+    attributes:
+      label: 再現手順
+      description: この問題を再現するための手順を記載してください
+      placeholder: |
+        1. '...' にアクセス
+        2. '....' をクリック
+        3. '....' までスクロール
+        4. エラーが発生
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+      description: 本来どのように動作すべきか記載してください
+      placeholder: 正しいパスワードを入力したら、ダッシュボードに遷移するはず
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: 発生している環境
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
+        - その他
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 関連するログ
+      description: エラーログやスクリーンショットがあれば添付してください
+      render: shell

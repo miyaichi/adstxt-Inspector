@@ -1,0 +1,31 @@
+name: ❓ 質問・問い合わせ
+description: 使い方や仕様に関する質問用テンプレート
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        質問の前に、既存のissueやドキュメントをご確認ください。
+
+  - type: textarea
+    id: question
+    attributes:
+      label: 質問内容
+      description: 具体的な質問内容を記載してください
+      placeholder: 例）APIの認証トークンの有効期限はどのくらいですか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 質問の背景・目的
+      description: この質問をする理由や背景を説明してください
+      placeholder: 例）バッチ処理の実装で、トークンの再取得タイミングを検討している
+
+  - type: textarea
+    id: research
+    attributes:
+      label: 既に確認したこと
+      description: ドキュメントやissueで確認した内容があれば記載してください
+      placeholder: 例）公式ドキュメントのAuthentication項目は確認済み

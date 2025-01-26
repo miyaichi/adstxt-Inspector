@@ -1,0 +1,39 @@
+name: 💡 機能要望
+description: 新機能や改善の提案用テンプレート
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        機能の提案ありがとうございます。以下の項目を記入してください。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい課題
+      description: この機能で解決したい問題や課題について説明してください
+      placeholder: 例）現在の検索機能では、過去の記録を探すのに時間がかかる
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 提案する解決策
+      description: どのような機能や改善があれば課題が解決できるか説明してください
+      placeholder: 例）検索フィルターに日付範囲の指定機能を追加する
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 代替案の検討
+      description: 他に検討した解決策があれば記載してください
+      placeholder: 例）カレンダービューの追加も検討したが、検索の方が柔軟性が高いと判断
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 補足情報
+      description: 参考情報やスクリーンショットがあれば追加してください

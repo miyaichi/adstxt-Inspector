@@ -1,0 +1,58 @@
+name: 🐛 Bug Report
+description: Template for reporting bugs
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting the bug. Please fill in as many fields as possible.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Current Issue
+      description: Please describe what is happening
+      placeholder: Example) Cannot proceed due to error display after entering password on login screen
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce-steps
+    attributes:
+      label: Steps to Reproduce
+      description: Please list the steps to reproduce this issue
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: Please describe how it should work
+      placeholder: Should transition to dashboard after entering correct password
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: Environment
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
+        - Other
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Related Logs
+      description: Please attach any error logs or screenshots if available
+      render: shell
