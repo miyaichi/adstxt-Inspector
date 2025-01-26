@@ -38,7 +38,10 @@ AdsTxt Inspector is a Chrome extension that helps you validate and analyze Ads.t
 
 ## How to Use
 
+<!--
 1. Install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/bgojlbkldapcmiimeafldjghcnbgcjha) (or [below](#installation))
+-->
+1. Install the extentionn from [Below](#installation)
 2. Navigate to any website you want to analyze
 3. Click the extension icon to open the side panel
 4. Press "Analyze" to scan Ads.txt and Sellers.json
@@ -75,7 +78,7 @@ The extension provides three main views:
 
 ### Sellers.json Specification
 - [IAB Tech Lab Sellers.json Specification 1.0](https://iabtechlab.com/wp-content/uploads/2019/07/Sellers.json_Final.pdf)
-- [FAQforSellers.jsonandSupplyChainObject](https://iabtechlab.com/wp-content/uploads/2019/07/Sellers.json_Final.pdf)
+- [FAQ for Sellers.json and SupplyChain Object](https://iabtechlab.com/wp-content/uploads/2019/07/Sellers.json_Final.pdf)
 - [Sellers.json Validator](https://www.aditude.com/tools/sellers-json-validator)
 
 ## Installation

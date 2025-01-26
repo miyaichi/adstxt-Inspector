@@ -38,7 +38,10 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ## 使用方法
 
+<!--
 1. [Chromeウェブストア](https://chrome.google.com/webstore/detail/bgojlbkldapcmiimeafldjghcnbgcjha)(または[下記](#installation))から拡張機能をインストール
+-->
+1. [下記](#installation)から拡張機能をインストール
 2. 分析したいウェブサイトにアクセス
 3. 拡張機能のアイコンをクリックしてサイドパネルを開く
 4. 「分析」を押してAds.txtとSellers.jsonをスキャン
@@ -75,7 +78,7 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ### Sellers.json Specification
 - [IAB Tech Lab Sellers.json Specification 1.0](https://www.pier1.co.jp/wp-content/uploads/2024/02/Sellers.json_Final-ja.pdf) (日本語)
-- [FAQforSellers.jsonandSupplyChainObject](https://www.pier1.co.jp/wp-content/uploads/2024/02/FAQ-for-sellers.json_supplychain-objec-ja.pdf) (日本語)
+- [FAQ for Sellers.json and SupplyChain Object](https://www.pier1.co.jp/wp-content/uploads/2024/02/FAQ-for-sellers.json_supplychain-objec-ja.pdf) (日本語)
 - [Sellers.json Validator](https://www.aditude.com/tools/sellers-json-validator)
 
 ## Installation
