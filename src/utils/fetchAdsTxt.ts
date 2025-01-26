@@ -34,7 +34,10 @@ export interface FetchAdsTxtResult {
  * @param domain - The domain name to fetch the ads.txt file from
  * @returns FetchAdsTxtResult object
  */
-export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> => {
+export const fetchAdsTxt = async (
+  domain: string,
+  duplicateCheck: boolean = false
+): Promise<FetchAdsTxtResult> => {
   const rootDomain = getRootDomain(domain);
   const adsTxtUrls = [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
@@ -228,7 +231,13 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
       ) {
         entries.push(entry);
       } else {
-        chrome.i18n.getMessage('duplicate_entry', [line]);
+        if (duplicateCheck) {
+          errors.push({
+            line: lineNumber,
+            content: line,
+            message: chrome.i18n.getMessage('duplicate_entries'),
+          });
+        }
       }
     });
   } catch (error) {

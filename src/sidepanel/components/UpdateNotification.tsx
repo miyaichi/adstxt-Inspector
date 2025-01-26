@@ -1,4 +1,3 @@
-// UpdateNotification.tsx
 import React from 'react';
 import { Alert } from './ui/Alert';
 

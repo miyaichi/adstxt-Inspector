@@ -18,16 +18,14 @@ interface UpdateInfo {
   store_url: string;
 }
 
-const UpdateNotification: React.FC<{ currentVersion: string; latestVersion: string; storeUrl: string }> = ({
-  currentVersion,
-  latestVersion,
-  storeUrl,
-}) => (
+const UpdateNotification: React.FC<{
+  currentVersion: string;
+  latestVersion: string;
+  storeUrl: string;
+}> = ({ currentVersion, latestVersion, storeUrl }) => (
   <Alert type="info">
     <div className="flex items-center justify-between">
-      <div>
-        {chrome.i18n.getMessage('new_version_available', [latestVersion, currentVersion])}
-      </div>
+      <div>{chrome.i18n.getMessage('new_version_available', [latestVersion, currentVersion])}</div>
       <a
         href={storeUrl}
         target="_blank"
@@ -47,7 +45,7 @@ export default function App() {
   const [contentScriptContext, setContentScriptContext] = useState<Context>('undefined');
   const { analyzing, adsTxtData, sellerAnalysis, analyze, isValidEntry } = useAdsSellers();
   const initialized = React.useRef(false);
-  
+
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [storeUrl, setStoreUrl] = useState<string | null>(null);
   const currentVersion = chrome.runtime.getManifest().version;
