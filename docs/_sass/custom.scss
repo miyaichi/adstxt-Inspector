@@ -2,11 +2,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 // Variables
-$primary-color: #4CAF50;
+$primary-color: #4caf50;
 $secondary-color: #212121;
 $background-color: #f4f4f9;
 $text-color: #333;
-$link-hover-color: #388E3C;
+$link-hover-color: #388e3c;
 
 // Global Styles
 body {
@@ -56,7 +56,9 @@ header {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin: 1rem 0;
   padding: 1.5rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 
   &:hover {
     transform: translateY(-5px);
