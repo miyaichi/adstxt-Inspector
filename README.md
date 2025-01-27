@@ -7,6 +7,7 @@ A Chrome extension for validating and analyzing ads.txt files and their correspo
 The extension consists of three main components:
 
 1. **Background Service Worker**
+
    - Monitors active tabs and fetches ads.txt/sellers.json
    - Stores scan results in Chrome Storage
    - Handles restricted URL patterns
@@ -14,6 +15,7 @@ The extension consists of three main components:
    - Controls alert notifications
 
 2. **Content Script**
+
    - Verifies and retrieves ads.txt file content
    - Fetches and parses sellers.json
    - Monitors tab information
@@ -30,6 +32,7 @@ The extension consists of three main components:
 ## Core Features
 
 ### Validation Features
+
 - Automated ads.txt validation
   - Syntax error checking
   - Duplicate entry detection
@@ -40,6 +43,7 @@ The extension consists of three main components:
   - Missing seller detection
 
 ### Analysis Features
+
 - Advertising service analysis
   - DIRECT/RESELLER ratio
   - Major provider coverage
@@ -50,6 +54,7 @@ The extension consists of three main components:
   - Trend analysis
 
 ### Reporting Features
+
 - Customizable reports
 - Multiple export formats (JSON/CSV)
 - Error summaries
@@ -107,7 +112,7 @@ Robust state management system utilizing ConnectionManager:
 ## Installation
 
 1. Download the latest release file (adstxt-inspector-build.zip
-) from the [Releases](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build) page.
+   ) from the [Releases](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build) page.
 
 2. Unzip the file to a local directory.
 
@@ -122,27 +127,32 @@ Robust state management system utilizing ConnectionManager:
 ## Development Setup
 
 1. Clone the repository:
+
 ```bash
 git clone [repository-url]
 cd ads-txt-inspector
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Run in development mode:
+
 ```bash
 npm run watch
 ```
 
 4. Build for development:
+
 ```bash
 npm run build
 ```
 
 if you want to build for production:
+
 ```bash
 npm run build:prod
 ```

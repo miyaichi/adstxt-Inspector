@@ -1,6 +1,6 @@
 name: 🐛 バグ報告
 description: バグの報告用テンプレート
-labels: ["bug"]
+labels: ['bug']
 body:
   - type: markdown
     attributes:

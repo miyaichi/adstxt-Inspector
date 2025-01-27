@@ -1,6 +1,6 @@
 name: 💡 Feature Request
 description: Template for suggesting new features or improvements
-labels: ["enhancement"]
+labels: ['enhancement']
 body:
   - type: markdown
     attributes:

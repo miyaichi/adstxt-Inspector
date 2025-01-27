@@ -1,6 +1,6 @@
 name: ❓ Question
 description: Template for questions about usage or specifications
-labels: ["question"]
+labels: ['question']
 body:
   - type: markdown
     attributes:

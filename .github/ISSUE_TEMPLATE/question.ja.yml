@@ -1,6 +1,6 @@
 name: ❓ 質問・問い合わせ
 description: 使い方や仕様に関する質問用テンプレート
-labels: ["question"]
+labels: ['question']
 body:
   - type: markdown
     attributes:
