@@ -6,7 +6,8 @@ interface LogLevel {
 }
 
 export class Logger {
-  private static loglevel: keyof LogLevel = 'debug';
+  private static isProduction = process.env.NODE_ENV === 'production';
+  private static loglevel: keyof LogLevel = Logger.isProduction ? 'error' : 'debug';
   private static readonly logLevels: LogLevel = {
     error: 1,
     warn: 2,
