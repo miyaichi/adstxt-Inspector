@@ -42,11 +42,7 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ## 使用方法
 
-<!--
 1. [Chromeウェブストア](https://chrome.google.com/webstore/detail/bgojlbkldapcmiimeafldjghcnbgcjha)(または[下記](#installation))から拡張機能をインストール
--->
-
-1. [下記](#installation)から拡張機能をインストール
 2. 分析したいウェブサイトにアクセス
 3. 拡張機能のアイコンをクリックしてサイドパネルを開く
 4. 「分析」を押してAds.txtとSellers.jsonをスキャン
