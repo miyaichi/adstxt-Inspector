@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { SearchAndFilter } from './SearchAndFilter';
+import { Tooltip } from './Tooltip';
 
 interface AdsTxtPanelProps {
   analyzing: boolean;
@@ -194,25 +195,37 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             <div className="info-grid p-4">
               <div className="flex flex-col space-y-2">
                 {adsTxtData.variables.contact && (
-                  <span className="font-medium">Contact: {adsTxtData.variables.contact}</span>
+                  <Tooltip content={chrome.i18n.getMessage('contact')}>
+                    <span className="font-medium">Contact: {adsTxtData.variables.contact}</span>
+                  </Tooltip>
                 )}
                 {adsTxtData.variables.inventoryPartnerdomain && (
-                  <span className="font-medium">
-                    Inventory Partner Domain: {adsTxtData.variables.inventoryPartnerdomain}
-                  </span>
+                  <Tooltip content={chrome.i18n.getMessage('inventorypartnerdomain')}>
+                    <span className="font-medium">
+                      Inventory Partner Domain: {adsTxtData.variables.inventoryPartnerdomain}
+                    </span>
+                  </Tooltip>
                 )}
                 {adsTxtData.variables.managerDomain && (
-                  <span className="font-medium">
-                    Manager Domain: {adsTxtData.variables.managerDomain}
-                  </span>
+                  <Tooltip content={chrome.i18n.getMessage('managerdomain')}>
+                    <span className="font-medium">
+                      Manager Domain: {adsTxtData.variables.managerDomain}
+                    </span>
+                  </Tooltip>
                 )}
                 {adsTxtData.variables.ownerDomain && (
-                  <span className="font-medium">
-                    Owner Domain: {adsTxtData.variables.ownerDomain}
-                  </span>
+                  <Tooltip content={chrome.i18n.getMessage('ownerdomain')}>
+                    <span className="font-medium">
+                      Owner Domain: {adsTxtData.variables.ownerDomain}
+                    </span>
+                  </Tooltip>
                 )}
                 {adsTxtData.variables.subDomain && (
-                  <span className="font-medium">Sub Domain: {adsTxtData.variables.subDomain}</span>
+                  <Tooltip content={chrome.i18n.getMessage('subdomain')}>
+                    <span className="font-medium">
+                      Sub Domain: {adsTxtData.variables.subDomain}
+                    </span>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -268,13 +281,22 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span
-                            className={`tag ${
-                              entry.relationship === 'DIRECT' ? 'tag-blue' : 'tag-gray'
-                            }`}
+                          <Tooltip
+                            content={
+                              entry.relationship === 'DIRECT'
+                                ? chrome.i18n.getMessage('direct')
+                                : chrome.i18n.getMessage('reseller')
+                            }
                           >
-                            {entry.relationship}
-                          </span>
+                            <span
+                              className={`tag ${
+                                entry.relationship === 'DIRECT' ? 'tag-blue' : 'tag-gray'
+                              }`}
+                            >
+                              {entry.relationship}
+                            </span>
+                          </Tooltip>
+
                           {validity.isValid ? (
                             <Check className="w-5 h-5 text-green-500" />
                           ) : (

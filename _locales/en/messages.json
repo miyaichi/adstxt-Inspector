@@ -26,6 +26,27 @@
   "no_ads_txt_data": {
     "message": "No Ads.txt data available"
   },
+  "contact": {
+    "message": "Provides contact information for the owner of the ads.txt file."
+  },
+  "direct": {
+    "message": "The publisher directly controls the account for selling ads."
+  },
+  "inventorypartnerdomain": {
+    "message": "Domain of a partner authorized to monetize ads within the content."
+  },
+  "managerdomain": {
+    "message": "Domain of the entity managing ad monetization for the publisher."
+  },
+  "ownerdomain": {
+    "message": "The business domain that owns the site or app."
+  },
+  "reseller": {
+    "message": "An authorized third party resells ad inventory on behalf of the publisher."
+  },
+  "subdomain": {
+    "message": "Refers to a subdomain with its own Ads.txt file for ad authorization."
+  },
   "insufficient_fields": {
     "message": "Insufficient number of fields. Expected at least 3 fields."
   },
@@ -52,6 +73,21 @@
   },
   "no_matching_entries_found": {
     "message": "No matching entries found in Sellers.json"
+  },
+  "both": {
+    "message": "Both a PUBLISHER and an INTERMEDIARY, selling their own ad inventory and reselling ad inventory."
+  },
+  "confidential": {
+    "message": "An entity that keeps its information confidential."
+  },
+  "intermediary": {
+    "message": "An entity that does not own ad inventory, but acts as a reseller or ad exchange intermediary."
+  },
+  "publisher": {
+    "message": "An entity that own inventory and is directly paid by the advertising system."
+  },
+  "passthrough": {
+    "message": "Intermediaries connecting sellers and buyers of advertising space."
   },
   "matches_owner_domain": {
     "message": "Matches OWNERDOMAIN"

@@ -165,3 +165,14 @@ body {
 .alert-success {
   @apply bg-green-50 border-green-200 text-green-700;
 }
+
+/* Tooltip Component */
+.tooltip {
+  @apply fixed bg-blue-600 text-white px-3 py-2 rounded max-w-[400px] 
+  whitespace-nowrap overflow-hidden text-ellipsis z-[1000] font-mono 
+  shadow-sm;
+}
+
+.tooltip-container {
+  @apply relative inline-block;
+}
