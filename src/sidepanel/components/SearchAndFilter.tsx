@@ -91,7 +91,7 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
           {/* Domain Filter */}
           {domains && domains.length > 0 && (
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Domain</label>
+              <label className="block text-smfont-medium text-gray-700 mb-1">Domain</label>
               <select
                 value={selectedDomain}
                 onChange={(e) => onDomainChange(e.target.value)}
@@ -119,7 +119,7 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
           {filters &&
             Object.entries(filters).map(([key, filter]) => (
               <div key={key} className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-smfont-medium text-gray-700 mb-1">
                   {filter.label}
                 </label>
                 <select
@@ -158,7 +158,7 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
       {(searchTerm || selectedDomain || Object.values(selectedFilters || {}).some(Boolean)) && (
         <div className="flex flex-wrap gap-2">
           {searchTerm && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-smbg-blue-100 text-blue-800">
               Search: {searchTerm}
               <button
                 onClick={handleClearSearch}
@@ -169,7 +169,7 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
             </span>
           )}
           {selectedDomain && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-smbg-green-100 text-green-800">
               Domain: {selectedDomain}
               <button
                 onClick={handleClearDomain}
@@ -184,7 +184,7 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
               value ? (
                 <span
                   key={key}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
+                  className="inline-flex items-center px-3 py-1 rounded-full text-smbg-purple-100 text-purple-800"
                 >
                   {filters?.[key].label}:{' '}
                   {filters?.[key].options.find((opt) => opt.value === value)?.label || value}

@@ -28,15 +28,15 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     relationship: {
       label: 'Relationship',
       options: [
-        { value: 'DIRECT', label: 'Direct' },
-        { value: 'RESELLER', label: 'Reseller' },
+        { value: 'DIRECT', label: 'DIRECT' },
+        { value: 'RESELLER', label: 'RESELLER' },
       ],
     },
     validity: {
       label: 'Validity',
       options: [
-        { value: 'valid', label: 'Valid' },
-        { value: 'invalid', label: 'Invalid' },
+        { value: 'valid', label: 'VALID' },
+        { value: 'invalid', label: 'INVALID' },
       ],
     },
   };
