@@ -121,5 +121,8 @@
   },
   "seller_type_analytics": {
     "message": "Seller タイプの分析"
+  },
+  "filter_options": {
+    "message": "フィルターオプション"
   }
 }

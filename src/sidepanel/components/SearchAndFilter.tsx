@@ -1,5 +1,6 @@
 import { ListFilterPlus, Search, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { Tooltip } from './Tooltip';
 
 export interface FilterOption {
   value: string;
@@ -77,12 +78,14 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
           </button>
         )}
         {/* Advanced Filters Toggle */}
-        <button
-          onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-          className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-        >
-          <ListFilterPlus color={isAdvancedOpen ? 'blue' : 'gray'} className="h-4 w-4" />
-        </button>
+        <Tooltip content={chrome.i18n.getMessage('filter_options')}>
+          <button
+            onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+          >
+            <ListFilterPlus color={isAdvancedOpen ? 'blue' : 'gray'} className="h-4 w-4" />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Advanced Filters */}

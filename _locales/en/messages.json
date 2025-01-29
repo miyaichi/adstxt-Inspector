@@ -122,5 +122,8 @@
   },
   "seller_type_analytics": {
     "message": "Seller Type Analytics"
+  },
+  "filter_options": {
+    "message": "Filter Options"
   }
 }
