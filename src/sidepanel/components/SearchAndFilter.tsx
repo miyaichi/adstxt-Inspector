@@ -78,14 +78,14 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
           </button>
         )}
         {/* Advanced Filters Toggle */}
-        <Tooltip content={chrome.i18n.getMessage('filter_options')}>
-          <button
-            onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-          >
+        <button
+          onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+          className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+        >
+          <Tooltip content={chrome.i18n.getMessage('filter_options')}>
             <ListFilterPlus color={isAdvancedOpen ? 'blue' : 'gray'} className="h-4 w-4" />
-          </button>
-        </Tooltip>
+          </Tooltip>
+        </button>
       </div>
 
       {/* Advanced Filters */}

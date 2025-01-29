@@ -42,7 +42,7 @@
     "message": "サイトやアプリを所有する事業者のドメインです。"
   },
   "reseller": {
-    "message": "パブリッシャーに代わって第三者が広告枠を再販しています。"
+    "message": "パブリッシャーにかわり第三者が広告枠をリセールしています。"
   },
   "subdomain": {
     "message": "独自の Ads.txt ファイルを持つサブドメインです。"
@@ -75,13 +75,13 @@
     "message": "Sellers.json に一致するエントリが見つかりません"
   },
   "both": {
-    "message": "PUBLISHER と INTERMEDIARY の両方として、自社広告枠の販売と、広告枠の再販を行う事業者。"
+    "message": "PUBLISHER と INTERMEDIARY として、自社広告枠の販売と、広告枠のリセールを行う事業者。"
   },
   "confidential": {
     "message": "情報を非公開にしている事業者。"
   },
   "intermediary": {
-    "message": "広告枠を所有せず、販売を仲介する再販業者や広告取引所。"
+    "message": "広告枠を所有せず、販売を仲介するリセラーやエクスチェンジ。"
   },
   "publisher": {
     "message": "在庫を所有し、広告システムから直接支払いを受ける事業者。"
