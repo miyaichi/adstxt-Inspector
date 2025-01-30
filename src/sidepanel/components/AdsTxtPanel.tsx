@@ -220,11 +220,15 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                     </span>
                   </Tooltip>
                 )}
-                {adsTxtData.variables.subDomain && (
+                {adsTxtData.variables.subDomain && adsTxtData.variables.subDomain.length > 0 && (
                   <Tooltip content={chrome.i18n.getMessage('subdomain')}>
-                    <span className="font-medium">
-                      Sub Domain: {adsTxtData.variables.subDomain}
-                    </span>
+                    <div className="flex flex-col">
+                      {adsTxtData.variables.subDomain.map((subDomain, index) => (
+                        <span key={index} className="font-medium">
+                          Sub Domain: {subDomain}
+                        </span>
+                      ))}
+                    </div>
                   </Tooltip>
                 )}
               </div>
