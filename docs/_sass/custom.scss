@@ -42,6 +42,17 @@ header {
   }
 }
 
+// Language Selector
+nav {
+  display: flex;
+  justify-content: right;
+  margin-top: 1rem;
+
+  a {
+    margin: 0 1rem;
+  }
+}
+
 // Container
 .container {
   max-width: 1200px;
