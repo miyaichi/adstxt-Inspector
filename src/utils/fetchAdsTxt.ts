@@ -19,7 +19,7 @@ export interface SupportedVariables {
   inventoryPartnerdomain?: string;
   managerDomain?: string;
   ownerDomain?: string;
-  subDomain?: string;
+  subDomain?: string[];
 }
 
 export interface FetchAdsTxtResult {
@@ -43,7 +43,7 @@ export const fetchAdsTxt = async (
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
   let adsTxtContent: string | null = null;
   let adsTxtUrl = '';
-  let subdomainDeclaration: string | null = null;
+  let subdomainDeclarations: string[] = [];
 
   // First fetch root domain ads.txt
   for (const url of adsTxtUrls) {
@@ -80,22 +80,19 @@ export const fetchAdsTxt = async (
     throw new Error(`No valid ads.txt found for ${domain}`);
   }
 
-  // If it's a subdomain, check for subdomain declaration in root domain ads.txt
+  // If it's a subdomain, check for subdomain declarations in root domain ads.txt
   if (isSubdomainDomain) {
     const lines = adsTxtContent.split(/\r?\n/);
     for (const line of lines) {
       const trimmedLine = line.trim();
       if (trimmedLine.toLowerCase().startsWith('subdomain=')) {
         const declaredSubdomain = trimmedLine.split('=')[1].trim();
-        if (declaredSubdomain === domain) {
-          subdomainDeclaration = declaredSubdomain;
-          break;
-        }
+        subdomainDeclarations.push(declaredSubdomain);
       }
     }
 
-    // If this is a declared subdomain, try to fetch its own ads.txt
-    if (subdomainDeclaration) {
+    // If this domain is in the declared subdomains, try to fetch its own ads.txt
+    if (subdomainDeclarations.includes(domain)) {
       try {
         const subdomainResponse = await fetch(`https://${domain}/ads.txt`);
         if (subdomainResponse.ok) {
@@ -147,12 +144,23 @@ export const fetchAdsTxt = async (
       for (const [key, regex] of Object.entries(variableMatches)) {
         if (regex.test(trimmedLine)) {
           const value = trimmedLine.split('=')[1].trim();
-          variables[key as keyof SupportedVariables] = value;
+          if (key === 'subDomain') {
+            // Initialize subDomain array if it doesn't exist
+            if (!variables.subDomain) {
+              variables.subDomain = [];
+            }
+            // Add the subdomain if it's not already in the array
+            if (!variables.subDomain.includes(value)) {
+              variables.subDomain.push(value);
+            }
+          } else {
+            variables[key as keyof Omit<SupportedVariables, 'subDomain'>] = value;
+          }
           return;
         }
       }
 
-      // Split fields by comma or whitespace
+      // Rest of the code remains the same for processing ads.txt entries
       const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
 
       // Fields must have at least 3 fields

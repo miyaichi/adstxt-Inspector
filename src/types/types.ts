@@ -44,21 +44,3 @@ export interface FetchSellersJsonOptions {
   retryDelay?: number;
   bypassCache?: boolean;
 }
-
-// Page information type
-export interface PageInfo {
-  url: string;
-  html: string;
-  demensions: {
-    width: number;
-    height: number;
-  };
-  scroll: {
-    x: number;
-    y: number;
-  };
-  viewport: {
-    width: number;
-    height: number;
-  };
-}

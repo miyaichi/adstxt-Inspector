@@ -26,6 +26,27 @@
   "no_ads_txt_data": {
     "message": "Ads.txt データがありません"
   },
+  "contact": {
+    "message": "Ads.txt ファイルの所有者の連絡先です。"
+  },
+  "direct": {
+    "message": "パブリッシャーが広告販売のアカウントを直接管理しています。"
+  },
+  "inventorypartnerdomain": {
+    "message": "コンテンツ内で広告を収益化する権限を持つパートナーのドメインです。"
+  },
+  "managerdomain": {
+    "message": "パブリッシャーのために広告収益化を管理する事業者のドメインです。"
+  },
+  "ownerdomain": {
+    "message": "サイトやアプリを所有する事業者のドメインです。"
+  },
+  "reseller": {
+    "message": "パブリッシャーにかわり第三者が広告枠をリセールしています。"
+  },
+  "subdomain": {
+    "message": "独自の Ads.txt ファイルを持つサブドメインです。"
+  },
   "insufficient_fields": {
     "message": "フィールド数が不十分です。少なくとも3つのフィールドが必要です。"
   },
@@ -52,6 +73,21 @@
   },
   "no_matching_entries_found": {
     "message": "Sellers.json に一致するエントリが見つかりません"
+  },
+  "both": {
+    "message": "PUBLISHER と INTERMEDIARY として、自社広告枠の販売と、広告枠のリセールを行う事業者。"
+  },
+  "confidential": {
+    "message": "情報を非公開にしている事業者。"
+  },
+  "intermediary": {
+    "message": "広告枠を所有せず、販売を仲介するリセラーやエクスチェンジ。"
+  },
+  "publisher": {
+    "message": "在庫を所有し、広告システムから直接支払いを受ける事業者。"
+  },
+  "passthrough": {
+    "message": "広告枠の販売者と購入者をつなぐ仲介者。"
   },
   "matches_owner_domain": {
     "message": "OWNERDOMAIN と一致しています"
@@ -85,5 +121,8 @@
   },
   "seller_type_analytics": {
     "message": "Seller タイプの分析"
+  },
+  "filter_options": {
+    "message": "フィルターオプション"
   }
 }

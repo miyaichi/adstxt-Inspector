@@ -8,21 +8,26 @@
     <title>{{ page.title }}</title>
   </head>
   <body>
+    <nav>
+      <script>
+        (function () {
+          const path = window.location.pathname;
+          let switchLink = '';
+          if (path.includes('/ja/')) {
+            switchLink = path.replace('/ja/', '/en/');
+            document.write(`<a href="${switchLink}">English</a>`);
+          } else if (path.includes('/en/')) {
+            switchLink = path.replace('/en/', '/ja/');
+            document.write(`<a href="${switchLink}">日本語</a>`);
+          } else {
+            document.write(`<a href="/en/">English</a> | <a href="/ja/">日本語</a>`);
+          }
+        })();
+      </script>
+    </nav>
+
     {{ content }}
-    <script>
-      if (
-        window.navigator.language.startsWith('ja') &&
-        window.location.pathname.indexOf('/ja/') === -1
-      ) {
-        window.location.href = '{{ site.baseurl }}/ja/';
-      }
-      if (
-        !window.navigator.language.startsWith('ja') &&
-        window.location.pathname.indexOf('/en/') === -1
-      ) {
-        window.location.href = '{{ site.baseurl }}/en/';
-      }
-    </script>
+
     <footer>
       <p><strong>{{ site.title }}</strong></p>
       <p>Copyright &copy; 2024 Yoshihiko Miyaichi</p>
