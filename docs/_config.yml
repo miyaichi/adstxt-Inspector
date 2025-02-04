@@ -50,3 +50,11 @@ defaults:
       path: 'ja'
     values:
       lang: ja
+
+# Add mermaid settings
+mermaid:
+  version: "10.9.0"  # you can specify the version you want to use
+
+# Add custom scripts to head
+head_scripts:
+  - https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js
