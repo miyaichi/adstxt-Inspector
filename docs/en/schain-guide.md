@@ -2,11 +2,13 @@
 layout: default
 lang: en
 permalink: /en/schain-guide
-title: Schain Guide
-description: SupplyChain Object (schain) Guide
+title: Supply Chain Guide
+description: Supply Chain Guide
 ---
 
-# SupplyChain Object (schain) Guide
+[Home](.) / Supply Chain Guide
+
+# Supply Chain Guide
 
 ## 1. What is SupplyChain Object?
 
@@ -16,26 +18,26 @@ SupplyChain Object (schain) is one of the IAB Tech Lab standards designed to ens
 
 In programmatic advertising transactions, Publishers, SSPs/Exchanges, and DSPs/Advertisers utilize various files to eliminate fraudulent inventory and ensure transparency. The following diagram illustrates this transaction flow:
 
-```mermaid
+<pre class="mermaid">
 flowchart LR
     subgraph Publisher["Publisher"]
-        A[Ads.txt / App-ads.txt] -->|Declare| B((Inventory))
-        note1[Declare authorized sales<br/>partners in public list]
+        A["Ads.txt / App-ads.txt"] -->|"Declare"| B(("Inventory"))
+        note1["Declare authorized sales<br/>partners in public list"]
     end
 
     subgraph SSP["SSP / Exchange"]
-        C[Sellers.json] -->|OpenRTB| D[Supply Chain Object]
-        note2[Publish authorized<br/>seller information]
+        C["Sellers.json"] -->|"OpenRTB"| D["Supply Chain Object"]
+        note2["Publish authorized<br/>seller information"]
     end
 
     subgraph DSP["DSP / Advertiser"]
         E[Bidding Decision] -->|Verify| F[Execute Transaction]
-        note3[- Verify Ads.txt<br/>- Verify Sellers.json<br/>- Verify schain]
+        note3["- Verify Ads.txt<br/>- Verify Sellers.json<br/>- Verify schain"]
     end
 
     B -->|Inventory Info| C
     D -->|Bid Request| E
-```
+</pre>
 
 ### 1.2 Role of Each Player and Verification Mechanism
 

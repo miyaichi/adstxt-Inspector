@@ -19,7 +19,13 @@ show_downloads: true
 
 # Build settings
 markdown: kramdown
-highlighter: rouge
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+  parse_block_html: true  # Enable parsing of Markdown inside HTML blocks
+  syntax_highlighter_opts:
+    disable: true  # Disable syntax highlighting for mermaid blocks
 
 # Plugins
 plugins:
@@ -53,7 +59,7 @@ defaults:
 
 # Add mermaid settings
 mermaid:
-  version: "10.9.0"  # you can specify the version you want to use
+  version: "10.9.0"
 
 # Add custom scripts to head
 head_scripts:

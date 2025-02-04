@@ -2,11 +2,13 @@
 layout: default
 lang: ja
 permalink: /ja/schain-guide
-title: Schain ガイド
-description: SupplyChain Object（schain）ガイド
+title: Supply Chain ガイド
+description: Supply Chain ガイド
 ---
 
-# SupplyChain Object（schain）ガイド
+[Home](.) / Supply Chain ガイド
+
+# Supply Chain ガイド
 
 ## 1. SupplyChain Objectとは
 
@@ -16,26 +18,26 @@ SupplyChain Object（schain）は、プログラマティック広告の透明�
 
 プログラマティック広告の取引において、Publisher、SSP/Exchange、DSP/Advertiserは各種ファイルを活用して不正在庫を排除し、透明性を確保しています。以下の図は、その取引の流れを示しています：
 
-```mermaid
+<pre class="mermaid">
 flowchart LR
     subgraph Publisher["Publisher"]
-        A[Ads.txt / App-ads.txt] -->|宣言| B((Inventory))
-        note1[正規販売パートナーを<br/>公開リストで宣言]
+        A["Ads.txt / App-ads.txt"] -->|"宣言"| B(("Inventory"))
+        note1["正規販売パートナーを<br/>公開リストで宣言"]
     end
 
     subgraph SSP["SSP / Exchange"]
-        C[Sellers.json] -->|OpenRTB| D[Supply Chain Object]
-        note2[認可された<br/>販売者情報を公開]
+        C["Sellers.json"] -->|"OpenRTB"| D["Supply Chain Object"]
+        note2["認可された<br/>販売者情報を公開"]
     end
 
     subgraph DSP["DSP / Advertiser"]
-        E[入札判断] -->|検証| F[取引の実行]
-        note3[- Ads.txt確認<br/>- Sellers.json確認<br/>- schain検証]
+        E["入札判断"] -->|"検証"| F["取引の実行"]
+        note3["- Ads.txt確認<br/>- Sellers.json確認<br/>- schain検証"]
     end
 
-    B -->|在庫情報| C
-    D -->|Bid Request| E
-```
+    B -->|"在庫情報"| C
+    D -->|"Bid Request"| E
+</pre>
 
 ### 1.2 各プレイヤーの役割と検証の仕組み
 
