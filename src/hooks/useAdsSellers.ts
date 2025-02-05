@@ -53,23 +53,6 @@ const fetchSellerAnalysisForDomain = async (
   };
 };
 
-/**
- * Get the sellers.json when MANAGERDOMAIN is specified.
- * @param managerDomain
- * @returns SellerAnalysis
- */
-const fetchManagerSellerAnalysis = async (managerDomain: string): Promise<SellerAnalysis> => {
-  const sellersJsonResult = await SellersJsonFetcher.fetch(managerDomain, FETCH_OPTIONS);
-  return {
-    domain: managerDomain,
-    sellersJson: {
-      data: sellersJsonResult.data ? sellersJsonResult.data.sellers : [],
-      error: sellersJsonResult.error,
-    },
-    adsTxtEntries: [],
-  };
-};
-
 export const useAdsSellers = (): UseAdsSellersReturn => {
   const [analyzing, setAnalyzing] = useState(false);
   const [adsTxtData, setAdsTxtData] = useState<FetchAdsTxtResult | null>(null);
@@ -91,12 +74,6 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       const entries = adsTxtEntriesAll.filter((entry) => entry.domain === domain);
       return fetchSellerAnalysisForDomain(domain, entries);
     });
-
-    // If MANAGERDOMAIN is specified, get it additionally
-    if (variables?.managerDomain) {
-      const managerDomain = variables.managerDomain.split(',')[0].trim();
-      analysisPromises.push(fetchManagerSellerAnalysis(managerDomain));
-    }
 
     const results = await Promise.allSettled(analysisPromises);
     return results

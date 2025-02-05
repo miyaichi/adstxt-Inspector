@@ -50,6 +50,9 @@
   "owner_domain_not_specified": {
     "message": "Owner domain not specified"
   },
+  "managerdomain_is_registered_as_a_seller": {
+    "message": "MANAGERDOMAIN is registered as a seller"
+  },
   "contact_information_missing": {
     "message": "Contact information missing"
   },

@@ -23,6 +23,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
 
     // 1. Supply Chain Compliance Check
     const hasOwnerDomain = !!ownerDomain;
+    const hasManagerDomain = !!managerDomain;
     const hasContact = !!adsTxtData.variables?.contact;
 
     // 2. Relationship Analysis
@@ -70,6 +71,8 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     // 7. Risk Assessment
     const riskFactors = [];
     if (!hasOwnerDomain) riskFactors.push('owner_domain_not_specified');
+    if (hasManagerDomain && adsTxtData.data.some((entry) => entry.domain === managerDomain))
+      riskFactors.push('managerdomain_is_registered_as_a_seller');
     if (!hasContact) riskFactors.push('contact_information_missing');
     if (missingSellersDomains.length > 0) riskFactors.push('missing_sellers_json_for_some_domains');
     if (ownerDomain && !hasOwnerAsPublisher)

@@ -59,6 +59,9 @@
   "owner_domain_not_listed_as_publisher_in_sellers_json": {
     "message": "オーナードメインが Sellers.json にパブリッシャーとしてリストされていません"
   },
+  "managerdomain_is_registered_as_a_seller": {
+    "message": "MANAGERDOMAIN がセラーとして登録されています"
+  },
   "some_sellers_does_not_disclose_information": {
     "message": "一部のセラーが情報を開示していません"
   },
