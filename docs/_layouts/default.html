@@ -6,13 +6,13 @@
     <meta name="google-site-verification" content="hlUGaBYnuKEU4Xf8vcGVpC9L-r7GCc7y-wojbvHgnIA" />
     <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" />
     {% for script in site.head_scripts %}
-      <script src="{{ script }}"></script>
+    <script src="{{ script }}"></script>
     {% endfor %}
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('DOMContentLoaded', function () {
         mermaid.initialize({
           startOnLoad: true,
-          theme: 'default'
+          theme: 'default',
         });
       });
     </script>
