@@ -1,6 +1,8 @@
-import React from 'react';
+import { AlertTriangle } from 'lucide-react';
+import React, { useMemo } from 'react';
 import type { SellerAnalysis } from '../../hooks/useAdsSellers';
 import type { FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
+import { Tooltip } from './Tooltip';
 
 interface SummaryPanelProps {
   analyzing: boolean;
@@ -13,6 +15,89 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   adsTxtData,
   sellerAnalysis,
 }) => {
+  const analysis = useMemo(() => {
+    if (!adsTxtData || sellerAnalysis.length === 0) return null;
+
+    const ownerDomain = adsTxtData.variables?.ownerDomain;
+    const managerDomain = adsTxtData.variables?.managerDomain?.split(',')[0];
+
+    // 1. Supply Chain Compliance Check
+    const hasOwnerDomain = !!ownerDomain;
+    const hasContact = !!adsTxtData.variables?.contact;
+
+    // 2. Relationship Analysis
+    const directEntries = adsTxtData.data.filter((entry) => entry.relationship === 'DIRECT');
+    const resellerEntries = adsTxtData.data.filter((entry) => entry.relationship === 'RESELLER');
+
+    // 3. Seller.json Coverage Analysis
+    const adsTxtDomains = new Set(adsTxtData.data.map((entry) => entry.domain));
+    const sellersJsonDomains = new Set(sellerAnalysis.map((analysis) => analysis.domain));
+    const missingSellersDomains = [...adsTxtDomains].filter(
+      (domain) => !sellersJsonDomains.has(domain)
+    );
+
+    // 4. Publisher-Seller Relationship Check
+    const ownerDomainSellers = sellerAnalysis
+      .flatMap((seller) => (seller.sellersJson && seller.sellersJson.data) || [])
+      .filter((entry) => entry.domain === ownerDomain || entry.domain === managerDomain);
+    const hasOwnerAsPublisher = ownerDomainSellers.some(
+      (seller) =>
+        seller.seller_type?.toUpperCase() === 'PUBLISHER' ||
+        seller.seller_type?.toUpperCase() === 'BOTH'
+    );
+
+    // 5. Seller Type Check
+    const sellerTypes = sellerAnalysis.reduce(
+      (acc, analysis) => {
+        (analysis.sellersJson?.data || []).forEach((seller) => {
+          acc[seller.seller_type.toUpperCase()] = (acc[seller.seller_type.toUpperCase()] || 0) + 1;
+        });
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    // 6. Confidential Seller Check
+    const confidentialSellers = sellerAnalysis.reduce(
+      (acc, analysis) =>
+        acc +
+        (analysis.sellersJson?.data || []).filter(
+          (seller) => String(seller.is_confidential) === '1'
+        ).length,
+      0
+    );
+
+    // 7. Risk Assessment
+    const riskFactors = [];
+    if (!hasOwnerDomain) riskFactors.push('owner_domain_not_specified');
+    if (!hasContact) riskFactors.push('contact_information_missing');
+    if (missingSellersDomains.length > 0) riskFactors.push('missing_sellers_json_for_some_domains');
+    if (ownerDomain && !hasOwnerAsPublisher)
+      riskFactors.push('owner_domain_not_listed_as_publisher_in_sellers_json');
+    if (confidentialSellers > 0) riskFactors.push('some_sellers_does_not_disclose_information');
+
+    return {
+      ownerDomain,
+      managerDomain,
+      directCount: directEntries.length,
+      resellerCount: resellerEntries.length,
+      missingSellersDomains,
+      sellerTypes,
+      riskFactors,
+      totalDomains: adsTxtDomains.size,
+      coveragePercent: (sellersJsonDomains.size / adsTxtDomains.size) * 100,
+    };
+  }, [adsTxtData, sellerAnalysis]);
+
+  const syntaxErrorCount = adsTxtData?.errors?.length || 0;
+  const duplicateEntryCount = adsTxtData?.duplicates?.length || 0;
+  const totalAdsTxtEntries = adsTxtData?.data.length || 0;
+  const validSellerCount = sellerAnalysis.reduce(
+    (acc, analysis) => acc + (analysis.sellersJson?.data.length || 0),
+    0
+  );
+  const sellerCoverageRate = (validSellerCount / totalAdsTxtEntries) * 100;
+
   if (analyzing) {
     return (
       <div className="p-4">
@@ -23,7 +108,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     );
   }
 
-  if (!adsTxtData || sellerAnalysis.length === 0) {
+  if (!analysis) {
     return (
       <div className="p-4">
         <div className="bg-gray-50 text-gray-600 p-4 rounded-lg">
@@ -33,127 +118,134 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     );
   }
 
-  const totalAdsTxtEntries = adsTxtData.data.length;
-  const totalSellersEntries = sellerAnalysis.reduce(
-    (sum, analysis) => sum + (analysis.sellersJson?.data.length || 0),
-    0
-  );
-
-  const ownerDomain = adsTxtData.variables?.ownerDomain || 'Not specified';
-  const managerDomain = adsTxtData.variables?.managerDomain?.split(',')[0] || 'Not specified';
-
-  const directEntries = adsTxtData.data.filter((entry) => entry.relationship === 'DIRECT');
-  const resellerEntries = adsTxtData.data.filter((entry) => entry.relationship === 'RESELLER');
-
-  const transactionPatterns = {
-    ownerDirect: directEntries.filter((e) => e.domain === ownerDomain).length,
-    ownerReseller: resellerEntries.filter((e) => e.domain === ownerDomain).length,
-    managerDirect: directEntries.filter((e) => e.domain === managerDomain).length,
-    managerReseller: resellerEntries.filter((e) => e.domain === managerDomain).length,
-    otherDirect: directEntries.filter((e) => e.domain !== ownerDomain && e.domain !== managerDomain)
-      .length,
-    otherReseller: resellerEntries.filter(
-      (e) => e.domain !== ownerDomain && e.domain !== managerDomain
-    ).length,
-  };
-
   return (
-    <div className="panel-container">
-      {/* Basic Info Section */}
-      <div className="panel-section">
-        <div className="panel-header">
-          <h3 className="panel-header-title">{chrome.i18n.getMessage('summary_overview')}</h3>
-        </div>
-        <div className="info-grid">
-          <div className="info-item">
-            <span className="font-medium">Total Ads.txt Entries:</span> {totalAdsTxtEntries}
-          </div>
-          <div className="info-item">
-            <span className="font-medium">Total Sellers.json Entries:</span> {totalSellersEntries}
-          </div>
-          <div className="info-item">
-            <span className="font-medium">Owner Domain:</span> {ownerDomain}
-          </div>
-          <div className="info-item">
-            <span className="font-medium">Manager Domain:</span> {managerDomain}
-          </div>
-        </div>
-      </div>
-
-      {/* Transaction Summary Section */}
-      <div className="panel-section">
-        <div className="panel-header">
-          <h3 className="panel-header-title">{chrome.i18n.getMessage('transaction_summary')}</h3>
-        </div>
-        <div className="panel-content">
-          <div className="alert alert-success">
-            <span className="font-medium">Direct Relationships:</span> {directEntries.length}
-          </div>
-          <div className="alert alert-warning">
-            <span className="font-medium">Reseller Relationships:</span> {resellerEntries.length}
-          </div>
-        </div>
-      </div>
-
-      {/* Transaction Patterns Section */}
-      <div className="panel-section">
-        <div className="panel-header">
-          <h3 className="panel-header-title">{chrome.i18n.getMessage('transaction_patterns')}</h3>
-        </div>
-        <div className="panel-content info-grid">
+    <div className="space-y-6 p-4">
+      {/* Supply Chain Overview */}
+      <div className="rounded-lg border p-4">
+        <h3 className="text-lg font-semibold mb-4">Supply Chain Overview</h3>
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium">Owner Domain Transactions</h4>
-            <div className="info-item bg-blue-50">Direct: {transactionPatterns.ownerDirect}</div>
-            <div className="info-item bg-blue-50">
-              Reseller: {transactionPatterns.ownerReseller}
-            </div>
+            <div className="text-sm font-medium">Owner Domain</div>
+            <div className="bg-gray-50 p-2 rounded">{analysis.ownerDomain || 'Not Specified'}</div>
           </div>
           <div className="space-y-2">
-            <h4 className="font-medium">Manager Domain Transactions</h4>
-            <div className="info-item bg-green-50">Direct: {transactionPatterns.managerDirect}</div>
-            <div className="info-item bg-green-50">
-              Reseller: {transactionPatterns.managerReseller}
-            </div>
-          </div>
-          <div className="col-span-2 space-y-2">
-            <h4 className="font-medium">Other Domain Transactions</h4>
-            <div className="info-item bg-yellow-50">Direct: {transactionPatterns.otherDirect}</div>
-            <div className="info-item bg-yellow-50">
-              Reseller: {transactionPatterns.otherReseller}
+            <div className="text-sm font-medium">Manager Domain</div>
+            <div className="bg-gray-50 p-2 rounded">
+              {analysis.managerDomain || 'Not Specified'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Seller Analysis Section */}
-      <div className="panel-section">
-        <div className="panel-header">
-          <h3 className="panel-header-title">{chrome.i18n.getMessage('seller_type_analytics')}</h3>
-        </div>
-        <div className="panel-content">
-          {sellerAnalysis.map((analysis) => {
-            const sellers = analysis.sellersJson?.data || [];
-            const publisherCount = sellers.filter(
-              (s) => s.seller_type?.toUpperCase() === 'PUBLISHER'
-            ).length;
-            const intermediaryCount = sellers.filter(
-              (s) => s.seller_type?.toUpperCase() === 'INTERMEDIARY'
-            ).length;
-            const bothCount = sellers.filter((s) => s.seller_type?.toUpperCase() === 'BOTH').length;
-
-            return (
-              <div key={analysis.domain} className="info-item">
-                <div className="font-medium">{analysis.domain}</div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <div className="info-item bg-blue-50">Publishers: {publisherCount}</div>
-                  <div className="info-item bg-yellow-50">Intermediaries: {intermediaryCount}</div>
-                  <div className="info-item bg-green-50">Both: {bothCount}</div>
-                </div>
-              </div>
-            );
-          })}
+      {/* Ads.txt Analysis */}
+      <div className="rounded-lg border p-4">
+        <h3 className="text-lg font-semibold mb-4">Ads.txt Analysis</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-red-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-red-800">Syntax Errors</div>
+            <div className="text-2xl font-bold text-red-600">{syntaxErrorCount}</div>
+          </div>
+          <div className="bg-amber-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-amber-800">Duplicate Entries</div>
+            <div className="text-2xl font-bold text-amber-600">{duplicateEntryCount}</div>
+          </div>
+          <div className="bg-blue-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-blue-800">Total Entries</div>
+            <div className="text-2xl font-bold text-blue-600">{totalAdsTxtEntries}</div>
+          </div>
         </div>
       </div>
+
+      {/* Relationship Distribution */}
+      <div className="rounded-lg border p-4">
+        <h3 className="text-lg font-semibold mb-4">Relationship Distribution</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-green-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-green-800">
+              <Tooltip content={chrome.i18n.getMessage('direct')}>DIRECT</Tooltip>
+            </div>
+            <div className="text-2xl font-bold text-green-600">{analysis.directCount}</div>
+          </div>
+          <div className="bg-purple-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-purple-800">
+              <Tooltip content={chrome.i18n.getMessage('reseller')}>RESELLER</Tooltip>
+            </div>
+            <div className="text-2xl font-bold text-purple-600">{analysis.resellerCount}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Seller Verification */}
+      <div className="rounded-lg border p-4">
+        <h3 className="text-lg font-semibold mb-4">Seller Verification</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Verified Sellers</span>
+            <span className="text-sm font-bold">{sellerCoverageRate.toFixed(1)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full"
+              style={{ width: `${sellerCoverageRate}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Valid: {validSellerCount}</span>
+            <span>Total: {totalAdsTxtEntries}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Seller Type Distribution */}
+      <div className="rounded-lg border p-4">
+        <h3 className="text-lg font-semibold mb-4">Seller Type Distribution</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-green-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-green-800">
+              <Tooltip content={chrome.i18n.getMessage('publisher')}>PUBLISHERS</Tooltip>
+            </div>
+            <div className="text-2xl font-bold text-green-600">
+              {analysis.sellerTypes['PUBLISHER'] || 0}
+            </div>
+          </div>
+          <div className="bg-blue-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-blue-800">
+              <Tooltip content={chrome.i18n.getMessage('intermediary')}>INTERMEDIARIES</Tooltip>
+            </div>
+            <div className="text-2xl font-bold text-blue-600">
+              {analysis.sellerTypes['INTERMEDIARY'] || 0}
+            </div>
+          </div>
+          <div className="bg-purple-50 p-3 rounded-lg flex flex-col items-center justify-center">
+            <div className="text-sm font-medium text-purple-800">
+              <Tooltip content={chrome.i18n.getMessage('both')}>BOTH</Tooltip>
+            </div>
+            <div className="text-2xl font-bold text-purple-600">
+              {analysis.sellerTypes['BOTH'] || 0}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Risk Assessment */}
+      {analysis.riskFactors.length > 0 && (
+        <div className="rounded-lg border border-red-200 p-4 bg-red-50">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            Risk Factors
+          </h3>
+          <ul className="space-y-2">
+            {analysis.riskFactors.map((risk, index) => (
+              <li key={index} className="flex items-center gap-2 text-red-600">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                {chrome.i18n.getMessage(risk)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
+
+export default SummaryPanel;

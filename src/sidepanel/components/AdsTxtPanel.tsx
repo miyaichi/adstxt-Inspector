@@ -9,12 +9,14 @@ interface AdsTxtPanelProps {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
+  duplicateCheck: boolean;
 }
 
 export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   analyzing,
   adsTxtData,
   isValidEntry,
+  duplicateCheck,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
@@ -145,18 +147,21 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     );
   }
 
+  // If duplicate check is enabled, include duplicates in the error count
+  const errors = duplicateCheck
+    ? adsTxtData.errors.concat(adsTxtData.duplicates).sort((a, b) => a.line - b.line)
+    : adsTxtData.errors;
+
   return (
     <div className="panel-container">
       {/* Errors Section */}
-      {adsTxtData.errors.length > 0 && (
+      {errors.length > 0 && (
         <div className="panel-section">
           <div className="panel-header">
-            <h3 className="panel-header-title text-red-600">
-              Errors Found ({adsTxtData.errors.length})
-            </h3>
+            <h3 className="panel-header-title text-red-600">Errors Found ({errors.length})</h3>
           </div>
           <div className="panel-content">
-            {adsTxtData.errors.map((error, index) => (
+            {errors.map((error, index) => (
               <div key={index} className="alert alert-error">
                 <div>
                   Line {error.line}: {error.message}

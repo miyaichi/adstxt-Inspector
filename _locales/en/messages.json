@@ -47,6 +47,24 @@
   "subdomain": {
     "message": "Refers to a subdomain with its own Ads.txt file for ad authorization."
   },
+  "owner_domain_not_specified": {
+    "message": "Owner domain not specified"
+  },
+  "contact_information_missing": {
+    "message": "Contact information missing"
+  },
+  "missing_sellers_json_for_some_domains": {
+    "message": "Missing Sellers.json for some domains"
+  },
+  "owner_domain_not_listed_as_publisher_in_sellers_json": {
+    "message": "Owner domain not listed as publisher in Sellers.json"
+  },
+  "confidential_sellers_detected": {
+    "message": "Confidential sellers detected"
+  },
+  "some_sellers_does_not_disclose_information": {
+    "message": "Some sellers do not disclose information"
+  },
   "insufficient_fields": {
     "message": "Insufficient number of fields. Expected at least 3 fields."
   },

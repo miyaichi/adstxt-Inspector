@@ -63,7 +63,10 @@ export default function App() {
         setConnectionManager(manager);
 
         // Initialize active tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
         if (tab?.id) {
           setTabId(tab.id);
           setTabInfo({
@@ -115,7 +118,7 @@ export default function App() {
     if (!tabInfo || !tabInfo.isScriptInjectionAllowed || analyzing) return;
 
     try {
-      await analyze(tabInfo.url, duplicateCheck);
+      await analyze(tabInfo.url);
     } catch (error) {
       logger.error('Analysis failed:', error);
     }
@@ -188,6 +191,7 @@ export default function App() {
                 analyzing={analyzing}
                 adsTxtData={adsTxtData}
                 isValidEntry={isValidEntry}
+                duplicateCheck={duplicateCheck}
               />
             </TabPanel>
 

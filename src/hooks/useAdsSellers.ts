@@ -23,7 +23,7 @@ interface UseAdsSellersReturn {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
-  analyze: (url: string, duplicateCheck: boolean) => Promise<void>;
+  analyze: (url: string) => Promise<void>;
   isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
@@ -109,9 +109,8 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   /**
    * Retrive and analyze the ads.txt and sellers.json based on the specified URL.
    * @param url
-   * @param duplicateCheck
    */
-  const analyze = async (url: string, duplicateCheck = false) => {
+  const analyze = async (url: string) => {
     if (analyzing) return;
 
     setAnalyzing(true);
@@ -120,7 +119,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
     try {
       const domain = new URL(url).hostname;
-      const adsTxtResult = await fetchAdsTxt(domain, duplicateCheck);
+      const adsTxtResult = await fetchAdsTxt(domain);
       setAdsTxtData(adsTxtResult);
       logger.debug('Ads.txt:', adsTxtResult);
 

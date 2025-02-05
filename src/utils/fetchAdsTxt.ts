@@ -27,18 +27,15 @@ export interface FetchAdsTxtResult {
   data: AdsTxt[];
   variables: SupportedVariables;
   errors: ErrorDetail[];
+  duplicates: ErrorDetail[];
 }
 
 /**
  * Fetches and parses the ads.txt file for the specified domain.
  * @param domain Domain name to fetch ads.txt for
- * @param duplicateCheck Whether to check for duplicate entries
  * @returns FetchAdsTxtResult object
  */
-export const fetchAdsTxt = async (
-  domain: string,
-  duplicateCheck: boolean = false
-): Promise<FetchAdsTxtResult> => {
+export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> => {
   const rootDomain = getRootDomain(domain);
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
 
@@ -74,17 +71,14 @@ export const fetchAdsTxt = async (
   }
 
   // Parse the ads.txt content
-  const { entries, variables, errors } = parseAdsTxtContent(
-    adsTxtContent,
-    duplicateCheck,
-    rootDomain
-  );
+  const { entries, variables, errors, duplicates } = parseAdsTxtContent(adsTxtContent, rootDomain);
 
   return {
     adsTxtUrl,
     data: entries,
     variables,
     errors,
+    duplicates,
   };
 };
 
@@ -174,22 +168,19 @@ interface ParseResult {
   entries: AdsTxt[];
   variables: SupportedVariables;
   errors: ErrorDetail[];
+  duplicates: ErrorDetail[];
 }
 
 /**
  * Parse the contents of ads.txt
  * @param content ads.txt content
- * @param duplicateCheck Whether to check for duplicate entries
  * @param rootDomain Root domain name
  * @returns ParseResult object
  */
-const parseAdsTxtContent = (
-  content: string,
-  duplicateCheck: boolean,
-  rootDomain: string
-): ParseResult => {
+const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult => {
   const entries: AdsTxt[] = [];
   const errors: ErrorDetail[] = [];
+  const duplicates: ErrorDetail[] = [];
   const variables: SupportedVariables = { ownerDomain: rootDomain };
 
   const lines = content.split(/\r?\n/);
@@ -310,13 +301,11 @@ const parseAdsTxtContent = (
     );
 
     if (isDuplicate) {
-      if (duplicateCheck) {
-        errors.push({
-          line: lineNumber,
-          content: line,
-          message: chrome.i18n.getMessage('duplicate_entries'),
-        });
-      }
+      duplicates.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('duplicate_entries'),
+      });
     } else {
       entries.push(entry);
     }
@@ -327,6 +316,7 @@ const parseAdsTxtContent = (
     entries: entries.sort((a, b) => a.domain.localeCompare(b.domain)),
     variables,
     errors,
+    duplicates,
   };
 };
 
