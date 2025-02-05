@@ -169,7 +169,7 @@ body {
 /* Tooltip Component */
 .tooltip {
   @apply fixed bg-blue-500 text-white px-3 py-2 rounded max-w-[400px] 
-  whitespace-nowrap overflow-hidden text-ellipsis z-[1000] font-mono 
+  whitespace-normal break-words z-[1000] font-mono 
   shadow-sm;
 }
 
