@@ -26,6 +26,9 @@
   "no_ads_txt_data": {
     "message": "Ads.txt データがありません"
   },
+  "download_ads_txt_without_errors": {
+    "message": "エラーをコメントアウトした Ads.txt をダウンロード"
+  },
   "contact": {
     "message": "Ads.txt ファイルの所有者の連絡先です。"
   },
