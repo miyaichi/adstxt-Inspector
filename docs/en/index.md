@@ -56,11 +56,11 @@ The extension provides three main views:
 
 ### Summary View
 
-- Supply Chain Overview  
+- Supply Chain Overview
 - Ads.txt Analysis (Errors, Duplicates)
 - Distribution of Relationships (DIRECT/RESELLER)
-- Seller Verification  
-- Distribution of Seller Types  
+- Seller Verification
+- Distribution of Seller Types
 - Risk Assessment
 
 ### Ads.txt Details

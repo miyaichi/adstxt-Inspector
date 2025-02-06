@@ -58,11 +58,11 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ### Summary View
 
-- サプライチェーン概要  
+- サプライチェーン概要
 - Ads.txt分析(エラー、重複)
 - 関係性の分布(DIRECT/RESELLER)
-- セラー検証  
-- セラータイプの分布  
+- セラー検証
+- セラータイプの分布
 - リスクアセスメント
 
 ### Ads.txt Details
