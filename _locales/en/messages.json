@@ -26,6 +26,9 @@
   "no_ads_txt_data": {
     "message": "No Ads.txt data available"
   },
+  "download_ads_txt_without_errors": {
+    "message": "Download Ads.txt with errors commented out"
+  },
   "contact": {
     "message": "Provides contact information for the owner of the ads.txt file."
   },

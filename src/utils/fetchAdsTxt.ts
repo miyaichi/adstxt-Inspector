@@ -24,6 +24,7 @@ export interface SupportedVariables {
 
 export interface FetchAdsTxtResult {
   adsTxtUrl: string;
+  adsTxtContent: string;
   data: AdsTxt[];
   variables: SupportedVariables;
   errors: ErrorDetail[];
@@ -75,11 +76,41 @@ export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> =>
 
   return {
     adsTxtUrl,
+    adsTxtContent,
     data: entries,
     variables,
     errors,
     duplicates,
   };
+};
+
+/**
+ * Add "#" to the beginning of the line for error entries to comment out
+ * @param content ads.txt content
+ * @param errors Array of error details
+ * @returns Modified ads.txt content
+ */
+export const commentErrorAdsTxtLines = (content: string, errors: ErrorDetail[]): string => {
+  const lines = content.split(/\r?\n/);
+
+  // Set of line numbers for duplicate entries
+  const lineNumbers = new Set<number>(errors.map((d) => d.line));
+
+  // For each line, add "#" to the beginning if it's a error entry
+  const newLines = lines.map((line, index) => {
+    const lineNumber = index + 1;
+    if (lineNumbers.has(lineNumber)) {
+      // If the line is already commented out, return it as is
+      if (line.trim().startsWith('#')) {
+        return line;
+      }
+      return `#${line} # error: ${errors.find((d) => d.line === lineNumber)?.message}`;
+    }
+    return line;
+  });
+
+  // Return the concatenated lines as the new content string
+  return newLines.join('\n');
 };
 
 // Helper functions
