@@ -53,17 +53,19 @@ To realize these benefits, Publishers need to undertake several initiatives. Fir
 
 ### 2.1 Required Actions for Publishers
 
-1. **Maintain Ads.txt / App-ads.txt**  
-   - **Accurately document** information about SSPs/Exchanges/Resellers authorized by your company.  
-   - **Promptly update** when new transactions begin or partnerships end to maintain consistency with schain.  
+1. **Maintain Ads.txt / App-ads.txt**
+
+   - **Accurately document** information about SSPs/Exchanges/Resellers authorized by your company.
+   - **Promptly update** when new transactions begin or partnerships end to maintain consistency with schain.
    - Use the correct distinction between `DIRECT` / `RESELLER` and use the **correct Seller ID**.
 
-2. **Verify Provided schain Information**  
-   - While Publishers rarely generate schain directly, verify that **partner SSPs/Exchanges correctly send and receive schain**.  
+2. **Verify Provided schain Information**
+
+   - While Publishers rarely generate schain directly, verify that **partner SSPs/Exchanges correctly send and receive schain**.
    - Check for **"complete=1" flag settings** and support **full path visualization** whenever possible.
 
-3. **Regular Maintenance**  
-   - Failing to **update Ads.txt / App-ads.txt** may result in DSPs blocking as "unknown Seller ID".  
+3. **Regular Maintenance**
+   - Failing to **update Ads.txt / App-ads.txt** may result in DSPs blocking as "unknown Seller ID".
    - As schain usage increases, **consistency with Ads.txt** becomes more important, so **maintain current information**.
 
 ## 3. Significance for SSPs/Exchanges
@@ -74,14 +76,16 @@ To fulfill these responsibilities, SSPs/Exchanges must take specific actions. In
 
 ### 3.1 Required Actions for SSPs/Exchanges
 
-1. **Set Up and Update Sellers.json**  
-   - Prepare and host **Sellers.json** that publishes **authorized Publishers and resellers**.  
+1. **Set Up and Update Sellers.json**
+
+   - Prepare and host **Sellers.json** that publishes **authorized Publishers and resellers**.
    - **Update the file promptly** when Publishers are added/removed or permissions change to maintain current status.
 
-2. **Implement schain Support**  
-   - Implement functionality to **include schain nodes in bid requests** (or receive them) in compliance with OpenRTB.  
+2. **Implement schain Support**
+
+   - Implement functionality to **include schain nodes in bid requests** (or receive them) in compliance with OpenRTB.
    - Ensure **consistent correlation** between schain and `Sellers.json` information by correctly linking **Seller ID / Domain information**.
 
-3. **Verify Consistency with Ads.txt / App-ads.txt**  
-   - Establish mechanisms to check for **invalid Seller IDs** by cross-referencing Publisher's Ads.txt / App-ads.txt.  
+3. **Verify Consistency with Ads.txt / App-ads.txt**
+   - Establish mechanisms to check for **invalid Seller IDs** by cross-referencing Publisher's Ads.txt / App-ads.txt.
    - Maintain a clean marketplace by implementing **transaction blocks** and **Publisher notifications** when potentially fraudulent inventory is detected.

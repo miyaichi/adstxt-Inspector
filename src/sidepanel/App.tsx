@@ -8,8 +8,8 @@ import { Logger } from '../utils/logger';
 import { AdsTxtPanel } from './components/AdsTxtPanel';
 import { SellersPanel } from './components/SellersPanel';
 import { SummaryPanel } from './components/SummaryPanel';
-import { Alert } from './components/ui/Alert';
 import { Button } from './components/ui/Button';
+import { compareVersions, UpdateNotification } from './components/UpdateNotification';
 
 const logger = new Logger('sidepanel');
 
@@ -17,26 +17,6 @@ interface UpdateInfo {
   version: string;
   store_url: string;
 }
-
-const UpdateNotification: React.FC<{
-  currentVersion: string;
-  latestVersion: string;
-  storeUrl: string;
-}> = ({ currentVersion, latestVersion, storeUrl }) => (
-  <Alert type="info">
-    <div className="flex items-center justify-between">
-      <div>{chrome.i18n.getMessage('new_version_available', [latestVersion, currentVersion])}</div>
-      <a
-        href={storeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 hover:text-blue-800 underline"
-      >
-        {chrome.i18n.getMessage('update_now')}
-      </a>
-    </div>
-  </Alert>
-);
 
 export default function App() {
   const [tabId, setTabId] = useState<number | null>(null);
@@ -55,10 +35,9 @@ export default function App() {
       try {
         const response = await fetch('https://miyaichi.github.io/adstxt-Inspector/version.json');
         const data: UpdateInfo = await response.json();
-        if (data.version > currentVersion) {
-          setLatestVersion(data.version);
-          setStoreUrl(data.store_url);
-        }
+        if (compareVersions(data.version, currentVersion) <= 0) return;
+        setLatestVersion(data.version);
+        setStoreUrl(data.store_url);
       } catch (error) {
         logger.error('Failed to check for updates:', error);
       }
@@ -84,7 +63,10 @@ export default function App() {
         setConnectionManager(manager);
 
         // Initialize active tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
         if (tab?.id) {
           setTabId(tab.id);
           setTabInfo({
@@ -136,7 +118,7 @@ export default function App() {
     if (!tabInfo || !tabInfo.isScriptInjectionAllowed || analyzing) return;
 
     try {
-      await analyze(tabInfo.url, duplicateCheck);
+      await analyze(tabInfo.url);
     } catch (error) {
       logger.error('Analysis failed:', error);
     }
@@ -209,6 +191,7 @@ export default function App() {
                 analyzing={analyzing}
                 adsTxtData={adsTxtData}
                 isValidEntry={isValidEntry}
+                duplicateCheck={duplicateCheck}
               />
             </TabPanel>
 

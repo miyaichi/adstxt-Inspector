@@ -26,7 +26,7 @@ AdsTxt Inspector is a Chrome extension that helps you validate and analyze Ads.t
 - Summary view of all advertising relationships
 - Breakdown of DIRECT vs RESELLER relationships
 - Transaction pattern analysis by domain types
-- Publisher and seller type distribution
+- Publisher and seller-type distribution
 
 ### Error Detection
 
@@ -56,10 +56,12 @@ The extension provides three main views:
 
 ### Summary View
 
-- Overview of all advertising relationships
-- Total number of entries and their types
-- Distribution of seller relationships
-- Quick error count and severity levels
+- Supply Chain Overview
+- Ads.txt Analysis (Errors, Duplicates)
+- Distribution of Relationships (DIRECT/RESELLER)
+- Seller Verification
+- Distribution of Seller Types
+- Risk Assessment
 
 ### Ads.txt Details
 
@@ -95,7 +97,7 @@ The extension provides three main views:
 2. Unzip to local directory
 3. Open `chrome://extensions/`
 4. Enable Developer Mode
-5. Click `Load unpacked` and select directory
+5. Click `Load unpacked` and select the directory
 
 ## Privacy & Security
 
@@ -106,7 +108,7 @@ The extension provides three main views:
 
 ## Contributing
 
-Source code is available on [GitHub](https://github.com/miyaichi/adstxt-Inspector). Contributions are welcome!
+The source code is available on [GitHub](https://github.com/miyaichi/adstxt-Inspector). Contributions are welcome!
 
 ## Acknowledgements
 

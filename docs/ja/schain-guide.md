@@ -53,17 +53,19 @@ Publisherにとって、SupplyChain Objectの活用は在庫の価値向上に�
 
 ### 2.1 Publisher がしなければいけないこと
 
-1. **Ads.txt / App-ads.txt の整備**  
-   - 自社が公認する SSP / Exchange / リセラーの情報を、**正確にファイルへ記載** する。  
-   - 新規取引開始や提携終了があれば **速やかに更新** し、schain と矛盾しないようにする。  
+1. **Ads.txt / App-ads.txt の整備**
+
+   - 自社が公認する SSP / Exchange / リセラーの情報を、**正確にファイルへ記載** する。
+   - 新規取引開始や提携終了があれば **速やかに更新** し、schain と矛盾しないようにする。
    - 記載時は `DIRECT` / `RESELLER` の区別を間違えず、**正しい Seller ID** を使う。
 
-2. **提供される schain 情報の確認**  
-   - Publisher 自身は schain を直接生成する機会は少ないものの、**提携先の SSP/Exchange が schain を正しく送信・受信しているか** を確認する。  
+2. **提供される schain 情報の確認**
+
+   - Publisher 自身は schain を直接生成する機会は少ないものの、**提携先の SSP/Exchange が schain を正しく送信・受信しているか** を確認する。
    - **「complete=1」設定の有無** などをチェックし、可能な限り **経路が完全に可視化される** ようサポートする。
 
-3. **定期的なメンテナンス**  
-   - **Ads.txt / App-ads.txt の更新** を怠ると、DSP 側で「不明な Seller ID」としてブロックされる可能性がある。  
+3. **定期的なメンテナンス**
+   - **Ads.txt / App-ads.txt の更新** を怠ると、DSP 側で「不明な Seller ID」としてブロックされる可能性がある。
    - schain の活用が進むほど **Ads.txt との整合性** が重視されるため、**常に最新情報** を保つようにする。
 
 ## 3. SSP/Exchangeにとっての意味
@@ -74,14 +76,16 @@ SSP/Exchangeは、プログラマティック広告エコシステムにおい�
 
 ### 3.1 SSP/Exchange がしなければいけないこと
 
-1. **Sellers.json の設置・更新**  
-   - 自社が **許諾している Publisher や再販事業者** を公開する **Sellers.json** を用意し、ホスティングする。  
+1. **Sellers.json の設置・更新**
+
+   - 自社が **許諾している Publisher や再販事業者** を公開する **Sellers.json** を用意し、ホスティングする。
    - Publisher の追加・終了、権限変更などがあった場合は **随時ファイルを更新** し、常に最新状態を保つ。
 
-2. **schain 対応の実装**  
-   - OpenRTB に準拠して **schain ノードを入札リクエストに含める**（または受け取る）機能を実装する。  
+2. **schain 対応の実装**
+
+   - OpenRTB に準拠して **schain ノードを入札リクエストに含める**（または受け取る）機能を実装する。
    - schain と `Sellers.json` の情報が **矛盾なく対応** するよう、**Seller ID / Domain 情報** を正しく紐づける。
 
-3. **Ads.txt / App-ads.txt との整合性確認**  
-   - Publisher 側の Ads.txt / App-ads.txt と突合し、**不正な Seller ID** がないかチェックする仕組みを整える。  
+3. **Ads.txt / App-ads.txt との整合性確認**
+   - Publisher 側の Ads.txt / App-ads.txt と突合し、**不正な Seller ID** がないかチェックする仕組みを整える。
    - 不正疑いの在庫が検知された場合は **取引ブロック** や **Publisher への通知** を行い、クリーンなマーケットプレイスを維持する。

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
+
 const logger = new Logger('useAdsSellers');
 
 export interface SellerAnalysis {
@@ -22,74 +23,71 @@ interface UseAdsSellersReturn {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
-  analyze: (url: string, duplicateCheck: boolean) => Promise<void>;
+  analyze: (url: string) => Promise<void>;
   isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
+
+const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
+
+/**
+ * Retrive the sellers.json for the specified domain and narrow down the ssearch using the corresponding ads.txt entries.
+ * @param domain
+ * @param adsTxtEntries
+ * @returns SellerAnalysis
+ */
+const fetchSellerAnalysisForDomain = async (
+  domain: string,
+  adsTxtEntries: AdsTxt[]
+): Promise<SellerAnalysis> => {
+  const sellersJsonResult = await SellersJsonFetcher.fetch(domain, FETCH_OPTIONS);
+  const filteredSellers = sellersJsonResult.data
+    ? sellersJsonResult.data.sellers.filter((seller) =>
+        adsTxtEntries.some((entry) => String(entry.publisherId) === String(seller.seller_id))
+      )
+    : [];
+
+  return {
+    domain,
+    sellersJson: { data: filteredSellers, error: sellersJsonResult.error },
+    adsTxtEntries,
+  };
+};
 
 export const useAdsSellers = (): UseAdsSellersReturn => {
   const [analyzing, setAnalyzing] = useState(false);
   const [adsTxtData, setAdsTxtData] = useState<FetchAdsTxtResult | null>(null);
   const [sellerAnalysis, setSellerAnalysis] = useState<SellerAnalysis[]>([]);
 
+  /**
+   * Retrive and analyze sellers.json for the specified domain list.
+   * @param domains
+   * @param adsTxtResult
+   * @returns SellerAnalysis[]
+   */
   const analyzeSellersJson = async (
     domains: string[],
     adsTxtResult: FetchAdsTxtResult
   ): Promise<SellerAnalysis[]> => {
-    const analysis: SellerAnalysis[] = [];
+    const { data: adsTxtEntriesAll, variables } = adsTxtResult;
 
-    const promises = domains.map(async (domain) => {
-      const sellersJsonResult = await SellersJsonFetcher.fetch(domain, {
-        timeout: 5000,
-        retries: 1,
-      });
-      const adsTxtEntries = adsTxtResult.data.filter((entry) => entry.domain === domain);
-
-      return {
-        domain,
-        sellersJson: sellersJsonResult.data
-          ? {
-              data: sellersJsonResult.data.sellers.filter((seller) =>
-                adsTxtEntries.some(
-                  (entry) => String(entry.publisherId) === String(seller.seller_id)
-                )
-              ),
-              error: sellersJsonResult.error,
-            }
-          : { data: [], error: sellersJsonResult.error },
-        adsTxtEntries,
-      };
+    const analysisPromises = domains.map((domain) => {
+      const entries = adsTxtEntriesAll.filter((entry) => entry.domain === domain);
+      return fetchSellerAnalysisForDomain(domain, entries);
     });
 
-    // If MANAGERDOMAIN is specified, fetch its sellers.json as well
-    if (adsTxtResult.variables?.managerDomain) {
-      const managerDomain = adsTxtResult.variables.managerDomain.split(',')[0].trim();
-      const managerPromise = SellersJsonFetcher.fetch(managerDomain, {
-        timeout: 5000,
-        retries: 1,
-      });
-      promises.push(
-        managerPromise.then((sellersJsonResult) => ({
-          domain: managerDomain,
-          sellersJson: sellersJsonResult.data
-            ? { data: sellersJsonResult.data.sellers, error: sellersJsonResult.error }
-            : { data: [], error: sellersJsonResult.error },
-          adsTxtEntries: [],
-        }))
-      );
-    }
-
-    const results = await Promise.allSettled(promises);
-
-    results.forEach((result) => {
-      if (result.status === 'fulfilled') {
-        analysis.push(result.value);
-      }
-    });
-
-    return analysis;
+    const results = await Promise.allSettled(analysisPromises);
+    return results
+      .filter(
+        (result): result is PromiseFulfilledResult<SellerAnalysis> => result.status === 'fulfilled'
+      )
+      .map((result) => result.value);
   };
 
-  const analyze = async (url: string, duplicateCheck = false) => {
+  /**
+   * Retrive and analyze the ads.txt and sellers.json based on the specified URL.
+   * @param url
+   */
+  const analyze = async (url: string) => {
     if (analyzing) return;
 
     setAnalyzing(true);
@@ -98,15 +96,14 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
     try {
       const domain = new URL(url).hostname;
-      const adsTxtResult = await fetchAdsTxt(domain, duplicateCheck);
+      const adsTxtResult = await fetchAdsTxt(domain);
       setAdsTxtData(adsTxtResult);
-      logger.info('Ads.txt:', adsTxtResult);
+      logger.debug('Ads.txt:', adsTxtResult);
 
       const sellerDomains = getUniqueDomains(adsTxtResult.data);
       const analysis = await analyzeSellersJson(sellerDomains, adsTxtResult);
       setSellerAnalysis(analysis);
-
-      logger.info('Seller analysis:', analysis);
+      logger.debug('Seller analysis:', analysis);
     } catch (error) {
       logger.error('Analysis failed:', error);
     } finally {
@@ -114,11 +111,16 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     }
   };
 
+  /**
+   * Validate whether the specified ads.txt entry is valid
+   * @param domain
+   * @param entry
+   * @returns ValidityResult
+   */
   const isValidEntry = (domain: string, entry: AdsTxt): ValidityResult => {
     const reasons: string[] = [];
-
-    const currentSellerAnalysis = sellerAnalysis.find((analysis) => analysis.domain === domain);
-    const seller = currentSellerAnalysis?.sellersJson?.data.find(
+    const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
+    const seller = currentAnalysis?.sellersJson?.data.find(
       (s) => String(s.seller_id) === String(entry.publisherId)
     );
 
@@ -129,55 +131,43 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       };
     }
 
-    // Validate SELLER_TYPE
-    if (seller.seller_type === 'PUBLISHER') {
-      if (entry.relationship !== 'DIRECT') {
-        reasons.push(
-          chrome.i18n.getMessage('seller_type_mismatch', [seller.seller_type, 'DIRECT'])
-        );
-      }
-    } else if (seller.seller_type === 'INTERMEDIARY') {
-      if (entry.relationship !== 'RESELLER') {
-        reasons.push(
-          chrome.i18n.getMessage('seller_type_mismatch', [seller.seller_type, 'RESELLER'])
-        );
+    // SELLER_TYPE and relationship validation
+    const relationshipMapping: Record<string, string> = {
+      PUBLISHER: 'DIRECT',
+      INTERMEDIARY: 'RESELLER',
+    };
+    const expectedRelationship = relationshipMapping[seller.seller_type];
+    if (expectedRelationship && entry.relationship !== expectedRelationship) {
+      reasons.push(
+        chrome.i18n.getMessage('seller_type_mismatch', [seller.seller_type, expectedRelationship])
+      );
+    }
+
+    // OWNERDOMAIN validation
+    const ownerDomain = adsTxtData?.variables?.ownerDomain;
+    if (ownerDomain && (seller.seller_type === 'PUBLISHER' || seller.seller_type === 'BOTH')) {
+      if (seller.domain !== ownerDomain) {
+        reasons.push(chrome.i18n.getMessage('owner_domain_mismatch', [ownerDomain, seller.domain]));
       }
     }
 
-    // Varidate OWNERDOMAIN
-    if (adsTxtData?.variables?.ownerDomain) {
-      const ownerDomain = adsTxtData.variables.ownerDomain;
-
-      if (seller.seller_type === 'PUBLISHER' || seller.seller_type === 'BOTH') {
-        if (seller.domain !== ownerDomain) {
-          reasons.push(
-            chrome.i18n.getMessage('owner_domain_mismatch', [ownerDomain, seller.domain])
-          );
-        }
-      }
-    }
-
-    // Varidate MANAGERDOMAIN
+    // MANAGERDOMAIN validation
     if (adsTxtData?.variables?.managerDomain) {
       const [managerDomain, countryCode] = adsTxtData.variables.managerDomain
         .split(',')
         .map((s) => s.trim());
 
-      // Check for multiple MANAGERDOMAIN declarations for the same country
-      const managerDomains = Object.entries(adsTxtData.variables).filter(
+      // Whether there are multiple MANAGERDOMAIN declarations for the same country code
+      const managerDomainCount = Object.entries(adsTxtData.variables).filter(
         ([key, value]) => key === 'managerDomain' && value.includes(countryCode)
       ).length;
 
-      if (managerDomains > 1) {
+      if (managerDomainCount > 1) {
         reasons.push(chrome.i18n.getMessage('multiple_manager_domain_declarations', [countryCode]));
       }
 
-      // Check if inventory is available from both
-      const sellerDomain = seller.domain;
-      if (
-        sellerDomain === adsTxtData.variables.ownerDomain &&
-        !['RESELLER'].includes(seller.seller_type)
-      ) {
+      // Whether inventory is provided from both the owner and the seller
+      if (seller.domain === ownerDomain && seller.seller_type !== 'RESELLER') {
         reasons.push(chrome.i18n.getMessage('inventory_from_both_domains'));
       }
     }

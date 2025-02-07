@@ -11,6 +11,7 @@ Home / [Supply Chain ガイド](./schain-guide)
 # AdsTxt Inspector
 
 ## 主な特徴
+
 AdsTxt Inspectorは、プログラマティック広告の透明性とコンプライアンスを確保するために、Ads.txtやSellers.jsonファイルを検証・分析するChrome拡張機能です。これらのファイルを自動的にスキャンし、問題を検出、パブリッシャーとセラーの関係を検証し、詳細なレポートを提供します。Ads.txt, Sellers.jsonを適切に実装することで、[サプライチェーン](./schain-guide)の透明性を向上させ、不正広告のリスクを軽減できます。
 
 ## 主な特徴
@@ -57,10 +58,12 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 ### Summary View
 
-- すべての広告関係の概要
-- エントリ総数とその分類
-- セラー関係の分布
-- エラー件数とその重要度を素早く確認
+- サプライチェーン概要
+- Ads.txt分析(エラー、重複)
+- 関係性の分布(DIRECT/RESELLER)
+- セラー検証
+- セラータイプの分布
+- リスクアセスメント
 
 ### Ads.txt Details
 

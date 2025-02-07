@@ -26,6 +26,9 @@
   "no_ads_txt_data": {
     "message": "Ads.txt データがありません"
   },
+  "download_ads_txt_without_errors": {
+    "message": "エラーをコメントアウトした Ads.txt をダウンロード"
+  },
   "contact": {
     "message": "Ads.txt ファイルの所有者の連絡先です。"
   },
@@ -46,6 +49,24 @@
   },
   "subdomain": {
     "message": "独自の Ads.txt ファイルを持つサブドメインです。"
+  },
+  "owner_domain_not_specified": {
+    "message": "オーナードメインが指定されていません"
+  },
+  "contact_information_missing": {
+    "message": "連絡先情報がありません"
+  },
+  "missing_sellers_json_for_some_domains": {
+    "message": "一部のドメインに Sellers.json がありません"
+  },
+  "owner_domain_not_listed_as_publisher_in_sellers_json": {
+    "message": "オーナードメインが Sellers.json にパブリッシャーとしてリストされていません"
+  },
+  "managerdomain_is_registered_as_a_seller": {
+    "message": "MANAGERDOMAIN がセラーとして登録されています"
+  },
+  "some_sellers_does_not_disclose_information": {
+    "message": "一部のセラーが情報を開示していません"
   },
   "insufficient_fields": {
     "message": "フィールド数が不十分です。少なくとも3つのフィールドが必要です。"

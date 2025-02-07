@@ -24,55 +24,33 @@ export interface SupportedVariables {
 
 export interface FetchAdsTxtResult {
   adsTxtUrl: string;
+  adsTxtContent: string;
   data: AdsTxt[];
   variables: SupportedVariables;
   errors: ErrorDetail[];
+  duplicates: ErrorDetail[];
 }
 
 /**
  * Fetches and parses the ads.txt file for the specified domain.
- * @param domain - The domain name to fetch the ads.txt file from
+ * @param domain Domain name to fetch ads.txt for
  * @returns FetchAdsTxtResult object
  */
-export const fetchAdsTxt = async (
-  domain: string,
-  duplicateCheck: boolean = false
-): Promise<FetchAdsTxtResult> => {
+export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> => {
   const rootDomain = getRootDomain(domain);
-  const adsTxtUrls = [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
-  let adsTxtContent: string | null = null;
+
+  // Retrive ads.txt of the root domain
+  const adsTxtUrls = [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
+  let adsTxtContent = '';
   let adsTxtUrl = '';
-  let subdomainDeclarations: string[] = [];
 
-  // First fetch root domain ads.txt
   for (const url of adsTxtUrls) {
-    try {
-      const response = await fetch(url, {
-        redirect: 'follow',
-        headers: {
-          Accept: 'text/plain',
-        },
-      });
-      const finalUrl = response.url;
-      const finalDomain = new URL(finalUrl).hostname;
-
-      if (response.ok && isWithinScope(finalDomain, rootDomain)) {
-        adsTxtContent = await response.text();
-        adsTxtUrl = finalUrl;
-        break;
-      } else if (response.status === 301 || response.status === 302) {
-        if (finalDomain && isWithinScope(finalDomain, rootDomain)) {
-          const redirectResponse = await fetch(finalUrl);
-          if (redirectResponse.ok) {
-            adsTxtContent = await redirectResponse.text();
-            adsTxtUrl = finalUrl;
-            break;
-          }
-        }
-      }
-    } catch (error) {
-      throw new Error(`Error fetching ads.txt from ${url}: ${(error as Error).message}`);
+    const result = await tryFetchUrl(url, rootDomain);
+    if (result) {
+      adsTxtContent = result.content;
+      adsTxtUrl = result.finalUrl;
+      break;
     }
   }
 
@@ -80,194 +58,308 @@ export const fetchAdsTxt = async (
     throw new Error(`No valid ads.txt found for ${domain}`);
   }
 
-  // If it's a subdomain, check for subdomain declarations in root domain ads.txt
+  // Check if the root domain's ads.txt contains a subdomain declaration
+  // If it does, fetch the ads.txt of the subdomain
   if (isSubdomainDomain) {
-    const lines = adsTxtContent.split(/\r?\n/);
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (trimmedLine.toLowerCase().startsWith('subdomain=')) {
-        const declaredSubdomain = trimmedLine.split('=')[1].trim();
-        subdomainDeclarations.push(declaredSubdomain);
-      }
-    }
-
-    // If this domain is in the declared subdomains, try to fetch its own ads.txt
-    if (subdomainDeclarations.includes(domain)) {
-      try {
-        const subdomainResponse = await fetch(`https://${domain}/ads.txt`);
-        if (subdomainResponse.ok) {
-          // If subdomain has its own ads.txt, use that instead
-          adsTxtContent = await subdomainResponse.text();
-          adsTxtUrl = subdomainResponse.url;
-        }
-        // If subdomain ads.txt doesn't exist, continue with root domain ads.txt (no error)
-      } catch (error) {
-        // If fetching subdomain ads.txt fails, continue with root domain ads.txt (no error)
+    const declaredSubdomains = extractDeclaredSubdomains(adsTxtContent);
+    if (declaredSubdomains.includes(domain)) {
+      const subdomainResult = await tryFetchSubdomainAdsTxt(domain);
+      if (subdomainResult) {
+        adsTxtContent = subdomainResult.content;
+        adsTxtUrl = subdomainResult.finalUrl;
       }
     }
   }
 
+  // Parse the ads.txt content
+  const { entries, variables, errors, duplicates } = parseAdsTxtContent(adsTxtContent, rootDomain);
+
+  return {
+    adsTxtUrl,
+    adsTxtContent,
+    data: entries,
+    variables,
+    errors,
+    duplicates,
+  };
+};
+
+/**
+ * Add "#" to the beginning of the line for error entries to comment out
+ * @param content ads.txt content
+ * @param errors Array of error details
+ * @returns Modified ads.txt content
+ */
+export const commentErrorAdsTxtLines = (content: string, errors: ErrorDetail[]): string => {
+  const lines = content.split(/\r?\n/);
+
+  // Set of line numbers for duplicate entries
+  const lineNumbers = new Set<number>(errors.map((d) => d.line));
+
+  // For each line, add "#" to the beginning if it's a error entry
+  const newLines = lines.map((line, index) => {
+    const lineNumber = index + 1;
+    if (lineNumbers.has(lineNumber)) {
+      // If the line is already commented out, return it as is
+      if (line.trim().startsWith('#')) {
+        return line;
+      }
+      return `#${line} # error: ${errors.find((d) => d.line === lineNumber)?.message}`;
+    }
+    return line;
+  });
+
+  // Return the concatenated lines as the new content string
+  return newLines.join('\n');
+};
+
+// Helper functions
+
+interface FetchResult {
+  content: string;
+  finalUrl: string;
+}
+
+/**
+ * Retrive ads.txt from the specified URL
+ * (if the domain of the final URL is within the scope, even if its redirected, the text will be returned)
+ * @param url URL to fetch ads.txt from
+ * @param rootDomain Root domain name
+ * @returns FetchResult object
+ */
+const tryFetchUrl = async (url: string, rootDomain: string): Promise<FetchResult | null> => {
+  try {
+    const response = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        Accept: 'text/plain',
+      },
+    });
+    const finalUrl = response.url;
+    const finalDomain = new URL(finalUrl).hostname;
+    if (response.ok && isWithinScope(finalDomain, rootDomain)) {
+      return { content: await response.text(), finalUrl };
+    }
+
+    // Redirect (301, 302) case
+    if (
+      (response.status === 301 || response.status === 302) &&
+      finalDomain &&
+      isWithinScope(finalDomain, rootDomain)
+    ) {
+      const redirectResponse = await fetch(finalUrl);
+      if (redirectResponse.ok) {
+        return { content: await redirectResponse.text(), finalUrl };
+      }
+    }
+  } catch (error) {
+    throw new Error(`Error fetching ads.txt from ${url}: ${(error as Error).message}`);
+  }
+  return null;
+};
+
+/**
+ * Retrieve ads.txt from the subdomain
+ * @param domain Subdomain name
+ * @returns FetchResult object
+ */
+const tryFetchSubdomainAdsTxt = async (domain: string): Promise<FetchResult | null> => {
+  try {
+    const url = `https://${domain}/ads.txt`;
+    const response = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        Accept: 'text/plain',
+      },
+    });
+    if (response.ok) {
+      return { content: await response.text(), finalUrl: response.url };
+    }
+  } catch (error) {
+    // Ignore if fetching ads.txt from the subdomain fails
+  }
+  return null;
+};
+
+/**
+ * Extract subdomain declarations ("subdomain=") from the ads.txt of the root domain
+ * @param content ads.txt content
+ * @returns Array of subdomains
+ */
+const extractDeclaredSubdomains = (content: string): string[] => {
+  return content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.toLowerCase().startsWith('subdomain='))
+    .map((line) => line.split('=')[1]?.trim())
+    .filter(Boolean) as string[];
+};
+
+interface ParseResult {
+  entries: AdsTxt[];
+  variables: SupportedVariables;
+  errors: ErrorDetail[];
+  duplicates: ErrorDetail[];
+}
+
+/**
+ * Parse the contents of ads.txt
+ * @param content ads.txt content
+ * @param rootDomain Root domain name
+ * @returns ParseResult object
+ */
+const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult => {
   const entries: AdsTxt[] = [];
   const errors: ErrorDetail[] = [];
-  const variables: SupportedVariables = {
-    ownerDomain: rootDomain, // Default owner domain is the root domain
+  const duplicates: ErrorDetail[] = [];
+  const variables: SupportedVariables = { ownerDomain: rootDomain };
+
+  const lines = content.split(/\r?\n/);
+
+  // Regular expressions for variable declarations
+  const VARIABLE_REGEXES: Record<string, RegExp> = {
+    contact: /^CONTACT=/i,
+    inventoryPartnerdomain: /^INVENTORYPARTNERDOMAIN=/i,
+    managerDomain: /^MANAGERDOMAIN=/i,
+    ownerDomain: /^OWNERDOMAIN=/i,
+    subDomain: /^SUBDOMAIN=/i,
   };
 
-  try {
-    const lines = adsTxtContent.split(/\r?\n/);
+  lines.forEach((line, index) => {
+    const lineNumber = index + 1;
+    let trimmedLine = line.trim();
 
-    lines.forEach((line, index) => {
-      const lineNumber = index + 1;
-      let trimmedLine = line.trim();
+    // Skip empty lines and comment lines
+    if (!trimmedLine || trimmedLine.startsWith('#')) {
+      return;
+    }
 
-      // Skip empty lines and comments
-      if (trimmedLine === '' || trimmedLine.startsWith('#')) {
-        return;
-      }
+    // Remove inline comments
+    const commentIndex = trimmedLine.indexOf('#');
+    if (commentIndex !== -1) {
+      trimmedLine = trimmedLine.substring(0, commentIndex).trim();
+    }
 
-      // Remove comments from the line
-      const commentIndex = trimmedLine.indexOf('#');
-      if (commentIndex !== -1) {
-        trimmedLine = trimmedLine.substring(0, commentIndex).trim();
-      }
-
-      // Process supported variables
-      const variableMatches = {
-        contact: /^CONTACT=/i,
-        inventoryPartnerdomain: /^INVENTORYPARTNERDOMAIN=/i,
-        managerDomain: /^MANAGERDOMAIN=/i,
-        ownerDomain: /^OWNERDOMAIN=/i,
-        subDomain: /^SUBDOMAIN=/i,
-      };
-
-      // Check if the line is a variable declaration
-      for (const [key, regex] of Object.entries(variableMatches)) {
-        if (regex.test(trimmedLine)) {
-          const value = trimmedLine.split('=')[1].trim();
+    // Process variable declaration lines
+    for (const [key, regex] of Object.entries(VARIABLE_REGEXES)) {
+      if (regex.test(trimmedLine)) {
+        const value = trimmedLine.split('=')[1]?.trim();
+        if (value) {
           if (key === 'subDomain') {
-            // Initialize subDomain array if it doesn't exist
-            if (!variables.subDomain) {
-              variables.subDomain = [];
-            }
-            // Add the subdomain if it's not already in the array
+            variables.subDomain = variables.subDomain || [];
             if (!variables.subDomain.includes(value)) {
               variables.subDomain.push(value);
             }
           } else {
-            variables[key as keyof Omit<SupportedVariables, 'subDomain'>] = value;
+            (variables as any)[key] = value;
           }
-          return;
         }
-      }
-
-      // Rest of the code remains the same for processing ads.txt entries
-      const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
-
-      // Fields must have at least 3 fields
-      if (fields.length < 3) {
-        errors.push({
-          line: lineNumber,
-          content: line,
-          message: chrome.i18n.getMessage('insufficient_fields'),
-        });
         return;
       }
+    }
 
-      const [domainField, publisherId, relationshipField, certificationAuthorityId] = fields;
+    // Process ads.txt entry lines
+    const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
+    if (fields.length < 3) {
+      errors.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('insufficient_fields'),
+      });
+      return;
+    }
 
-      // Check if the relationship field is either "DIRECT" or "RESELLER"
-      const relationship = relationshipField.toUpperCase();
-      if (relationship !== 'DIRECT' && relationship !== 'RESELLER') {
-        errors.push({
-          line: lineNumber,
-          content: line,
-          message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
-        });
-        return;
-      }
+    const [domainField, publisherId, relationshipField, certificationAuthorityId] = fields;
+    const relationship = relationshipField.toUpperCase();
 
-      // Check if the domain field is a valid domain name
-      if (!isValidDomain(domainField)) {
-        errors.push({
-          line: lineNumber,
-          content: line,
-          message: chrome.i18n.getMessage('invalid_domain', [domainField]),
-        });
-        return;
-      }
+    // Validate the relationship type. Only 'DIRECT' and 'RESELLER' are allowed.
+    if (relationship !== 'DIRECT' && relationship !== 'RESELLER') {
+      errors.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
+      });
+      return;
+    }
 
-      // Check if the publisher ID is alphanumeric with allowed characters
-      if (!publisherId.match(/^[a-zA-Z0-9.\-_=]+$/)) {
-        errors.push({
-          line: lineNumber,
-          content: line,
-          message: chrome.i18n.getMessage('invalid_publisher_id', [publisherId]),
-        });
-        return;
-      }
+    // Validate the domain name
+    if (!isValidDomain(domainField)) {
+      errors.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('invalid_domain', [domainField]),
+      });
+      return;
+    }
 
-      // Check if the certification authority ID is alphanumeric with allowed characters
-      if (certificationAuthorityId && !certificationAuthorityId.match(/^[a-zA-Z0-9.\-_]+$/)) {
-        errors.push({
-          line: lineNumber,
-          content: line,
-          message: chrome.i18n.getMessage('invalid_certification_authority_id', [
-            certificationAuthorityId,
-          ]),
-        });
-        return;
-      }
+    // Validate the publisher ID and certification authority
+    if (!publisherId.match(/^[a-zA-Z0-9.\-_=]+$/)) {
+      errors.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('invalid_publisher_id', [publisherId]),
+      });
+      return;
+    }
 
-      // Add valid entry
-      const entry: AdsTxt = {
-        domain: domainField.toLowerCase(),
-        publisherId,
-        relationship: relationship as 'DIRECT' | 'RESELLER',
-      };
+    // Validate the certification authority ID
+    if (certificationAuthorityId && !certificationAuthorityId.match(/^[a-zA-Z0-9.\-_]+$/)) {
+      errors.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('invalid_certification_authority_id', [
+          certificationAuthorityId,
+        ]),
+      });
+      return;
+    }
 
-      if (certificationAuthorityId) {
-        entry.certificationAuthorityId = certificationAuthorityId;
-      }
+    const entry: AdsTxt = {
+      domain: domainField.toLowerCase(),
+      publisherId,
+      relationship: relationship as 'DIRECT' | 'RESELLER',
+    };
 
-      if (
-        !entries.some(
-          (e) =>
-            e.domain === entry.domain &&
-            e.publisherId === entry.publisherId &&
-            e.relationship === entry.relationship
-        )
-      ) {
-        entries.push(entry);
-      } else {
-        if (duplicateCheck) {
-          errors.push({
-            line: lineNumber,
-            content: line,
-            message: chrome.i18n.getMessage('duplicate_entries'),
-          });
-        }
-      }
-    });
-  } catch (error) {
-    errors.push({
-      line: 0,
-      content: '',
-      message: `Error parsing ads.txt: ${(error as Error).message}`,
-    });
-  }
+    if (certificationAuthorityId) {
+      entry.certificationAuthorityId = certificationAuthorityId;
+    }
 
+    const isDuplicate = entries.some(
+      (e) =>
+        e.domain === entry.domain &&
+        e.publisherId === entry.publisherId &&
+        e.relationship === entry.relationship
+    );
+
+    if (isDuplicate) {
+      duplicates.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('duplicate_entries'),
+      });
+    } else {
+      entries.push(entry);
+    }
+  });
+
+  // Return the entries sorted by domain name
   return {
-    adsTxtUrl,
-    data: entries.sort((a, b) => a.domain.localeCompare(b.domain)),
+    entries: entries.sort((a, b) => a.domain.localeCompare(b.domain)),
     variables,
     errors,
+    duplicates,
   };
 };
 
-// Other utility functions remain unchanged
+// Utility functions
+
+/**
+ * Get the root domain from the domain name
+ * @param domain Domain name
+ * @returns Root domain name
+ */
 export const getRootDomain = (domain: string): string => {
   const parsed = psl.parse(domain);
-
   if ('domain' in parsed) {
     return parsed.domain as string;
   } else {
@@ -275,28 +367,49 @@ export const getRootDomain = (domain: string): string => {
   }
 };
 
+/**
+ * Whether the target domain is within the scope of the root domain
+ */
 const isWithinScope = (targetDomain: string, rootDomain: string): boolean => {
   return targetDomain === rootDomain || targetDomain.endsWith(`.${rootDomain}`);
 };
 
+/**
+ * Check if the domain is a subdomain of the root domain
+ * @param domain Domain name to check
+ * @param rootDomain Root domain name
+ */
 const isSubdomain = (domain: string, rootDomain: string): boolean => {
-  if (domain === rootDomain) return false;
-  if (domain === `www.${rootDomain}`) return false;
+  if (domain === rootDomain || domain === `www.${rootDomain}`) return false;
   return domain.endsWith(`.${rootDomain}`);
 };
 
+/**
+ * Wether the domain string is valid or not
+ * @param domain Domain name to validate
+ * @returns True if the domain is valid, false otherwise
+ */
 const isValidDomain = (domain: string): boolean => {
   return psl.isValid(domain);
 };
 
+/**
+ * Returns an array of unique domains from the given ads.txt data
+ * @param adsTxtData Array of ads.txt records
+ * @returns Array of unique domains
+ */
 export const getUniqueDomains = (adsTxtData: AdsTxt[]): string[] => {
   const uniqueDomains = new Set<string>();
-  adsTxtData.forEach((entry) => {
-    uniqueDomains.add(entry.domain);
-  });
+  adsTxtData.forEach((entry) => uniqueDomains.add(entry.domain));
   return Array.from(uniqueDomains).sort();
 };
 
+/**
+ * Extracts ads.txt records for a given domain
+ * @param adsTxtArray Array of ads.txt records
+ * @param domain Domain name to filter by
+ * @returns Array of ads.txt records for the given domain
+ */
 export const filterAdsTxtByDomain = (adsTxtArray: AdsTxt[], domain: string): AdsTxt[] => {
   return adsTxtArray.filter((record) => record.domain === domain);
 };
