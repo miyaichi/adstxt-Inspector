@@ -23,7 +23,7 @@ export default function App() {
   const [tabInfo, setTabInfo] = useState<TabInfo | null>(null);
   const [connectionManager, setConnectionManager] = useState<ConnectionManager | null>(null);
   const [contentScriptContext, setContentScriptContext] = useState<Context>('undefined');
-  const { analyzing, adsTxtData, sellerAnalysis, analyze, isValidEntry } = useAdsSellers();
+  const { analyzing, adsTxtData, sellerAnalysis, analyze, isVerifiedEntry } = useAdsSellers();
   const [duplicateCheck, setDuplicateCheck] = useState<boolean>(false);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [storeUrl, setStoreUrl] = useState<string | null>(null);
@@ -183,6 +183,7 @@ export default function App() {
                 analyzing={analyzing}
                 adsTxtData={adsTxtData}
                 sellerAnalysis={sellerAnalysis}
+                isVerifiedEntry={isVerifiedEntry}
               />
             </TabPanel>
 
@@ -190,7 +191,7 @@ export default function App() {
               <AdsTxtPanel
                 analyzing={analyzing}
                 adsTxtData={adsTxtData}
-                isValidEntry={isValidEntry}
+                isVerifiedEntry={isVerifiedEntry}
                 duplicateCheck={duplicateCheck}
               />
             </TabPanel>

@@ -1,19 +1,21 @@
 import { AlertTriangle } from 'lucide-react';
 import React, { useMemo } from 'react';
-import type { SellerAnalysis } from '../../hooks/useAdsSellers';
-import type { FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
+import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
+import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { Tooltip } from './Tooltip';
 
 interface SummaryPanelProps {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
+  isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
 export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   analyzing,
   adsTxtData,
   sellerAnalysis,
+  isVerifiedEntry,
 }) => {
   const analysis = useMemo(() => {
     if (!adsTxtData || sellerAnalysis.length === 0) return null;
@@ -95,11 +97,19 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   const syntaxErrorCount = adsTxtData?.errors?.length || 0;
   const duplicateEntryCount = adsTxtData?.duplicates?.length || 0;
   const totalAdsTxtEntries = adsTxtData?.data.length || 0;
-  const validSellerCount = sellerAnalysis.reduce(
+  const existingSellerCoun = sellerAnalysis.reduce(
     (acc, analysis) => acc + (analysis.sellersJson?.data.length || 0),
     0
   );
-  const sellerCoverageRate = (validSellerCount / totalAdsTxtEntries) * 100;
+  const verifiedSellerCount =
+    adsTxtData?.data.reduce(
+      (acc, entry) => acc + (isVerifiedEntry(entry.domain, entry).isVerified ? 1 : 0),
+      0
+    ) || 0;
+  const SellerExistingRate =
+    totalAdsTxtEntries === 0 ? 0 : (existingSellerCoun / totalAdsTxtEntries) * 100;
+  const sellerVerificationRate =
+    totalAdsTxtEntries === 0 ? 0 : (verifiedSellerCount / totalAdsTxtEntries) * 100;
 
   if (analyzing) {
     return (
@@ -145,15 +155,15 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         <h3 className="text-lg font-semibold mb-4">Ads.txt Analysis</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-red-50 p-3 rounded-lg flex flex-col items-center justify-center">
-            <div className="text-sm font-medium text-red-800">Syntax Errors</div>
+            <div className="text-sm font-medium text-red-800">Errors</div>
             <div className="text-2xl font-bold text-red-600">{syntaxErrorCount}</div>
           </div>
           <div className="bg-amber-50 p-3 rounded-lg flex flex-col items-center justify-center">
-            <div className="text-sm font-medium text-amber-800">Duplicate Entries</div>
+            <div className="text-sm font-medium text-amber-800">Duplicate</div>
             <div className="text-2xl font-bold text-amber-600">{duplicateEntryCount}</div>
           </div>
           <div className="bg-blue-50 p-3 rounded-lg flex flex-col items-center justify-center">
-            <div className="text-sm font-medium text-blue-800">Total Entries</div>
+            <div className="text-sm font-medium text-blue-800">Total</div>
             <div className="text-2xl font-bold text-blue-600">{totalAdsTxtEntries}</div>
           </div>
         </div>
@@ -181,20 +191,40 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       {/* Seller Verification */}
       <div className="rounded-lg border p-4">
         <h3 className="text-lg font-semibold mb-4">Seller Verification</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Verified Sellers</span>
-            <span className="text-sm font-bold">{sellerCoverageRate.toFixed(1)}%</span>
+        <div className="space-y-6">
+          {/* Verified Sellers */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Verified Sellers</span>
+              <span className="text-sm font-bold">{sellerVerificationRate.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-green-600 h-2 rounded-full"
+                style={{ width: `${sellerVerificationRate}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Verified: {verifiedSellerCount}</span>
+              <span>Total: {totalAdsTxtEntries}</span>
+            </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full"
-              style={{ width: `${sellerCoverageRate}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>Valid: {validSellerCount}</span>
-            <span>Total: {totalAdsTxtEntries}</span>
+          {/* Existing Sellers */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Existing Sellers</span>
+              <span className="text-sm font-bold">{SellerExistingRate.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full"
+                style={{ width: `${SellerExistingRate}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Existing: {existingSellerCoun}</span>
+              <span>Total: {totalAdsTxtEntries}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -205,7 +235,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-green-50 p-3 rounded-lg flex flex-col items-center justify-center">
             <div className="text-sm font-medium text-green-800">
-              <Tooltip content={chrome.i18n.getMessage('publisher')}>PUBLISHERS</Tooltip>
+              <Tooltip content={chrome.i18n.getMessage('publisher')}>Pub</Tooltip>
             </div>
             <div className="text-2xl font-bold text-green-600">
               {analysis.sellerTypes['PUBLISHER'] || 0}
@@ -213,7 +243,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           </div>
           <div className="bg-blue-50 p-3 rounded-lg flex flex-col items-center justify-center">
             <div className="text-sm font-medium text-blue-800">
-              <Tooltip content={chrome.i18n.getMessage('intermediary')}>INTERMEDIARIES</Tooltip>
+              <Tooltip content={chrome.i18n.getMessage('intermediary')}>Int</Tooltip>
             </div>
             <div className="text-2xl font-bold text-blue-600">
               {analysis.sellerTypes['INTERMEDIARY'] || 0}
@@ -221,7 +251,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           </div>
           <div className="bg-purple-50 p-3 rounded-lg flex flex-col items-center justify-center">
             <div className="text-sm font-medium text-purple-800">
-              <Tooltip content={chrome.i18n.getMessage('both')}>BOTH</Tooltip>
+              <Tooltip content={chrome.i18n.getMessage('both')}>Both</Tooltip>
             </div>
             <div className="text-2xl font-bold text-purple-600">
               {analysis.sellerTypes['BOTH'] || 0}

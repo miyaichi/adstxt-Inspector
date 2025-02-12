@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "AdsTxt Inspector",
-  "version": "1.4",
+  "version": "1.5",
   "description": "__MSG_app_description__",
   "default_locale": "en",
-  "permissions": ["activeTab", "tabs", "sidePanel", "storage", "unlimitedStorage"],
+  "permissions": ["activeTab", "sidePanel", "storage", "unlimitedStorage"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"

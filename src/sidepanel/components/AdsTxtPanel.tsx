@@ -3,21 +3,21 @@ import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { commentErrorAdsTxtLines } from '../../utils/fetchAdsTxt';
-import DownloadAdsTxt from './DownloadAdsTxt';
+import { DownloadAdsTxt } from './DownloadAdsTxt';
 import { SearchAndFilter } from './SearchAndFilter';
 import { Tooltip } from './Tooltip';
 
 interface AdsTxtPanelProps {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
-  isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
+  isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
   duplicateCheck: boolean;
 }
 
 export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   analyzing,
   adsTxtData,
-  isValidEntry,
+  isVerifiedEntry,
   duplicateCheck,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -95,9 +95,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             : true;
 
           // Validity filter
-          const validity = isValidEntry(domain, entry);
+          const validity = isVerifiedEntry(domain, entry);
           const matchesValidity = selectedFilters.validity
-            ? (selectedFilters.validity === 'valid') === validity.isValid
+            ? (selectedFilters.validity === 'valid') === validity.isVerified
             : true;
 
           return matchesSearch && matchesRelationship && matchesValidity;
@@ -120,7 +120,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
       totalEntries,
       filteredCount,
     };
-  }, [adsTxtData, searchTerm, selectedDomain, selectedFilters, isValidEntry]);
+  }, [adsTxtData, searchTerm, selectedDomain, selectedFilters, isVerifiedEntry]);
 
   const handleFilterChange = (filterKey: string, value: string) => {
     setSelectedFilters((prev) => ({
@@ -283,12 +283,14 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             </div>
             <div className="space-y-2 ml-4">
               {entries.map((entry, index) => {
-                const validity = isValidEntry(domain, entry);
+                const validity = isVerifiedEntry(domain, entry);
                 return (
                   <div
                     key={`${domain}-${index}`}
                     className={`entry-card ${
-                      validity.isValid ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                      validity.isVerified
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-red-200 bg-red-50'
                     }`}
                   >
                     <div className="entry-card-content">
@@ -318,14 +320,14 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                             </span>
                           </Tooltip>
 
-                          {validity.isValid ? (
+                          {validity.isVerified ? (
                             <Check className="w-5 h-5 text-green-500" />
                           ) : (
                             <AlertTriangle className="w-5 h-5 text-red-500" />
                           )}
                         </div>
                       </div>
-                      {!validity.isValid && validity.reasons.length > 0 && (
+                      {!validity.isVerified && validity.reasons.length > 0 && (
                         <div className="flex flex-col text-red-600 space-y-1">
                           {validity.reasons.map((reason, idx) => (
                             <span key={idx}>{reason}</span>

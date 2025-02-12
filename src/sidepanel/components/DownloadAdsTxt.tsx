@@ -5,7 +5,7 @@ interface DownloadAdsTxtProps {
   children: React.ReactNode;
 }
 
-const DownloadAdsTxt: React.FC<DownloadAdsTxtProps> = ({ content, children }) => {
+export const DownloadAdsTxt: React.FC<DownloadAdsTxtProps> = ({ content, children }) => {
   const downloadFile = () => {
     const blob = new Blob([content], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
@@ -28,5 +28,3 @@ const DownloadAdsTxt: React.FC<DownloadAdsTxtProps> = ({ content, children }) =>
     </button>
   );
 };
-
-export default DownloadAdsTxt;

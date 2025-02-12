@@ -15,7 +15,7 @@ export interface SellerAnalysis {
 }
 
 export interface ValidityResult {
-  isValid: boolean;
+  isVerified: boolean;
   reasons: string[];
 }
 
@@ -24,7 +24,7 @@ interface UseAdsSellersReturn {
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
   analyze: (url: string) => Promise<void>;
-  isValidEntry: (domain: string, entry: AdsTxt) => ValidityResult;
+  isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
 const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
@@ -117,7 +117,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
    * @param entry
    * @returns ValidityResult
    */
-  const isValidEntry = (domain: string, entry: AdsTxt): ValidityResult => {
+  const isVerifiedEntry = (domain: string, entry: AdsTxt): ValidityResult => {
     const reasons: string[] = [];
     const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
     const seller = currentAnalysis?.sellersJson?.data.find(
@@ -126,7 +126,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
     if (!seller) {
       return {
-        isValid: false,
+        isVerified: false,
         reasons: [chrome.i18n.getMessage('seller_not_found')],
       };
     }
@@ -173,7 +173,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     }
 
     return {
-      isValid: reasons.length === 0,
+      isVerified: reasons.length === 0,
       reasons,
     };
   };
@@ -183,6 +183,6 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     adsTxtData,
     sellerAnalysis,
     analyze,
-    isValidEntry,
+    isVerifiedEntry,
   };
 };
