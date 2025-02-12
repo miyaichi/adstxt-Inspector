@@ -112,7 +112,7 @@ The extension provides three main views:
 
 The source code is available on [GitHub](https://github.com/miyaichi/adstxt-Inspector). Contributions are welcome!
 
-# Support
+## Support
 
 If you have any questions, suggestions, or issues, please let us know [here](https://github.com/miyaichi/adstxt-Inspector/issues).
 
