@@ -81,7 +81,7 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 
 # サポート
 
-質問や提案、問題がある場合は、![こちら](https://github.com/miyaichi/adstxt-Inspector/issues)から内容をお知らせください。
+質問や提案、問題がある場合は、[こちら](https://github.com/miyaichi/adstxt-Inspector/issues) から内容をお知らせください。
 
 ## 参考ドキュメント
 
