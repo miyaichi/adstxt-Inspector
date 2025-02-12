@@ -28,14 +28,6 @@ a {
   }
 }
 
-img {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: block;
-  clear: both;
-}
-
 // Header
 header {
   background-color: $primary-color;
