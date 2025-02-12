@@ -28,6 +28,13 @@ a {
   }
 }
 
+img {
+  display: block;
+  max-width: 80%;
+  margin: 2rem auto;
+  height: auto;
+}
+
 // Header
 header {
   background-color: $primary-color;
