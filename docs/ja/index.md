@@ -79,6 +79,10 @@ AdsTxt Inspectorは、プログラマティック広告の透明性とコンプ�
 - 関係検証の結果
 - ソースのSellers.jsonファイルへのリンク
 
+# サポート
+
+質問や提案、問題がある場合は、![こちら](https://github.com/miyaichi/adstxt-Inspector/issues)から内容をお知らせください。
+
 ## 参考ドキュメント
 
 ### Ads.txt 規格
