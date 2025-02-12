@@ -28,6 +28,12 @@ a {
   }
 }
 
+img {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 // Header
 header {
   background-color: $primary-color;
