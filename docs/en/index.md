@@ -12,6 +12,8 @@ Home / [Schain Guide](./schain-guide)
 
 AdsTxt Inspector is a Chrome extension that helps you validate and analyze Ads.txt and Sellers.json files for programmatic advertising transparency and compliance. It automatically scans these files to detect issues, validates relationships between publishers and sellers, and provides detailed reports.
 
+![AdsTxt Inspector](../images/adstxt-inspector-en.png)
+
 ## Key Features
 
 ### Real-time Validation
@@ -109,6 +111,10 @@ The extension provides three main views:
 ## Contributing
 
 The source code is available on [GitHub](https://github.com/miyaichi/adstxt-Inspector). Contributions are welcome!
+
+## Support
+
+If you have any questions, suggestions, or issues, please let us know [here](https://github.com/miyaichi/adstxt-Inspector/issues).
 
 ## Acknowledgements
 
