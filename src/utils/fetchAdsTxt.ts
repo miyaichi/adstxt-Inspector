@@ -19,7 +19,7 @@ export interface SupportedVariables {
   inventoryPartnerdomain?: string;
   managerDomain?: string;
   ownerDomain?: string;
-  subDomain?: string[];
+  subDomains?: string[];
 }
 
 export interface FetchAdsTxtResult {
@@ -246,9 +246,9 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
         const value = trimmedLine.split('=')[1]?.trim();
         if (value) {
           if (key === 'subDomain') {
-            variables.subDomain = variables.subDomain || [];
-            if (!variables.subDomain.includes(value)) {
-              variables.subDomain.push(value);
+            variables.subDomains = variables.subDomains || [];
+            if (!variables.subDomains.includes(value)) {
+              variables.subDomains.push(value);
             }
           } else {
             (variables as any)[key] = value;
