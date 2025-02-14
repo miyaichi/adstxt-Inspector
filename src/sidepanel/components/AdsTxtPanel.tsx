@@ -223,13 +223,6 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                     </span>
                   </Tooltip>
                 )}
-                {adsTxtData.variables.managerDomain && (
-                  <Tooltip content={chrome.i18n.getMessage('managerdomain')}>
-                    <span className="font-medium">
-                      Manager Domain: {adsTxtData.variables.managerDomain}
-                    </span>
-                  </Tooltip>
-                )}
                 {adsTxtData.variables.ownerDomain && (
                   <Tooltip content={chrome.i18n.getMessage('ownerdomain')}>
                     <span className="font-medium">
@@ -237,15 +230,19 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                     </span>
                   </Tooltip>
                 )}
+                {adsTxtData.variables.managerDomains &&
+                  adsTxtData.variables.managerDomains.length > 0 && (
+                    <Tooltip content={chrome.i18n.getMessage('managerdomain')}>
+                      <span className="font-medium">
+                        Manager Domain: {adsTxtData.variables.managerDomains.join(', ')}
+                      </span>
+                    </Tooltip>
+                  )}
                 {adsTxtData.variables.subDomains && adsTxtData.variables.subDomains.length > 0 && (
                   <Tooltip content={chrome.i18n.getMessage('subdomain')}>
-                    <div className="flex flex-col">
-                      {adsTxtData.variables.subDomains.map((subDomain, index) => (
-                        <span key={index} className="font-medium">
-                          Sub Domain: {subDomain}
-                        </span>
-                      ))}
-                    </div>
+                    <span className="font-medium">
+                      Sub Domain: {adsTxtData.variables.subDomains.join(', ')}
+                    </span>
                   </Tooltip>
                 )}
               </div>

@@ -17,7 +17,7 @@ export interface ErrorDetail {
 export interface SupportedVariables {
   contact?: string;
   inventoryPartnerdomain?: string;
-  managerDomain?: string;
+  managerDomains?: string[];
   ownerDomain?: string;
   subDomains?: string[];
 }
@@ -249,6 +249,24 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
             variables.subDomains = variables.subDomains || [];
             if (!variables.subDomains.includes(value)) {
               variables.subDomains.push(value);
+            }
+          } else if (key === 'managerDomain') {
+            variables.managerDomains = variables.managerDomains || [];
+            const [managerDomain, countryCode] = value.split(',').map((s) => s.trim());
+            const managerDomainCount = Object.entries(variables).filter(
+              ([k, v]) =>
+                k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
+            ).length;
+            if (managerDomainCount > 1) {
+              errors.push({
+                line: lineNumber,
+                content: line,
+                message: chrome.i18n.getMessage('multiple_manager_domain_declarations', [
+                  countryCode,
+                ]),
+              });
+            } else {
+              variables.managerDomains.push(value);
             }
           } else {
             (variables as any)[key] = value;

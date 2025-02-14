@@ -173,7 +173,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                 {analysis.domain === adsTxtData?.variables?.ownerDomain && (
                   <span className="tag tag-blue">Owner Domain</span>
                 )}
-                {analysis.domain === adsTxtData?.variables?.managerDomain?.split(',')[0] && (
+                {adsTxtData?.variables?.managerDomains?.includes(analysis.domain) && (
                   <span className="tag tag-blue">Manager Domain</span>
                 )}
               </div>

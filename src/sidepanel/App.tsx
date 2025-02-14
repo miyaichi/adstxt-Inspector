@@ -129,7 +129,11 @@ export default function App() {
                   <span>{chrome.i18n.getMessage('duplicate_check')}</span>
                 </label>
               </div>
-              <Button onClick={handleAnalyze} disabled={!tabInfo?.tabId || analyzing} className="ml-auto">
+              <Button
+                onClick={handleAnalyze}
+                disabled={!tabInfo?.tabId || analyzing}
+                className="ml-auto"
+              >
                 {analyzing
                   ? chrome.i18n.getMessage('analyzing')
                   : chrome.i18n.getMessage('analyze')}
