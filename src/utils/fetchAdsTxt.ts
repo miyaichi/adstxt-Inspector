@@ -246,6 +246,15 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
         const value = trimmedLine.split('=')[1]?.trim();
         if (value) {
           if (key === 'subDomain') {
+            if (!isValidDomain(value)) {
+              errors.push({
+                line: lineNumber,
+                content: line,
+                message: chrome.i18n.getMessage('invalid_domain', [value]),
+              });
+              return;
+            }
+        
             variables.subDomains = variables.subDomains || [];
             if (!variables.subDomains.includes(value)) {
               variables.subDomains.push(value);
@@ -253,6 +262,15 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
           } else if (key === 'managerDomain') {
             variables.managerDomains = variables.managerDomains || [];
             const [managerDomain, countryCode] = value.split(',').map((s) => s.trim());
+            if (!isValidDomain(managerDomain)) {
+              errors.push({
+                line: lineNumber,
+                content: line,
+                message: chrome.i18n.getMessage('invalid_domain', [managerDomain]),
+              });
+              return;
+            }
+
             const managerDomainCount = Object.entries(variables).filter(
               ([k, v]) =>
                 k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
