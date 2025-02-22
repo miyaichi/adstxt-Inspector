@@ -254,7 +254,7 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
               });
               return;
             }
-        
+
             variables.subDomains = variables.subDomains || [];
             if (!variables.subDomains.includes(value)) {
               variables.subDomains.push(value);
@@ -378,9 +378,11 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
     }
   });
 
-  // Return the entries sorted by domain name
+  // Return the entries sorted by domain name and publisher ID
   return {
-    entries: entries.sort((a, b) => a.domain.localeCompare(b.domain)),
+    entries: entries.sort(
+      (a, b) => a.domain.localeCompare(b.domain) || a.publisherId.localeCompare(b.publisherId)
+    ),
     variables,
     errors,
     duplicates,

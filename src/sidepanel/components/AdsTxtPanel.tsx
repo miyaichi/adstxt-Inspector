@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { commentErrorAdsTxtLines } from '../../utils/fetchAdsTxt';
-import { DownloadAdsTxt } from './DownloadAdsTxt';
+import { DownloadPlainAdsTxt } from './DownloadAdsTxt';
 import { SearchAndFilter } from './SearchAndFilter';
 import { Tooltip } from './Tooltip';
 
@@ -163,13 +163,15 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             <h3 className="panel-header-title text-red-600">Errors Found ({errors.length})</h3>
           </div>
           <div className="panel-content">
-            {/* DownloadAdsTxt component */}
+            {/* DownloadPlainAdsTxt component */}
             {totalEntries > 0 && errors.length > 0 && (
               <div className="flex justify-end space-x-2 cursor-pointer">
-                <DownloadAdsTxt content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}>
+                <DownloadPlainAdsTxt
+                  content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}
+                >
                   <span>{chrome.i18n.getMessage('download_ads_txt_without_errors')}</span>
                   <Download className="w-4 h-4" />
-                </DownloadAdsTxt>
+                </DownloadPlainAdsTxt>
               </div>
             )}
             {/* Error list */}
