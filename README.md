@@ -14,15 +14,7 @@ The extension consists of three main components:
    - Manages scheduled scans
    - Controls alert notifications
 
-2. **Content Script**
-
-   - Verifies and retrieves ads.txt file content
-   - Fetches and parses sellers.json
-   - Monitors tab information
-   - Maintains bidirectional communication with Side Panel
-   - Prevents duplicate initialization
-
-3. **Side Panel (React UI)**
+2. **Side Panel (React UI)**
    - Visualizes scan results
    - Displays real-time errors
    - Provides advertising service analysis view
@@ -55,8 +47,6 @@ The extension consists of three main components:
 
 ### Reporting Features
 
-- Customizable reports
-- Multiple export formats (JSON/CSV)
 - Error summaries
 - Improvement suggestions
 
@@ -75,25 +65,27 @@ Robust state management system utilizing ConnectionManager:
 └── src/
     ├── background/
     │   └── background.ts
-    ├── contentScript/
-    │   └── contentScript.ts
     ├── hooks/
     │   └── useAdsSellers.ts
     ├── sidepanel/
     │   ├── App.tsx
     │   ├── components/
     │   │   ├── AdsTxtPanel.tsx
+    │   │   ├── SearchAndFilter.tsx
     │   │   ├── SellerJsonPanel.tsx
+    │   │   ├── SummaryPanel.tsx
+    │   │   ├── Tooltips.tsx
+    │   │   ├── UpdateNotification.tsx
     │   │   └─ ui/
     │   │       ├── Alert.tsx
     │   │       └── Button.tsx
     │   └── index.tsx
     ├── styles/
+    │   └── global.css
     ├── types/
     │   ├── messages.ts
     │   └── types.ts
     └── utils/
-        ├── connectionManager.ts
         ├── fetchAdsTxt.ts
         ├── fetchSellersJson.ts
         ├── fetchWithTimeout.ts
