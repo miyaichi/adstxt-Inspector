@@ -262,7 +262,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         filters={filters}
         selectedFilters={selectedFilters}
         onFilterChange={handleFilterChange}
-        placeholder="Search by Publisher ID, Domain, or TAG-ID..."
+        placeholder="Search by Publisher ID, Domain, or CA ID..."
         showResultCount={true}
         totalResults={totalEntries}
         filteredResults={filteredCount}
@@ -298,7 +298,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           <div className="text-gray-600">Publisher ID: {entry.publisherId}</div>
                           {entry.certificationAuthorityId && (
                             <div className="text-gray-500">
-                              TAG-ID: {entry.certificationAuthorityId}
+                              CA ID: {entry.certificationAuthorityId}
                             </div>
                           )}
                         </div>

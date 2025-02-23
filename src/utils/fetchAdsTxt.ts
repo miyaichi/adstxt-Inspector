@@ -381,7 +381,10 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
   // Return the entries sorted by domain name and publisher ID
   return {
     entries: entries.sort(
-      (a, b) => a.domain.localeCompare(b.domain) || a.publisherId.localeCompare(b.publisherId)
+      (a, b) => a.domain.localeCompare(b.domain) || 
+      a.publisherId.length - b.publisherId.length || 
+      a.publisherId.localeCompare(b.publisherId) ||
+      a.relationship.localeCompare(b.relationship)
     ),
     variables,
     errors,
