@@ -176,7 +176,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         </div>
         <div className="flex justify-end">
           <DownloadCsvAdsTxt domain={analysis.ownerDomain || ''} adsTxt={adsTxtData?.data || []}>
-            <button className="external-link">Download Valid Data</button>
+            <span>Download Valid Data</span>
           </DownloadCsvAdsTxt>
         </div>
       </div>
