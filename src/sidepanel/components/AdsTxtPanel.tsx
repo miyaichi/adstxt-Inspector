@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { commentErrorAdsTxtLines } from '../../utils/fetchAdsTxt';
-import { DownloadPlainAdsTxt } from './DownloadAdsTxt';
+import { DownloadCsvAdsTxt, DownloadPlainAdsTxt } from './DownloadAdsTxt';
 import { SearchAndFilter } from './SearchAndFilter';
 import { Tooltip } from './Tooltip';
 
@@ -193,19 +193,30 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
 
       {/* Ads.txt Header */}
       <div className="panel-section">
-        <div className="panel-header flex items-center justify-between">
-          <div className="info-item">
-            {adsTxtData.adsTxtUrl} ({domains.length} domains, {adsTxtData.data.length} entries)
+        <div className="panel-header ">
+          <div className="flex items-center justify-between">
+            <div className="info-item">
+              {adsTxtData.adsTxtUrl} ({domains.length} domains, {adsTxtData.data.length} entries)
+            </div>
+            <a
+              href={adsTxtData.adsTxtUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="external-link"
+            >
+              <span>View Raw</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
           </div>
-          <a
-            href={adsTxtData.adsTxtUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="external-link"
-          >
-            <span>View Raw</span>
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          <div className="flex justify-end">
+            <DownloadCsvAdsTxt
+              domain={adsTxtData.variables.ownerDomain || ''}
+              adsTxt={adsTxtData?.data || []}
+            >
+              <span>Download CSV</span>
+              <Download className="w-4 h-4" />
+            </DownloadCsvAdsTxt>
+          </div>
         </div>
 
         {/* Supported Variables Section */}

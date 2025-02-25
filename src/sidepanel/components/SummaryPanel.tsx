@@ -2,7 +2,6 @@ import { AlertTriangle } from 'lucide-react';
 import React, { useMemo } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
-import { DownloadCsvAdsTxt } from './DownloadAdsTxt';
 import { Tooltip } from './Tooltip';
 
 interface SummaryPanelProps {
@@ -173,11 +172,6 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
             <div className="text-sm font-medium text-blue-800">Total</div>
             <div className="text-2xl font-bold text-blue-600">{totalAdsTxtEntries}</div>
           </div>
-        </div>
-        <div className="flex justify-end">
-          <DownloadCsvAdsTxt domain={analysis.ownerDomain || ''} adsTxt={adsTxtData?.data || []}>
-            <span>Download Valid Data</span>
-          </DownloadCsvAdsTxt>
         </div>
       </div>
 

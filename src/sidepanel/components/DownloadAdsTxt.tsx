@@ -56,8 +56,12 @@ export const DownloadCsvAdsTxt: React.FC<DownloadCsvAdsTxtVProps> = ({
       item.relationship,
       item.certificationAuthorityId || '',
     ]);
-    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvContent = [
+      headers.map((field) => `"${field}"`).join(','),
+      ...rows.map((value) => value.map((field) => `"${field}"`).join(',')),
+    ].join('\n');
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
 
     // Create a temporary link and trigger the download
