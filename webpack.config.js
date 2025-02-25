@@ -9,7 +9,6 @@ module.exports = {
   devtool: isProduction ? false : 'source-map',
   entry: {
     background: './src/background/background.ts',
-    contentScript: './src/contentScript/contentScript.ts',
     sidepanel: './src/sidepanel/index.tsx',
   },
   output: {

@@ -23,7 +23,7 @@ export class SellersJsonFetcher {
     if (!bypassCache) {
       const cached = await SellersJsonCache.get(domain);
       if (cached) {
-        return { data: cached.data, cached: true };
+        return { domain, data: cached.data, cached: true };
       }
     }
 
@@ -54,18 +54,18 @@ export class SellersJsonFetcher {
         const data = await response.json();
 
         if (!this.isValidSellersJson(data)) {
-          return { error: 'Invalid sellers.json format' };
+          return { domain, error: 'Invalid sellers.json format' };
         }
 
         // Cache the valid response
         await SellersJsonCache.set(domain, data);
 
-        return { data };
+        return { domain, data };
       } catch (error) {
         lastError = error as Error;
 
         if (error instanceof SyntaxError) {
-          return { error: 'Invalid JSON format' };
+          return { domain, error: 'Invalid JSON format' };
         }
 
         if (!(error instanceof FetchTimeoutError) && !(error instanceof TypeError)) {
@@ -79,6 +79,7 @@ export class SellersJsonFetcher {
     }
 
     return {
+      domain,
       error: `Error fetching sellers.json: ${lastError?.message || 'Unknown error'}`,
     };
   }

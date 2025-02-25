@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { commentErrorAdsTxtLines } from '../../utils/fetchAdsTxt';
-import { DownloadAdsTxt } from './DownloadAdsTxt';
+import { DownloadCsvAdsTxt, DownloadPlainAdsTxt } from './DownloadAdsTxt';
 import { SearchAndFilter } from './SearchAndFilter';
 import { Tooltip } from './Tooltip';
 
@@ -163,13 +163,15 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             <h3 className="panel-header-title text-red-600">Errors Found ({errors.length})</h3>
           </div>
           <div className="panel-content">
-            {/* DownloadAdsTxt component */}
+            {/* DownloadPlainAdsTxt component */}
             {totalEntries > 0 && errors.length > 0 && (
               <div className="flex justify-end space-x-2 cursor-pointer">
-                <DownloadAdsTxt content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}>
+                <DownloadPlainAdsTxt
+                  content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}
+                >
                   <span>{chrome.i18n.getMessage('download_ads_txt_without_errors')}</span>
                   <Download className="w-4 h-4" />
-                </DownloadAdsTxt>
+                </DownloadPlainAdsTxt>
               </div>
             )}
             {/* Error list */}
@@ -191,19 +193,30 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
 
       {/* Ads.txt Header */}
       <div className="panel-section">
-        <div className="panel-header flex items-center justify-between">
-          <div className="info-item">
-            {adsTxtData.adsTxtUrl} ({domains.length} domains, {adsTxtData.data.length} entries)
+        <div className="panel-header ">
+          <div className="flex items-center justify-between">
+            <div className="info-item">
+              {adsTxtData.adsTxtUrl} ({domains.length} domains, {adsTxtData.data.length} entries)
+            </div>
+            <a
+              href={adsTxtData.adsTxtUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="external-link"
+            >
+              <span>View Raw</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
           </div>
-          <a
-            href={adsTxtData.adsTxtUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="external-link"
-          >
-            <span>View Raw</span>
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          <div className="flex justify-end">
+            <DownloadCsvAdsTxt
+              domain={adsTxtData.variables.ownerDomain || ''}
+              adsTxt={adsTxtData?.data || []}
+            >
+              <span>Download CSV</span>
+              <Download className="w-4 h-4" />
+            </DownloadCsvAdsTxt>
+          </div>
         </div>
 
         {/* Supported Variables Section */}
@@ -223,13 +236,6 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                     </span>
                   </Tooltip>
                 )}
-                {adsTxtData.variables.managerDomain && (
-                  <Tooltip content={chrome.i18n.getMessage('managerdomain')}>
-                    <span className="font-medium">
-                      Manager Domain: {adsTxtData.variables.managerDomain}
-                    </span>
-                  </Tooltip>
-                )}
                 {adsTxtData.variables.ownerDomain && (
                   <Tooltip content={chrome.i18n.getMessage('ownerdomain')}>
                     <span className="font-medium">
@@ -237,15 +243,19 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                     </span>
                   </Tooltip>
                 )}
-                {adsTxtData.variables.subDomain && adsTxtData.variables.subDomain.length > 0 && (
+                {adsTxtData.variables.managerDomains &&
+                  adsTxtData.variables.managerDomains.length > 0 && (
+                    <Tooltip content={chrome.i18n.getMessage('managerdomain')}>
+                      <span className="font-medium">
+                        Manager Domain: {adsTxtData.variables.managerDomains.join(', ')}
+                      </span>
+                    </Tooltip>
+                  )}
+                {adsTxtData.variables.subDomains && adsTxtData.variables.subDomains.length > 0 && (
                   <Tooltip content={chrome.i18n.getMessage('subdomain')}>
-                    <div className="flex flex-col">
-                      {adsTxtData.variables.subDomain.map((subDomain, index) => (
-                        <span key={index} className="font-medium">
-                          Sub Domain: {subDomain}
-                        </span>
-                      ))}
-                    </div>
+                    <span className="font-medium">
+                      Sub Domain: {adsTxtData.variables.subDomains.join(', ')}
+                    </span>
                   </Tooltip>
                 )}
               </div>
@@ -263,7 +273,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         filters={filters}
         selectedFilters={selectedFilters}
         onFilterChange={handleFilterChange}
-        placeholder="Search by Publisher ID, Domain, or TAG-ID..."
+        placeholder="Search by Publisher ID, Domain, or CA ID..."
         showResultCount={true}
         totalResults={totalEntries}
         filteredResults={filteredCount}
@@ -299,7 +309,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           <div className="text-gray-600">Publisher ID: {entry.publisherId}</div>
                           {entry.certificationAuthorityId && (
                             <div className="text-gray-500">
-                              TAG-ID: {entry.certificationAuthorityId}
+                              CA ID: {entry.certificationAuthorityId}
                             </div>
                           )}
                         </div>

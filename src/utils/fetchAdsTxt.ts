@@ -17,9 +17,9 @@ export interface ErrorDetail {
 export interface SupportedVariables {
   contact?: string;
   inventoryPartnerdomain?: string;
-  managerDomain?: string;
+  managerDomains?: string[];
   ownerDomain?: string;
-  subDomain?: string[];
+  subDomains?: string[];
 }
 
 export interface FetchAdsTxtResult {
@@ -246,9 +246,45 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
         const value = trimmedLine.split('=')[1]?.trim();
         if (value) {
           if (key === 'subDomain') {
-            variables.subDomain = variables.subDomain || [];
-            if (!variables.subDomain.includes(value)) {
-              variables.subDomain.push(value);
+            if (!isValidDomain(value)) {
+              errors.push({
+                line: lineNumber,
+                content: line,
+                message: chrome.i18n.getMessage('invalid_domain', [value]),
+              });
+              return;
+            }
+
+            variables.subDomains = variables.subDomains || [];
+            if (!variables.subDomains.includes(value)) {
+              variables.subDomains.push(value);
+            }
+          } else if (key === 'managerDomain') {
+            variables.managerDomains = variables.managerDomains || [];
+            const [managerDomain, countryCode] = value.split(',').map((s) => s.trim());
+            if (!isValidDomain(managerDomain)) {
+              errors.push({
+                line: lineNumber,
+                content: line,
+                message: chrome.i18n.getMessage('invalid_domain', [managerDomain]),
+              });
+              return;
+            }
+
+            const managerDomainCount = Object.entries(variables).filter(
+              ([k, v]) =>
+                k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
+            ).length;
+            if (managerDomainCount > 1) {
+              errors.push({
+                line: lineNumber,
+                content: line,
+                message: chrome.i18n.getMessage('multiple_manager_domain_declarations', [
+                  countryCode,
+                ]),
+              });
+            } else {
+              variables.managerDomains.push(value);
             }
           } else {
             (variables as any)[key] = value;
@@ -342,9 +378,15 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
     }
   });
 
-  // Return the entries sorted by domain name
+  // Return the entries sorted by domain name and publisher ID
   return {
-    entries: entries.sort((a, b) => a.domain.localeCompare(b.domain)),
+    entries: entries.sort(
+      (a, b) =>
+        a.domain.localeCompare(b.domain) ||
+        a.publisherId.length - b.publisherId.length ||
+        a.publisherId.localeCompare(b.publisherId) ||
+        a.relationship.localeCompare(b.relationship)
+    ),
     variables,
     errors,
     duplicates,

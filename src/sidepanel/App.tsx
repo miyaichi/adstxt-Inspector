@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { useAdsSellers } from '../hooks/useAdsSellers';
-import { BaseMessage, TabInfo } from '../types/messages';
-import { Context } from '../types/types';
-import { ConnectionManager } from '../utils/connectionManager';
+import { TabInfo } from '../types/messages';
 import { Logger } from '../utils/logger';
 import { AdsTxtPanel } from './components/AdsTxtPanel';
 import { SellersPanel } from './components/SellersPanel';
@@ -13,16 +11,14 @@ import { compareVersions, UpdateNotification } from './components/UpdateNotifica
 
 const logger = new Logger('sidepanel');
 
+const updateUrl = 'https://miyaichi.github.io/adstxt-Inspector/version.json';
 interface UpdateInfo {
   version: string;
   store_url: string;
 }
 
 export default function App() {
-  const [tabId, setTabId] = useState<number | null>(null);
   const [tabInfo, setTabInfo] = useState<TabInfo | null>(null);
-  const [connectionManager, setConnectionManager] = useState<ConnectionManager | null>(null);
-  const [contentScriptContext, setContentScriptContext] = useState<Context>('undefined');
   const { analyzing, adsTxtData, sellerAnalysis, analyze, isVerifiedEntry } = useAdsSellers();
   const [duplicateCheck, setDuplicateCheck] = useState<boolean>(false);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
@@ -33,7 +29,7 @@ export default function App() {
   useEffect(() => {
     const checkForUpdates = async () => {
       try {
-        const response = await fetch('https://miyaichi.github.io/adstxt-Inspector/version.json');
+        const response = await fetch(updateUrl);
         const data: UpdateInfo = await response.json();
         if (compareVersions(data.version, currentVersion) <= 0) return;
         setLatestVersion(data.version);
@@ -58,17 +54,12 @@ export default function App() {
       if (initialized.current) return;
 
       try {
-        const manager = new ConnectionManager('sidepanel', handleMessage);
-        manager.connect();
-        setConnectionManager(manager);
-
         // Initialize active tab
         const [tab] = await chrome.tabs.query({
           active: true,
           currentWindow: true,
         });
         if (tab?.id) {
-          setTabId(tab.id);
           setTabInfo({
             tabId: tab.id,
             windowId: tab.windowId,
@@ -93,26 +84,9 @@ export default function App() {
       if (!newTab) return;
 
       logger.debug('Tab info change detected from storage:', newTab);
-      setTabId(newTab.tabId);
       setTabInfo(newTab);
     });
   }, []);
-
-  useEffect(() => {
-    // Update content script context
-    setContentScriptContext(tabId ? `content-${tabId}` : 'undefined');
-  }, [tabId, tabInfo]);
-
-  const handleMessage = (message: BaseMessage) => {
-    logger.debug('Message received', { type: message.type });
-
-    // Implement other message handling here ...
-    switch (message.type) {
-      default:
-        logger.debug('Unknown message type:', message.type);
-        break;
-    }
-  };
 
   const handleAnalyze = async () => {
     if (!tabInfo || !tabInfo.isScriptInjectionAllowed || analyzing) return;
@@ -155,7 +129,11 @@ export default function App() {
                   <span>{chrome.i18n.getMessage('duplicate_check')}</span>
                 </label>
               </div>
-              <Button onClick={handleAnalyze} disabled={!tabId || analyzing} className="ml-auto">
+              <Button
+                onClick={handleAnalyze}
+                disabled={!tabInfo?.tabId || analyzing}
+                className="ml-auto"
+              >
                 {analyzing
                   ? chrome.i18n.getMessage('analyzing')
                   : chrome.i18n.getMessage('analyze')}

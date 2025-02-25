@@ -23,6 +23,7 @@ export interface Seller {
 
 // Sellers JSON type
 export interface SellersJson {
+  domain: string;
   identifiers?: any;
   contact_email?: string;
   contact_address?: string;
@@ -33,6 +34,7 @@ export interface SellersJson {
 
 // Types for fetchSellersJson function
 export interface FetchSellersJsonResult {
+  domain: string;
   data?: SellersJson;
   error?: string;
   cached?: boolean;

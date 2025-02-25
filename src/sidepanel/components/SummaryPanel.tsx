@@ -21,11 +21,17 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     if (!adsTxtData || sellerAnalysis.length === 0) return null;
 
     const ownerDomain = adsTxtData.variables?.ownerDomain;
-    const managerDomain = adsTxtData.variables?.managerDomain?.split(',')[0];
+    const managerDomains =
+      adsTxtData.variables?.managerDomains
+        ?.map((domain) => {
+          const match = domain.match(/^([\w.-]+)\b/);
+          return match ? match[1] : '';
+        })
+        .filter((domain) => domain !== '') || [];
 
     // 1. Supply Chain Compliance Check
     const hasOwnerDomain = !!ownerDomain;
-    const hasManagerDomain = !!managerDomain;
+    const hasManagerDomain = managerDomains?.length > 0;
     const hasContact = !!adsTxtData.variables?.contact;
 
     // 2. Relationship Analysis
@@ -42,7 +48,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     // 4. Publisher-Seller Relationship Check
     const ownerDomainSellers = sellerAnalysis
       .flatMap((seller) => (seller.sellersJson && seller.sellersJson.data) || [])
-      .filter((entry) => entry.domain === ownerDomain || entry.domain === managerDomain);
+      .filter((entry) => entry.domain === ownerDomain || managerDomains.includes(entry.domain));
     const hasOwnerAsPublisher = ownerDomainSellers.some(
       (seller) =>
         seller.seller_type?.toUpperCase() === 'PUBLISHER' ||
@@ -73,7 +79,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     // 7. Risk Assessment
     const riskFactors = [];
     if (!hasOwnerDomain) riskFactors.push('owner_domain_not_specified');
-    if (hasManagerDomain && adsTxtData.data.some((entry) => entry.domain === managerDomain))
+    if (hasManagerDomain && adsTxtData.data.some((entry) => managerDomains.includes(entry.domain)))
       riskFactors.push('managerdomain_is_registered_as_a_seller');
     if (!hasContact) riskFactors.push('contact_information_missing');
     if (missingSellersDomains.length > 0) riskFactors.push('missing_sellers_json_for_some_domains');
@@ -83,7 +89,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
 
     return {
       ownerDomain,
-      managerDomain,
+      managerDomains,
       directCount: directEntries.length,
       resellerCount: resellerEntries.length,
       missingSellersDomains,
@@ -144,7 +150,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           <div className="space-y-2">
             <div className="text-sm font-medium">Manager Domain</div>
             <div className="bg-gray-50 p-2 rounded">
-              {analysis.managerDomain || 'Not Specified'}
+              {analysis.managerDomains.join(', ') || 'Not Specified'}
             </div>
           </div>
         </div>

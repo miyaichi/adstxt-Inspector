@@ -152,20 +152,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     }
 
     // MANAGERDOMAIN validation
-    if (adsTxtData?.variables?.managerDomain) {
-      const [managerDomain, countryCode] = adsTxtData.variables.managerDomain
-        .split(',')
-        .map((s) => s.trim());
-
-      // Whether there are multiple MANAGERDOMAIN declarations for the same country code
-      const managerDomainCount = Object.entries(adsTxtData.variables).filter(
-        ([key, value]) => key === 'managerDomain' && value.includes(countryCode)
-      ).length;
-
-      if (managerDomainCount > 1) {
-        reasons.push(chrome.i18n.getMessage('multiple_manager_domain_declarations', [countryCode]));
-      }
-
+    if (adsTxtData?.variables?.managerDomains && adsTxtData.variables.managerDomains.length > 0) {
       // Whether inventory is provided from both the owner and the seller
       if (seller.domain === ownerDomain && seller.seller_type !== 'RESELLER') {
         reasons.push(chrome.i18n.getMessage('inventory_from_both_domains'));
