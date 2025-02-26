@@ -52,7 +52,7 @@ The SupplyChain Object (often abbreviated as "schain") is a technical standard d
 
 ### How They Work Together
 
-<div class="mermaid">
+<pre class="mermaid">
 flowchart LR
     subgraph Publisher["Publisher"]
         A["Ads.txt / App-ads.txt"] -->|"Declares"| B(("Inventory"))
@@ -71,7 +71,7 @@ flowchart LR
 
     B -->|"Inventory Info"| C
     D -->|"Bid Request"| E
-</div>
+</pre>
 
 When you visit a website or app:
 1. The publisher's ad space becomes available

@@ -52,7 +52,7 @@ SupplyChain Object（よく「schain」と略される）は、IAB Tech Labに�
 
 ### 彼らはどのように協力するか
 
-<div class="mermaid">
+<pre class="mermaid">
 flowchart LR
     subgraph Publisher["パブリッシャー"]
         A["Ads.txt / App-ads.txt"] -->|"宣言"| B(("インベントリ"))
@@ -71,7 +71,7 @@ flowchart LR
 
     B -->|"在庫情報"| C
     D -->|"入札リクエスト"| E
-</div>
+</pre>
 
 ウェブサイトやアプリを訪問すると：
 1. パブリッシャーの広告スペースが利用可能になる
