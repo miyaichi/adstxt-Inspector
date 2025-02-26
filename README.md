@@ -2,62 +2,69 @@
 
 A Chrome extension for validating and analyzing ads.txt files and their corresponding sellers.json entries. Built with TypeScript, React, and TailwindCSS, it helps maintain transparency and quality in programmatic advertising setups.
 
+<img src="src/assets/icons/source/icon.svg" width="20%">
+
 ## Architecture
 
 The extension consists of three main components:
 
 1. **Background Service Worker**
-
-   - Monitors active tabs and fetches ads.txt/sellers.json
-   - Stores scan results in Chrome Storage
+   - Monitors active tabs and detects URL changes
    - Handles restricted URL patterns
-   - Manages scheduled scans
-   - Controls alert notifications
+   - Manages communication between components
 
 2. **Side Panel (React UI)**
-   - Visualizes scan results
-   - Displays real-time errors
-   - Provides advertising service analysis view
-   - Offers custom settings interface
-   - Generates and exports reports
+   - Provides an intuitive interface with multiple views:
+     - Summary View: Overview of supply chain, errors, and relationships
+     - Ads.txt Details: Full analysis of ads.txt entries with validation
+     - Sellers Analysis: Comprehensive sellers.json analysis
+   - Features search, filtering and data export capabilities
+
+3. **Utility Modules**
+   - Ads.txt and Sellers.json fetching and parsing
+   - Advanced validation logic
+   - Error detection and reporting
 
 ## Core Features
 
 ### Validation Features
 
-- Automated ads.txt validation
+- **Ads.txt Validation**
   - Syntax error checking
   - Duplicate entry detection
   - Required field verification
-- Sellers.json integration
+  - Proper formatting validation
+
+- **Sellers.json Integration**
   - Seller ID verification
   - Relationship validation
   - Missing seller detection
+  - Cross-reference with ads.txt entries
 
 ### Analysis Features
 
-- Advertising service analysis
-  - DIRECT/RESELLER ratio
-  - Major provider coverage
-  - New entry detection
-- History management
-  - Periodic scan result storage
-  - Change tracking
-  - Trend analysis
+- **Transaction Analysis**
+  - DIRECT/RESELLER relationship ratio
+  - Seller type distribution (PUBLISHER/INTERMEDIARY/BOTH)
+  - Validation rate assessment
+
+- **Risk Assessment**
+  - Missing owner domain detection
+  - Relationship inconsistencies
+  - Confidential seller identification
+  - Supply chain completeness verification
 
 ### Reporting Features
 
-- Error summaries
-- Improvement suggestions
+- **Error Summaries**
+  - Comprehensive error listings with line references
+  - Exportable error reports
+  - Actionable error messages
 
-## State Management
-
-Robust state management system utilizing ConnectionManager:
-
-- **Chrome Storage API** for cross-component state sharing
-- **Type-safe communication interfaces**
-- **Automatic reconnection** with exponential backoff
-- **Error handling and logging**
+- **Data Export**
+  - Download validated ads.txt data
+  - Export to CSV for further analysis
+  - Error-corrected ads.txt generation
 
 ## Project Structure
 
@@ -71,10 +78,12 @@ Robust state management system utilizing ConnectionManager:
     │   ├── App.tsx
     │   ├── components/
     │   │   ├── AdsTxtPanel.tsx
+    │   │   ├── DownloadAdsTxt.tsx
+    │   │   ├── DownloadSellersJson.tsx
     │   │   ├── SearchAndFilter.tsx
-    │   │   ├── SellerJsonPanel.tsx
+    │   │   ├── SellersPanel.tsx
     │   │   ├── SummaryPanel.tsx
-    │   │   ├── Tooltips.tsx
+    │   │   ├── Tooltip.tsx
     │   │   ├── UpdateNotification.tsx
     │   │   └─ ui/
     │   │       ├── Alert.tsx
@@ -90,21 +99,20 @@ Robust state management system utilizing ConnectionManager:
         ├── fetchSellersJson.ts
         ├── fetchWithTimeout.ts
         ├── logger.ts
-        └── sellersJsonChece.ts
+        └── sellersJsonCache.ts
 ```
 
 ## Tech Stack
 
-- TypeScript
-- React
-- TailwindCSS
-- Chrome Extensions API
-- Webpack
+- **TypeScript** - Type-safe JavaScript
+- **React** - UI framework
+- **TailwindCSS** - Utility-first CSS framework
+- **Chrome Extensions API** - Browser integration
+- **PSL** - Public Suffix List processing
 
 ## Installation
 
-1. Download the latest release file (adstxt-inspector-build.zip
-   ) from the [Releases](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build) page.
+1. Download the latest release file (adstxt-inspector-build.zip) from the [Releases](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build) page.
 
 2. Unzip the file to a local directory.
 
@@ -154,7 +162,7 @@ npm run build:prod
 - Proper handling of cross-origin requests
 - Secure storage of sensitive data
 - Appropriate handling of restricted URLs
-- Implementation of Content Security Policy
+- Implementation of timeout handling for network requests
 
 ## Contributing
 
@@ -163,6 +171,12 @@ npm run build:prod
 3. Commit changes (`git commit -m 'Add NewFeature'`)
 4. Push to branch (`git push origin feature/NewFeature`)
 5. Create Pull Request
+
+## Documentation
+
+For more information about ads.txt and sellers.json standards:
+- [IAB Tech Lab Ads.txt Specification](https://iabtechlab.com/ads-txt/)
+- [IAB Tech Lab Sellers.json Specification](https://iabtechlab.com/sellers-json/)
 
 ## License
 

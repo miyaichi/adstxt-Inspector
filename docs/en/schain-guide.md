@@ -3,89 +3,202 @@ layout: default
 lang: en
 permalink: /en/schain-guide
 title: Supply Chain Guide
-description: Supply Chain Guide
+description: Understanding Advertising Supply Chains Made Simple
 ---
 
 [Home](.) / Supply Chain Guide
 
-# Supply Chain Guide
+# Supply Chain Guide - Understanding Digital Advertising Transparency
 
-## 1. What is SupplyChain Object?
+## What is an Advertising Supply Chain?
 
-SupplyChain Object (schain) is one of the IAB Tech Lab standards designed to ensure transparency in programmatic advertising. This mechanism provides information about advertising transaction paths included in OpenRTB bid requests and records which supply paths advertising impressions have traversed. It maintains transparency in transactions by sequentially recording detailed information about each participant (Seller ID, domain, etc.) and indicating the completeness of path information through a complete flag.
+Before we dive into the technical details, let's understand what an advertising supply chain is.
 
-### 1.1 Transaction Flow and Verification Mechanism
+In digital advertising, content publishers (website or app owners) want to show ads, and advertisers want to display their ads to users. However, between these two parties, there's often a complex network of companies that help connect publishers with advertisers. This network is called the "advertising supply chain."
 
-In programmatic advertising transactions, Publishers, SSPs/Exchanges, and DSPs/Advertisers utilize various files to eliminate fraudulent inventory and ensure transparency. The following diagram illustrates this transaction flow:
+Think of it like a delivery service for ads:
+- **Publishers** own the space where ads appear (like a store with empty shelves)
+- **Advertisers** have the ads they want to show (like products)
+- The **supply chain** is all the companies that help get the right ads to the right spaces (like delivery trucks, warehouses, and distribution centers)
 
-<pre class="mermaid">
+## What is the SupplyChain Object?
+
+The SupplyChain Object (often abbreviated as "schain") is a technical standard developed by IAB Tech Lab to bring transparency to this complex system. It's basically a digital record that tracks every company involved in delivering an ad from the advertiser to the publisher.
+
+### Why is this important?
+
+1. **Transparency**: Helps advertisers know exactly where their money is going
+2. **Fraud Prevention**: Makes it harder for bad actors to sell fake or unauthorized ad space
+3. **Quality Control**: Enables verification of legitimate ad inventory sources
+4. **Efficiency**: Helps identify and eliminate unnecessary middlemen
+
+## How Does the Supply Chain Work?
+
+### The Key Players
+
+1. **Publishers**: Owners of websites and apps where ads appear
+   - They create the content that attracts visitors
+   - They have ad spaces to sell (inventory)
+
+2. **SSPs / Exchanges**: Supply-Side Platforms and Ad Exchanges
+   - Help publishers sell their ad inventory
+   - Connect publishers to multiple potential buyers
+   - Example: Google Ad Manager, Xandr, Magnite
+
+3. **DSPs / Advertisers**: Demand-Side Platforms and the brands buying ads
+   - Help advertisers buy ad space efficiently
+   - Automatically purchase ad impressions across many publishers
+   - Example: The Trade Desk, Google DV360, Amazon DSP
+
+### How They Work Together
+
+<div class="mermaid">
 flowchart LR
     subgraph Publisher["Publisher"]
-        A["Ads.txt / App-ads.txt"] -->|"Declare"| B(("Inventory"))
-        note1["Declare authorized sales<br/>partners in public list"]
+        A["Ads.txt / App-ads.txt"] -->|"Declares"| B(("Inventory"))
+        note1["Public list of authorized<br/>selling partners"]
     end
 
     subgraph SSP["SSP / Exchange"]
         C["Sellers.json"] -->|"OpenRTB"| D["Supply Chain Object"]
-        note2["Publish authorized<br/>seller information"]
+        note2["Publishes information<br/>about authorized sellers"]
     end
 
     subgraph DSP["DSP / Advertiser"]
         E[Bidding Decision] -->|Verify| F[Execute Transaction]
-        note3["- Verify Ads.txt<br/>- Verify Sellers.json<br/>- Verify schain"]
+        note3["- Verifies Ads.txt<br/>- Verifies Sellers.json<br/>- Verifies Supply Chain"]
     end
 
-    B -->|Inventory Info| C
-    D -->|Bid Request| E
-</pre>
+    B -->|"Inventory Info"| C
+    D -->|"Bid Request"| E
+</div>
 
-### 1.2 Role of Each Player and Verification Mechanism
+When you visit a website or app:
+1. The publisher's ad space becomes available
+2. An ad request is sent through the supply chain
+3. Advertisers bid to show their ads in real-time
+4. The winning ad is displayed
+5. Money flows from the advertiser back through the chain to the publisher
 
-Each player has a distinct role in ensuring transaction transparency. On the Publisher side, authorized sales partners are declared through Ads.txt/App-ads.txt, and authorized trading relationships are published to prevent unauthorized reselling. SSPs/Exchanges publish seller information through Sellers.json and achieve path transparency by generating and transmitting SupplyChain Objects. DSPs/Advertisers eliminate fraudulent inventory by verifying these files' consistency and transaction paths.
+## Understanding the Key Files
 
-These elements work together in verification. Ads.txt verifies authorized sellers, DIRECT/RESELLER relationships, and Seller ID consistency. Sellers.json verifies seller information, transaction types, and domain consistency. The schain verifies transaction path completeness, node information, and complete flag status.
+### Ads.txt (Authorized Digital Sellers)
 
-## 2. Significance for Publishers
+This is a simple text file that publishers place on their websites to publicly declare which companies are authorized to sell their ad inventory.
 
-For Publishers, utilizing SupplyChain Object leads to inventory value enhancement. By proving legitimate routes and protecting inventory from unauthorized reselling and domain spoofing, opportunities arise to secure higher bid prices. Additionally, complete visualization of advertising transaction paths enables the elimination of unnecessary margins and early detection of suspicious transactions. This serves as proof of trustworthy transactions, contributing to long-term brand value maintenance and strengthened relationships with advertisers.
+**Example:**
+```
+exchange.com, 1234, DIRECT, ab123
+adnetwork.com, 5678, RESELLER, cd456
+```
 
-To realize these benefits, Publishers need to undertake several initiatives. First, proper management of Ads.txt is crucial. They must include accurate information, update it regularly, correctly distinguish between DIRECT/RESELLER relationships, and use accurate Seller IDs. Furthermore, by clearly identifying authorized sales partners and appropriately categorizing transaction types, unauthorized reselling can be prevented. Continuous monitoring, including regular Ads.txt updates, transaction path monitoring, and early error detection, is also necessary.
+This means:
+- `exchange.com` with ID `1234` can sell the publisher's inventory directly
+- `adnetwork.com` with ID `5678` can resell the publisher's inventory
 
-### 2.1 Required Actions for Publishers
+### Sellers.json
 
-1. **Maintain Ads.txt / App-ads.txt**
+This is a file that SSPs and exchanges publish to identify all the sellers (publishers and intermediaries) they represent.
 
-   - **Accurately document** information about SSPs/Exchanges/Resellers authorized by your company.
-   - **Promptly update** when new transactions begin or partnerships end to maintain consistency with schain.
-   - Use the correct distinction between `DIRECT` / `RESELLER` and use the **correct Seller ID**.
+**Example:**
+```json
+{
+  "sellers": [
+    {
+      "seller_id": "1234",
+      "name": "Example Publisher",
+      "domain": "example.com",
+      "seller_type": "PUBLISHER"
+    }
+  ]
+}
+```
 
-2. **Verify Provided schain Information**
+This means:
+- The exchange works with a seller identified as `1234`
+- This seller is "Example Publisher" with domain "example.com"
+- This seller is the actual content publisher (not a reseller)
 
-   - While Publishers rarely generate schain directly, verify that **partner SSPs/Exchanges correctly send and receive schain**.
-   - Check for **"complete=1" flag settings** and support **full path visualization** whenever possible.
+### SupplyChain Object
 
-3. **Regular Maintenance**
-   - Failing to **update Ads.txt / App-ads.txt** may result in DSPs blocking as "unknown Seller ID".
-   - As schain usage increases, **consistency with Ads.txt** becomes more important, so **maintain current information**.
+This is a data structure included in bid requests that shows the complete path an ad request takes through the supply chain.
 
-## 3. Significance for SSPs/Exchanges
+**Example:**
+```json
+{
+  "schain": {
+    "ver": "1.0",
+    "complete": 1,
+    "nodes": [
+      {
+        "asi": "publisher-exchange.com",
+        "sid": "1234",
+        "hp": 1
+      },
+      {
+        "asi": "dsp-partner.com",
+        "sid": "5678",
+        "hp": 1
+      }
+    ]
+  }
+}
+```
 
-SSPs/Exchanges play a crucial role in the programmatic advertising ecosystem. They ensure transaction transparency through accurate recording of transaction paths, provision of complete schain information, and proper management of Publisher inventory. By preventing fraudulent inventory and ensuring transaction transparency, they maintain compliance and enhance market reliability. This enables them to provide high-quality impressions, improve transaction reliability, and strengthen market competitiveness.
+This means:
+- The ad request started at `publisher-exchange.com` (with seller ID `1234`)
+- Then passed through `dsp-partner.com` (with seller ID `5678`)
+- The chain is complete (no missing information)
 
-To fulfill these responsibilities, SSPs/Exchanges must take specific actions. In managing Sellers.json, they need to publish accurate information, update regularly, and properly manage Publisher information. In schain implementation, accurate information transmission in OpenRTB, appropriate complete flag settings, and accurate node information recording are important. Additionally, they must build verification systems for checking consistency with Ads.txt, detecting fraudulent transactions, and establishing error reporting frameworks.
+## What Publishers Need to Do
 
-### 3.1 Required Actions for SSPs/Exchanges
+1. **Maintain Accurate Ads.txt Files**
+   - List all authorized selling partners
+   - Specify correct relationships (DIRECT or RESELLER)
+   - Update promptly when partnerships change
 
-1. **Set Up and Update Sellers.json**
+2. **Verify SupplyChain Information**
+   - Work with partners who properly implement supply chain transparency
+   - Ensure your inventory is properly identified throughout the chain
 
-   - Prepare and host **Sellers.json** that publishes **authorized Publishers and resellers**.
-   - **Update the file promptly** when Publishers are added/removed or permissions change to maintain current status.
+3. **Regular Monitoring**
+   - Check that your ads.txt is current
+   - Monitor for unauthorized sellers of your inventory
+   - Verify that supply chain data is accurate
 
-2. **Implement schain Support**
+## What SSPs/Exchanges Need to Do
 
-   - Implement functionality to **include schain nodes in bid requests** (or receive them) in compliance with OpenRTB.
-   - Ensure **consistent correlation** between schain and `Sellers.json` information by correctly linking **Seller ID / Domain information**.
+1. **Maintain Accurate Sellers.json Files**
+   - List all publishers and resellers in your system
+   - Include correct identification information
+   - Update when publisher relationships change
 
-3. **Verify Consistency with Ads.txt / App-ads.txt**
-   - Establish mechanisms to check for **invalid Seller IDs** by cross-referencing Publisher's Ads.txt / App-ads.txt.
-   - Maintain a clean marketplace by implementing **transaction blocks** and **Publisher notifications** when potentially fraudulent inventory is detected.
+2. **Implement SupplyChain Support**
+   - Properly pass supply chain information in bid requests
+   - Ensure seller IDs match between systems
+   - Maintain connection between ads.txt and sellers.json information
+
+3. **Verify Consistency**
+   - Check that your sellers' ads.txt entries are accurate
+   - Block suspicious inventory without proper identification
+   - Maintain a clean marketplace
+
+## Benefits of a Transparent Supply Chain
+
+For everyone in the digital advertising ecosystem:
+
+1. **Reduced Fraud**: Makes it harder for unauthorized parties to sell counterfeit inventory
+2. **Better ROI**: Advertisers know where their money is going
+3. **Trust**: Creates a more trustworthy ecosystem
+4. **Efficiency**: Can identify and eliminate unnecessary intermediaries
+5. **Compliance**: Meets increasing industry standards for transparency
+
+## Further Reading
+
+- [IAB Tech Lab Ads.txt Specification](https://iabtechlab.com/ads-txt/)
+- [IAB Tech Lab Sellers.json Specification](https://iabtechlab.com/sellers-json/)
+- [SupplyChain Object Specification](https://github.com/InteractiveAdvertisingBureau/openrtb/blob/master/supplychainobject.md)
+
+---
+
+This guide provides a simplified explanation of the advertising supply chain transparency mechanisms. For more detailed technical information, please refer to the official IAB Tech Lab documentation.
