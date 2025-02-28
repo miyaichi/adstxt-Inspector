@@ -1,6 +1,6 @@
 # AdsTxt Inspector
 
-A Chrome extension for validating and analyzing ads.txt files and their corresponding sellers.json entries. Built with TypeScript, React, and TailwindCSS, it helps maintain transparency and quality in programmatic advertising setups.
+A Chrome extension for validating and analyzing Ads.txt, App-ads.txt files and their corresponding Sellers.json entries. Built with TypeScript, React, and TailwindCSS, it helps maintain transparency and quality in programmatic advertising setups.
 
 <img src="src/assets/icons/source/icon.svg" width="20%">
 
@@ -9,9 +9,12 @@ A Chrome extension for validating and analyzing ads.txt files and their correspo
 The extension consists of three main components:
 
 1. **Background Service Worker**
-   - Monitors active tabs and detects URL changes
+
+   - Monitors active tabs and fetches Ads.txt/App-ads.txt/Sellers.json
+   - Stores scan results in Chrome Storage
    - Handles restricted URL patterns
-   - Manages communication between components
+   - Manages scheduled scans
+   - Controls alert notifications
 
 2. **Side Panel (React UI)**
    - Provides an intuitive interface with multiple views:
@@ -20,51 +23,41 @@ The extension consists of three main components:
      - Sellers Analysis: Comprehensive sellers.json analysis
    - Features search, filtering and data export capabilities
 
-3. **Utility Modules**
-   - Ads.txt and Sellers.json fetching and parsing
-   - Advanced validation logic
-   - Error detection and reporting
-
 ## Core Features
 
 ### Validation Features
 
-- **Ads.txt Validation**
+- Automated Ads.txt and App-ads.txt validation
   - Syntax error checking
   - Duplicate entry detection
   - Required field verification
-  - Proper formatting validation
-
-- **Sellers.json Integration**
+- Sellers.json integration
   - Seller ID verification
   - Relationship validation
   - Missing seller detection
-  - Cross-reference with ads.txt entries
 
 ### Analysis Features
 
-- **Transaction Analysis**
   - DIRECT/RESELLER relationship ratio
   - Seller type distribution (PUBLISHER/INTERMEDIARY/BOTH)
   - Validation rate assessment
-
-- **Risk Assessment**
-  - Missing owner domain detection
-  - Relationship inconsistencies
-  - Confidential seller identification
-  - Supply chain completeness verification
+  - Cross-validation of Ads.txt/App-ads.txt and Sellers.json entries
 
 ### Reporting Features
 
-- **Error Summaries**
-  - Comprehensive error listings with line references
-  - Exportable error reports
-  - Actionable error messages
+- Error summaries
+- Improvement suggestions
+- Download Ads.txt/App-ads.txt with errors commented out
+- Exportable reports (CSV)
 
-- **Data Export**
-  - Download validated ads.txt data
-  - Export to CSV for further analysis
-  - Error-corrected ads.txt generation
+## State Management
+
+Robust state management system utilizing ConnectionManager:
+
+- **Chrome Storage API** for cross-component state sharing
+- **Type-safe communication interfaces**
+- **Automatic reconnection** with exponential backoff
+- **Error handling and logging**
 
 ## Project Structure
 
@@ -102,17 +95,26 @@ The extension consists of three main components:
         └── sellersJsonCache.ts
 ```
 
+## Web and App Transparency
+
+AdsTxt Inspector supports both website and mobile application advertising transparency:
+
+- **Ads.txt for websites**: Validates standard Ads.txt files found on domains
+- **App-ads.txt for mobile/CTV apps**: Analyzes App-ads.txt files on developer domains
+- **Cross-validation**: Verifies relationships between publishers and advertising systems in both web and app environments
+
 ## Tech Stack
 
-- **TypeScript** - Type-safe JavaScript
-- **React** - UI framework
-- **TailwindCSS** - Utility-first CSS framework
-- **Chrome Extensions API** - Browser integration
-- **PSL** - Public Suffix List processing
+- TypeScript
+- React
+- TailwindCSS
+- Chrome Extensions API
+- Webpack
 
 ## Installation
 
-1. Download the latest release file (adstxt-inspector-build.zip) from the [Releases](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build) page.
+1. Download the latest release file (adstxt-inspector-build.zip
+   ) from the [Releases](https://github.com/miyaichi/adstxt-Inspector/releases/tag/latest-build) page.
 
 2. Unzip the file to a local directory.
 
@@ -171,12 +173,6 @@ npm run build:prod
 3. Commit changes (`git commit -m 'Add NewFeature'`)
 4. Push to branch (`git push origin feature/NewFeature`)
 5. Create Pull Request
-
-## Documentation
-
-For more information about ads.txt and sellers.json standards:
-- [IAB Tech Lab Ads.txt Specification](https://iabtechlab.com/ads-txt/)
-- [IAB Tech Lab Sellers.json Specification](https://iabtechlab.com/sellers-json/)
 
 ## License
 
