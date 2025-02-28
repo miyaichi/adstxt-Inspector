@@ -129,7 +129,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
     return (
       <div className="p-4">
         <div className="bg-blue-50 text-blue-700 p-4 rounded-lg">
-          {chrome.i18n.getMessage('analyzing_sellers_json')}
+          {chrome.i18n.getMessage('analyzing_file', ['Sellers.json'])}
         </div>
       </div>
     );

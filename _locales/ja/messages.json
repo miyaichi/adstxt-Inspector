@@ -9,7 +9,7 @@
     "message": "Chrome ウェブストアでアップデート"
   },
   "analyse_button_description": {
-    "message": "このドメインの Ads.txt/App-ads.txt を分析するには、分析ボタンを押してください。"
+    "message": "このドメインの $1 を分析するには、分析ボタンを押してください。"
   },
   "checks_app_ads_txt": {
     "message": "App-ads.txt をチェック"
@@ -23,14 +23,14 @@
   "analyze": {
     "message": "分析"
   },
-  "analyzing_ads_txt": {
-    "message": "Ads.txt/App-ads.txt を分析中..."
+  "analyzing_file": {
+    "message": "$1 を分析中..."
   },
   "no_ads_txt_data": {
-    "message": "Ads.txt/App-ads.txt データがありません"
+    "message": "$1 データがありません"
   },
-  "download_ads_txt_without_errors": {
-    "message": "エラーをコメントアウトした Ads.txt/App-ads.txt をダウンロード"
+  "download_file_without_errors": {
+    "message": "エラーをコメントアウトした $1 をダウンロード"
   },
   "contact": {
     "message": "Ads.txt/App-ads.txt ファイルの所有者の連絡先です。"
@@ -88,9 +88,6 @@
   },
   "duplicate_entries": {
     "message": "エントリが重複しています"
-  },
-  "analyzing_sellers_json": {
-    "message": "Sellers.json を分析中..."
   },
   "no_seller_json_data": {
     "message": "Sellers.json データがありません"

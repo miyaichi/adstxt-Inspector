@@ -9,7 +9,7 @@
     "message": "Update via Chrome Web Store"
   },
   "analyse_button_description": {
-    "message": "Press the Analyze button to analyze the Ads.txt/App-ads.txt file for this domain."
+    "message": "Press the Analyze button to analyze the $1 file for this domain."
   },
   "checks_app_ads_txt": {
     "message": "Checks App-ads.txt"
@@ -23,14 +23,14 @@
   "analyze": {
     "message": "Analyze"
   },
-  "analyzing_ads_txt": {
-    "message": "Analyzing Ads.txt/App-ads.txt..."
+  "analyzing_file": {
+    "message": "Analyzing $1..."
   },
   "no_ads_txt_data": {
-    "message": "No Ads.txt/App-ads.txt data available"
+    "message": "No $1 data available"
   },
-  "download_ads_txt_without_errors": {
-    "message": "Download Ads.txt/App-ads.txt with errors commented out"
+  "download_file_without_errors": {
+    "message": "Download $1 with errors commented out"
   },
   "contact": {
     "message": "Provides contact information for the owner of the ads.txt/App-ads.txt file."
@@ -91,9 +91,6 @@
   },
   "duplicate_entries": {
     "message": "Duplicate entries found."
-  },
-  "analyzing_sellers_json": {
-    "message": "Analyzing Sellers.json..."
   },
   "no_seller_json_data": {
     "message": "No Sellers.json data available"
