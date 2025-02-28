@@ -1,0 +1,51 @@
+Package Title: AdsTxt Inspector
+Package Overview: Verify and analyze the Ads.txt/App-ads.txt and the corresponding Sellers.json entry.
+Description:
+An essential tool for ensuring the transparency and compliance of programmatic advertising. Automatically verifies and analyzes Ads.txt/App-ads.txt and Sellers.json files to ensure the integrity of advertising transactions.
+
+What this tool can do
+
+ - Automatically detects syntax errors and duplicate entries in Ads.txt/App-ads.txt files
+ - Verify seller IDs against the Sellers.json file.
+ - Visibility into the relationship between publishers and sellers.
+ - Early detection of non-compliance risks.
+
+Key features.
+
+✨ Real-time verification
+ - Automatic scanning of Ads.txt files on websites.
+ - Instantly detects grammatical errors and duplicate entries.
+ - Cross-validation with Sellers.json file.
+
+📊 Detailed analysis
+ - Comprehensive summary display of advertising transactional relationships.
+ - DIRECT/RESELLER relationship classification.
+ - Transaction pattern analysis per domain type.
+
+🔍 Error detection and reporting
+ - Line-numbered syntax error highlighting.
+ - Checking for missing mandatory fields.
+ - Seller ID mismatch identification.
+ - Invalid transaction relationship alerts.
+
+💻 Easy-to-use interface
+ - Intuitive overview dashboard.
+ - Detailed inspection per entry.
+ - Real-time error reporting.
+ - Visual display of relationships.
+
+Privacy and security
+
+ - All processing is completed in the browser.
+ - No data transmission to external servers.
+ - Only public Ads.txt/Sellers.json files are analyzed.
+ - No tracking analytics collection.
+
+Recommended usage scenarios
+
+ - Publishers: Verify the Ads.txt settings on their site.
+ - Ad tech companies: Verify relationships with business partners.
+ - Advertisers: check the transparency of programmatic advertising transactions.
+ - Developers: check operation when implementing Ads.txt.
+
+For safe and transparent programmatic advertising transactions, please use this service.
