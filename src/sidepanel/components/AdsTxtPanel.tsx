@@ -9,6 +9,7 @@ import { Tooltip } from './Tooltip';
 
 interface AdsTxtPanelProps {
   analyzing: boolean;
+  checkAppAdsTxt: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
   duplicateCheck: boolean;
@@ -16,6 +17,7 @@ interface AdsTxtPanelProps {
 
 export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   analyzing,
+  checkAppAdsTxt,
   adsTxtData,
   isVerifiedEntry,
   duplicateCheck,
@@ -167,6 +169,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             {totalEntries > 0 && errors.length > 0 && (
               <div className="flex justify-end space-x-2 cursor-pointer">
                 <DownloadPlainAdsTxt
+                  appAdsTxt={checkAppAdsTxt}
                   content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}
                 >
                   <span>{chrome.i18n.getMessage('download_ads_txt_without_errors')}</span>
@@ -191,7 +194,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         </div>
       )}
 
-      {/* Ads.txt Header */}
+      {/* Ads.txt/App-ads.txt Header */}
       <div className="panel-section">
         <div className="panel-header ">
           <div className="flex items-center justify-between">
@@ -211,6 +214,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
           <div className="flex justify-end">
             <DownloadCsvAdsTxt
               domain={adsTxtData.variables.ownerDomain || ''}
+              appAdsTxt={checkAppAdsTxt}
               adsTxt={adsTxtData?.data || []}
             >
               <span>Download CSV</span>

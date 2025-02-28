@@ -23,7 +23,7 @@ interface UseAdsSellersReturn {
   analyzing: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
-  analyze: (url: string) => Promise<void>;
+  analyze: (url: string, appAdsTxt: boolean) => void;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
@@ -84,10 +84,10 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   };
 
   /**
-   * Retrive and analyze the ads.txt and sellers.json based on the specified URL.
+   * Retrive and analyze the ads.txt/app-ads.txt and sellers.json based on the specified URL.
    * @param url
    */
-  const analyze = async (url: string) => {
+  const analyze = async (url: string, appAdsTxt: boolean) => {
     if (analyzing) return;
 
     setAnalyzing(true);
@@ -96,9 +96,9 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
     try {
       const domain = new URL(url).hostname;
-      const adsTxtResult = await fetchAdsTxt(domain);
+      const adsTxtResult = await fetchAdsTxt(domain, appAdsTxt);
       setAdsTxtData(adsTxtResult);
-      logger.debug('Ads.txt:', adsTxtResult);
+      logger.debug(appAdsTxt ? 'App-ads.txt' : 'Ads.txt', adsTxtResult);
 
       const sellerDomains = getUniqueDomains(adsTxtResult.data);
       const analysis = await analyzeSellersJson(sellerDomains, adsTxtResult);
@@ -112,7 +112,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   };
 
   /**
-   * Validate whether the specified ads.txt entry is valid
+   * Validate whether the specified ads.txt/app-ads.txt entry is valid
    * @param domain
    * @param entry
    * @returns ValidityResult

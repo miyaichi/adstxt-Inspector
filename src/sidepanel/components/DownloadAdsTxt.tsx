@@ -2,11 +2,16 @@ import React from 'react';
 import type { AdsTxt } from '../../utils/fetchAdsTxt';
 
 interface DownloadPlainAdsTxtProps {
+  appAdsTxt: boolean;
   content: string;
   children: React.ReactNode;
 }
 
-export const DownloadPlainAdsTxt: React.FC<DownloadPlainAdsTxtProps> = ({ content, children }) => {
+export const DownloadPlainAdsTxt: React.FC<DownloadPlainAdsTxtProps> = ({
+  appAdsTxt,
+  content,
+  children,
+}) => {
   const downloadFile = () => {
     const blob = new Blob([content], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
@@ -14,7 +19,7 @@ export const DownloadPlainAdsTxt: React.FC<DownloadPlainAdsTxtProps> = ({ conten
     // Create a temporary link and trigger the download
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'ads.txt';
+    link.download = appAdsTxt ? 'app-ads.txt' : 'ads.txt';
     document.body.appendChild(link);
     link.click();
 
@@ -32,12 +37,14 @@ export const DownloadPlainAdsTxt: React.FC<DownloadPlainAdsTxtProps> = ({ conten
 
 interface DownloadCsvAdsTxtVProps {
   domain: string;
+  appAdsTxt: boolean;
   adsTxt: AdsTxt[];
   children: React.ReactNode;
 }
 
 export const DownloadCsvAdsTxt: React.FC<DownloadCsvAdsTxtVProps> = ({
   domain,
+  appAdsTxt,
   adsTxt,
   children,
 }) => {
@@ -67,7 +74,7 @@ export const DownloadCsvAdsTxt: React.FC<DownloadCsvAdsTxtVProps> = ({
     // Create a temporary link and trigger the download
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${domain}_adsTxt.csv`;
+    link.download = appAdsTxt ? `${domain}_app-ads.txt.csv` : `${domain}_ads.txt.csv`;
     document.body.appendChild(link);
     link.click();
 

@@ -6,6 +6,7 @@ import { Tooltip } from './Tooltip';
 
 interface SummaryPanelProps {
   analyzing: boolean;
+  checksAppAdsTxt: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
@@ -13,6 +14,7 @@ interface SummaryPanelProps {
 
 export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   analyzing,
+  checksAppAdsTxt,
   adsTxtData,
   sellerAnalysis,
   isVerifiedEntry,
@@ -156,9 +158,11 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         </div>
       </div>
 
-      {/* Ads.txt Analysis */}
+      {/* Ads.txt/App-ads.txt Analysis */}
       <div className="rounded-lg border p-4">
-        <h3 className="text-lg font-semibold mb-4">Ads.txt Analysis</h3>
+        <h3 className="text-lg font-semibold mb-4">
+          {checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'} Analyze
+        </h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-red-50 p-3 rounded-lg flex flex-col items-center justify-center">
             <div className="text-sm font-medium text-red-800">Errors</div>

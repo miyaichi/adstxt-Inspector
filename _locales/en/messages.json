@@ -9,7 +9,10 @@
     "message": "Update via Chrome Web Store"
   },
   "analyse_button_description": {
-    "message": "Press the Analyze button to analyze the Ads.txt file for this domain."
+    "message": "Press the Analyze button to analyze the Ads.txt/App-ads.txt file for this domain."
+  },
+  "checks_app_ads_txt": {
+    "message": "Checks App-ads.txt"
   },
   "duplicate_check": {
     "message": "Duplicate Check"
@@ -21,16 +24,16 @@
     "message": "Analyze"
   },
   "analyzing_ads_txt": {
-    "message": "Analyzing Ads.txt..."
+    "message": "Analyzing Ads.txt/App-ads.txt..."
   },
   "no_ads_txt_data": {
-    "message": "No Ads.txt data available"
+    "message": "No Ads.txt/App-ads.txt data available"
   },
   "download_ads_txt_without_errors": {
-    "message": "Download Ads.txt with errors commented out"
+    "message": "Download Ads.txt/App-ads.txt with errors commented out"
   },
   "contact": {
-    "message": "Provides contact information for the owner of the ads.txt file."
+    "message": "Provides contact information for the owner of the ads.txt/App-ads.txt file."
   },
   "direct": {
     "message": "The publisher directly controls the account for selling ads."
@@ -48,7 +51,7 @@
     "message": "An authorized third party resells ad inventory on behalf of the publisher."
   },
   "subdomain": {
-    "message": "Refers to a subdomain with its own Ads.txt file for ad authorization."
+    "message": "Refers to a subdomain with its own Ads.txt/App-ads.txt file for ad authorization."
   },
   "owner_domain_not_specified": {
     "message": "Owner domain not specified"
