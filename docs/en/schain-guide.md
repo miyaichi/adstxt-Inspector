@@ -82,7 +82,7 @@ When you visit a website or app:
 
 ## Understanding the Key Files
 
-### Ads.txt (Authorized Digital Sellers)
+### Ads.txt/App-ads.txt (Authorized Digital Sellers)
 
 This is a simple text file that publishers place on their websites to publicly declare which companies are authorized to sell their ad inventory.
 
@@ -152,7 +152,7 @@ This means:
 
 ## What Publishers Need to Do
 
-1. **Maintain Accurate Ads.txt Files**
+1. **Maintain Accurate Ads.txt/App-ads.txt Files**
    - List all authorized selling partners
    - Specify correct relationships (DIRECT or RESELLER)
    - Update promptly when partnerships change
@@ -162,7 +162,7 @@ This means:
    - Ensure your inventory is properly identified throughout the chain
 
 3. **Regular Monitoring**
-   - Check that your ads.txt is current
+   - Check that your Ads.txt/App-ads.txt is current
    - Monitor for unauthorized sellers of your inventory
    - Verify that supply chain data is accurate
 
@@ -176,10 +176,10 @@ This means:
 2. **Implement SupplyChain Support**
    - Properly pass supply chain information in bid requests
    - Ensure seller IDs match between systems
-   - Maintain connection between ads.txt and sellers.json information
+   - Maintain connection between Ads.txt/App-ads.txt and sellers.json information
 
 3. **Verify Consistency**
-   - Check that your sellers' ads.txt entries are accurate
+   - Check that your sellers' Ads.txt/App-ads.txt entries are accurate
    - Block suspicious inventory without proper identification
    - Maintain a clean marketplace
 
@@ -196,6 +196,7 @@ For everyone in the digital advertising ecosystem:
 ## Further Reading
 
 - [IAB Tech Lab Ads.txt Specification](https://iabtechlab.com/ads-txt/)
+- [IAB Tech Lab App-ads.txt Specification](https://iabtechlab.com/wp-content/uploads/2019/03/app-ads.txt-v1.0-final-.pdf)
 - [IAB Tech Lab Sellers.json Specification](https://iabtechlab.com/sellers-json/)
 - [SupplyChain Object Specification](https://github.com/InteractiveAdvertisingBureau/openrtb/blob/master/supplychainobject.md)
 

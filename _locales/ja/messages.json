@@ -9,7 +9,10 @@
     "message": "Chrome ウェブストアでアップデート"
   },
   "analyse_button_description": {
-    "message": "このドメインの Ads.txt を分析するには、分析ボタンを押してください。"
+    "message": "このドメインの $1 を分析するには、分析ボタンを押してください。"
+  },
+  "checks_app_ads_txt": {
+    "message": "App-ads.txt をチェック"
   },
   "duplicate_check": {
     "message": "重複チェック"
@@ -20,17 +23,17 @@
   "analyze": {
     "message": "分析"
   },
-  "analyzing_ads_txt": {
-    "message": "Ads.txt を分析中..."
+  "analyzing_file": {
+    "message": "$1 を分析中..."
   },
   "no_ads_txt_data": {
-    "message": "Ads.txt データがありません"
+    "message": "$1 データがありません"
   },
-  "download_ads_txt_without_errors": {
-    "message": "エラーをコメントアウトした Ads.txt をダウンロード"
+  "download_file_without_errors": {
+    "message": "エラーをコメントアウトした $1 をダウンロード"
   },
   "contact": {
-    "message": "Ads.txt ファイルの所有者の連絡先です。"
+    "message": "Ads.txt/App-ads.txt ファイルの所有者の連絡先です。"
   },
   "direct": {
     "message": "パブリッシャーが広告販売のアカウントを直接管理しています。"
@@ -48,7 +51,7 @@
     "message": "パブリッシャーにかわり第三者が広告枠をリセールしています。"
   },
   "subdomain": {
-    "message": "独自の Ads.txt ファイルを持つサブドメインです。"
+    "message": "独自の Ads.txt/App-ads.txt ファイルを持つサブドメインです。"
   },
   "owner_domain_not_specified": {
     "message": "オーナードメインが指定されていません"
@@ -85,9 +88,6 @@
   },
   "duplicate_entries": {
     "message": "エントリが重複しています"
-  },
-  "analyzing_sellers_json": {
-    "message": "Sellers.json を分析中..."
   },
   "no_seller_json_data": {
     "message": "Sellers.json データがありません"

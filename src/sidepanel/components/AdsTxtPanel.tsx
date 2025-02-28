@@ -9,6 +9,7 @@ import { Tooltip } from './Tooltip';
 
 interface AdsTxtPanelProps {
   analyzing: boolean;
+  checkAppAdsTxt: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
   duplicateCheck: boolean;
@@ -16,6 +17,7 @@ interface AdsTxtPanelProps {
 
 export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   analyzing,
+  checkAppAdsTxt,
   adsTxtData,
   isVerifiedEntry,
   duplicateCheck,
@@ -133,7 +135,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     return (
       <div className="p-4">
         <div className="bg-blue-50 text-blue-700 p-4 rounded-lg">
-          {chrome.i18n.getMessage('analyzing_ads_txt')}
+          {chrome.i18n.getMessage('analyzing_file', [checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'])}
         </div>
       </div>
     );
@@ -143,7 +145,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     return (
       <div className="p-4">
         <div className="bg-gray-50 text-gray-600 p-4 rounded-lg">
-          {chrome.i18n.getMessage('no_ads_txt_data')}
+          {chrome.i18n.getMessage('no_ads_txt_data', [checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'])}
         </div>
       </div>
     );
@@ -167,9 +169,10 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             {totalEntries > 0 && errors.length > 0 && (
               <div className="flex justify-end space-x-2 cursor-pointer">
                 <DownloadPlainAdsTxt
+                  appAdsTxt={checkAppAdsTxt}
                   content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}
                 >
-                  <span>{chrome.i18n.getMessage('download_ads_txt_without_errors')}</span>
+                  <span>{chrome.i18n.getMessage('download_file_without_errors', [checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'])}</span>
                   <Download className="w-4 h-4" />
                 </DownloadPlainAdsTxt>
               </div>
@@ -191,7 +194,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         </div>
       )}
 
-      {/* Ads.txt Header */}
+      {/* Ads.txt/App-ads.txt Header */}
       <div className="panel-section">
         <div className="panel-header ">
           <div className="flex items-center justify-between">
@@ -211,6 +214,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
           <div className="flex justify-end">
             <DownloadCsvAdsTxt
               domain={adsTxtData.variables.ownerDomain || ''}
+              appAdsTxt={checkAppAdsTxt}
               adsTxt={adsTxtData?.data || []}
             >
               <span>Download CSV</span>

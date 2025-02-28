@@ -20,6 +20,7 @@ interface UpdateInfo {
 export default function App() {
   const [tabInfo, setTabInfo] = useState<TabInfo | null>(null);
   const { analyzing, adsTxtData, sellerAnalysis, analyze, isVerifiedEntry } = useAdsSellers();
+  const [checksAppAdsTxt, setChecksAppAdsTxt] = useState<boolean>(false);
   const [duplicateCheck, setDuplicateCheck] = useState<boolean>(false);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [storeUrl, setStoreUrl] = useState<string | null>(null);
@@ -92,7 +93,7 @@ export default function App() {
     if (!tabInfo || !tabInfo.isScriptInjectionAllowed || analyzing) return;
 
     try {
-      await analyze(tabInfo.url);
+      await analyze(tabInfo.url, checksAppAdsTxt);
     } catch (error) {
       logger.error('Analysis failed:', error);
     }
@@ -123,6 +124,14 @@ export default function App() {
                 <label className="flex items-center space-x-1">
                   <input
                     type="checkbox"
+                    checked={checksAppAdsTxt}
+                    onChange={(e) => setChecksAppAdsTxt(e.target.checked)}
+                  />
+                  <span>{chrome.i18n.getMessage('checks_app_ads_txt')}</span>
+                </label>
+                <label className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
                     checked={duplicateCheck}
                     onChange={(e) => setDuplicateCheck(e.target.checked)}
                   />
@@ -142,7 +151,7 @@ export default function App() {
 
             {/* Explanation Message */}
             <div className="text-sm text-gray-500">
-              {chrome.i18n.getMessage('analyse_button_description')}
+              {chrome.i18n.getMessage('analyse_button_description', [checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'])}
             </div>
           </div>
         </div>
@@ -152,13 +161,14 @@ export default function App() {
           <Tabs>
             <TabList>
               <Tab>Summary View</Tab>
-              <Tab>Ads.txt Details</Tab>
+              <Tab>{checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'} Analysis</Tab>
               <Tab>Sellers Analysis</Tab>
             </TabList>
 
             <TabPanel>
               <SummaryPanel
                 analyzing={analyzing}
+                checksAppAdsTxt={checksAppAdsTxt}
                 adsTxtData={adsTxtData}
                 sellerAnalysis={sellerAnalysis}
                 isVerifiedEntry={isVerifiedEntry}
@@ -169,6 +179,7 @@ export default function App() {
               <AdsTxtPanel
                 analyzing={analyzing}
                 adsTxtData={adsTxtData}
+                checkAppAdsTxt={checksAppAdsTxt}
                 isVerifiedEntry={isVerifiedEntry}
                 duplicateCheck={duplicateCheck}
               />

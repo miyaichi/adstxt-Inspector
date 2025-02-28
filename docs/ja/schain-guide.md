@@ -152,7 +152,7 @@ SSPやエクスチェンジが公開するファイルで、彼らが代表す�
 
 ## パブリッシャーがするべきこと
 
-1. **正確なAds.txtファイルの管理**
+1. **正確なAds.txt/App-ads.txtファイルの管理**
    - すべての認可された販売パートナーをリストする
    - 正確な関係（DIRECTまたはRESELLER）を指定する
    - パートナーシップが変更されたら迅速に更新する
@@ -162,7 +162,7 @@ SSPやエクスチェンジが公開するファイルで、彼らが代表す�
    - あなたの在庫がチェーン全体で適切に識別されていることを確認する
 
 3. **定期的なモニタリング**
-   - Ads.txtが最新であることを確認する
+   - Ads.txt/App-ads.txtが最新であることを確認する
    - 未認可の販売者があなたの在庫を販売していないか監視する
    - サプライチェーンデータが正確であることを確認する
 
@@ -176,10 +176,10 @@ SSPやエクスチェンジが公開するファイルで、彼らが代表す�
 2. **SupplyChain対応の実装**
    - 入札リクエストにサプライチェーン情報を適切に渡す
    - 販売者IDがシステム間で一致することを確認する
-   - Ads.txtとSellers.json情報間の接続を維持する
+   - Ads.txt/App-ads.txtとSellers.json情報間の接続を維持する
 
 3. **一貫性の検証**
-   - 販売者のAds.txtエントリが正確であることを確認する
+   - 販売者のAds.txt/App-ads.txtエントリが正確であることを確認する
    - 適切な識別のない不審な在庫をブロックする
    - クリーンな市場を維持する
 
@@ -196,6 +196,7 @@ SSPやエクスチェンジが公開するファイルで、彼らが代表す�
 ## 参考資料
 
 - [IAB Tech Lab Ads.txt 仕様](https://www.pier1.co.jp/wp-content/uploads/2024/02/Ads.txt-1.1-ja.pdf)
+- [IABTechLab App-ads.txt 仕様](https://www.pier1.co.jp/wp-content/uploads/2024/02/app-ads.txt-v1.0-final-ja.pdf) (日本語)
 - [IAB Tech Lab Sellers.json 仕様](https://www.pier1.co.jp/wp-content/uploads/2024/02/Sellers.json_Final-ja.pdf)
 - [SupplyChain Object 仕様とFAQ](https://www.pier1.co.jp/wp-content/uploads/2024/02/FAQ-for-sellers.json_supplychain-objec-ja.pdf)
 

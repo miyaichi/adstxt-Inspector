@@ -34,14 +34,20 @@ export interface FetchAdsTxtResult {
 /**
  * Fetches and parses the ads.txt file for the specified domain.
  * @param domain Domain name to fetch ads.txt for
+ * @param appAdsTxt Whether to fetch app-ads.txt instead of ads.txt
  * @returns FetchAdsTxtResult object
  */
-export const fetchAdsTxt = async (domain: string): Promise<FetchAdsTxtResult> => {
+export const fetchAdsTxt = async (
+  domain: string,
+  appAdsTxt: boolean = false
+): Promise<FetchAdsTxtResult> => {
   const rootDomain = getRootDomain(domain);
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
 
   // Retrive ads.txt of the root domain
-  const adsTxtUrls = [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
+  const adsTxtUrls = appAdsTxt
+    ? [`https://${rootDomain}/app-ads.txt`, `http://${rootDomain}/app-ads.txt`]
+    : [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
   let adsTxtContent = '';
   let adsTxtUrl = '';
 
