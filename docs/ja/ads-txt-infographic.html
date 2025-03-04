@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ads.txt / app-ads.txt 実践導入・運用ガイド</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi&family=Zen+Kurenaido&display=swap');
+        
+        :root {
+            --color-1: #593C47;
+            --color-2: #F2E63D;
+            --color-3: #F2C53D;
+            --color-4: #F25C05;
+            --color-5: #F24405;
+            --text-dark: #334155;
+            --text-heading: #1e40af;
+            --text-subheading: #475569;
+            --bg-light: #f8fafc;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Zen Kurenaido', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--color-1), var(--color-4));
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed var(--color-3);
+            position: relative;
+        }
+        
+        .title {
+            font-family: 'Kaisei Decol', serif;
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--color-1), var(--color-5));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .subtitle {
+            font-family: 'Yomogi', cursive;
+            font-size: 16px;
+            color: var(--text-subheading);
+            margin-bottom: 5px;
+        }
+        
+        .date {
+            font-size: 14px;
+            color: var(--text-subheading);
+            text-align: right;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .column {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-title {
+            font-family: 'Kaisei Decol', serif;
+            font-size: 18px;
+            color: var(--text-heading);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--color-3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-3);
+            color: var(--color-1);
+            border-radius: 50%;
+        }
+        
+        .content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .key-point {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(242, 230, 60, 0.1);
+            border-left: 3px solid var(--color-3);
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .highlight {
+            background: linear-gradient(transparent 60%, var(--color-2) 40%);
+            padding: 0 2px;
+            font-weight: bold;
+        }
+        
+        .arrow-connector {
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .arrow-down {
+            font-size: 24px;
+            color: var(--color-4);
+            animation: bounce 2s infinite;
+        }
+        
+        .hand-drawn-box {
+            border: 2px solid var(--color-1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            position: relative;
+            background: white;
+        }
+        
+        .hand-drawn-box::before {
+            content: "";
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 12px;
+            border: 2px solid var(--color-1);
+            z-index: -1;
+            transform: rotate(-0.5deg);
+        }
+        
+        .note-tag {
+            display: inline-block;
+            background: var(--color-1);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            transform: rotate(-2deg);
+            position: absolute;
+            top: -10px;
+            left: 20px;
+        }
+        
+        .example-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .example-box::before {
+            content: "例";
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--color-3);
+            color: var(--color-1);
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 0 0 0 8px;
+        }
+        
+        .numbered-list {
+            counter-reset: item;
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .numbered-list li {
+            counter-increment: item;
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 35px;
+        }
+        
+        .numbered-list li::before {
+            content: counter(item);
+            background: var(--color-3);
+            color: var(--color-1);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .step-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .step-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: var(--color-4);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .connection-line {
+            height: 20px;
+            width: 2px;
+            background: var(--color-4);
+            margin-left: 15px;
+        }
+        
+        .warning-box {
+            background: rgba(242, 92, 5, 0.1);
+            border-left: 4px solid var(--color-4);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-title {
+            color: var(--color-5);
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .two-column {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        
+        .two-column > div {
+            flex: 1;
+        }
+        
+        .emoji-bullet {
+            padding-left: 25px;
+            position: relative;
+            margin: 8px 0;
+        }
+        
+        .emoji-bullet::before {
+            position: absolute;
+            left: 0;
+            top: 2px;
+        }
+        
+        .check-bullet::before {
+            content: "✅";
+        }
+        
+        .warning-bullet::before {
+            content: "⚠️";
+        }
+        
+        .idea-bullet::before {
+            content: "💡";
+        }
+        
+        .hand-drawn-arrow {
+            position: relative;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .hand-drawn-arrow svg {
+            width: 80px;
+            height: 40px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-subheading);
+            padding-top: 20px;
+            border-top: 1px dashed var(--color-3);
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .column {
+                width: 100%;
+            }
+        }
+        
+        .banner {
+            position: relative;
+            padding: 10px 20px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, var(--color-2), var(--color-3));
+            border-radius: 8px;
+            color: var(--color-1);
+            font-weight: bold;
+            transform: rotate(-1deg);
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .banner::before, .banner::after {
+            content: "";
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--color-1);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .banner::before {
+            left: 5px;
+        }
+        
+        .banner::after {
+            right: 5px;
+        }
+        
+        .speech-bubble {
+            position: relative;
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0 15px 20px;
+            border: 2px solid var(--color-1);
+            font-family: 'Yomogi', cursive;
+        }
+        
+        .speech-bubble::before {
+            content: "";
+            position: absolute;
+            left: -12px;
+            top: 15px;
+            border-style: solid;
+            border-width: 8px 12px 8px 0;
+            border-color: transparent var(--color-1) transparent transparent;
+        }
+        
+        .faq-box {
+            margin: 15px 0;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            color: var(--color-1);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .faq-question::before {
+            content: "Q";
+            background: var(--color-1);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .faq-answer {
+            margin-left: 32px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .faq-answer::before {
+            content: "A";
+            background: var(--color-3);
+            color: var(--color-1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            left: -32px;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: var(--color-3);
+            color: var(--color-1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .circle-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: var(--color-3);
+            color: var(--color-1);
+            border-radius: 50%;
+            font-weight: bold;
+            transform: rotate(-5deg);
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 12px;
+            text-align: center;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .case-study {
+            border: 2px solid var(--color-3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+            position: relative;
+        }
+        
+        .case-study-title {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            color: var(--color-1);
+            font-weight: bold;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1 class="title">ads.txt / app-ads.txt 実践導入・運用ガイド</h1>
+                <p class="subtitle">オンライン広告の信頼性と透明性を高めるための完全ガイド</p>
+            </div>
+            <div class="date">2025年3月版</div>
+        </header>
+        
+        <div class="main-content">
+            <!-- Column 1 -->
+            <div class="column">
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-question"></i></span>
+                        ads.txt/app-ads.txtとは？
+                    </h2>
+                    <div class="content">
+                        <p><span class="highlight">ads.txt（Authorized Digital Sellers）</span>は、ウェブサイトの広告枠を販売できる<span class="highlight">正規の事業者を公開リスト化</span>するためのテキストファイルです。</p>
+                        
+                        <div class="hand-drawn-box">
+                            <span class="note-tag">効果</span>
+                            <p>悪質なドメインなりすましや無許可の広告販売を防ぎ、オンライン広告の透明性を高め広告詐欺を減らす取り組み</p>
+                        </div>
+                        
+                        <p>同様に、モバイルアプリ向けには<span class="highlight">app-ads.txt</span>というファイルを用います。</p>
+                        
+                        <div class="key-point">
+                            <p>設置されたads.txtやapp-ads.txtは誰でも閲覧可能で、広告主や広告取引システムがその内容をクロール（自動取得）して、正規の販売者情報を確認できます。</p>
+                        </div>
+                        
+                        <div class="hand-drawn-box">
+                            <span class="note-tag">管理主体</span>
+                            <p>サイトやアプリの運営者（パブリッシャー）が自社ドメイン上にファイルを設置し、許可する広告販売者の情報を維持管理します。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-link"></i></span>
+                        Sellers.json および SupplyChain
+                    </h2>
+                    <div class="content">
+                        <div class="two-column">
+                            <div>
+                                <h3 class="banner">ads.txt</h3>
+                                <p class="emoji-bullet check-bullet">パブリッシャーが認定する販売者を示す</p>
+                                <p class="emoji-bullet check-bullet">サイト/アプリ運営者が管理</p>
+                            </div>
+                            <div>
+                                <h3 class="banner">Sellers.json</h3>
+                                <p class="emoji-bullet check-bullet">SSP/エクスチェンジが扱うパブリッシャーや仲介者を公開</p>
+                                <p class="emoji-bullet check-bullet">広告プラットフォームが管理</p>
+                            </div>
+                        </div>
+                        
+                        <div class="speech-bubble">
+                            この三位一体の仕組み（ads.txt/app-ads.txt、Sellers.json、SupplyChain Object）により、デジタル広告エコシステム全体の透明性が向上し、不正な広告取引を排除することが可能になります。
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-file-code"></i></span>
+                        ads.txt / app-ads.txtの記述フォーマット
+                    </h2>
+                    <div class="content">
+                        <p>ads.txtおよびapp-ads.txtはプレーンテキスト形式のファイルで、1行に1社ずつ<span class="highlight">許可する広告販売者の情報</span>を記載します。</p>
+                        
+                        <div class="numbered-list">
+                            <li><strong>広告システムのドメイン名</strong> – 広告取引を行うSSPや広告エクスチェンジのドメイン</li>
+                            <li><strong>サイト運営者の識別子（アカウントID）</strong> – 上記システムにおけるパブリッシャーのアカウントID</li>
+                            <li><strong>関係性（アカウント種別）</strong> – <code>DIRECT</code>（直接取引）または<code>RESELLER</code>（再販経由）</li>
+                            <li><strong>認証局ID（オプション）</strong> – 広告システムが認定を受けている認証機関のID</li>
+                        </div>
+                        
+                        <div class="example-box">
+                            google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0
+                        </div>
+                        
+                        <div class="key-point">
+                            <p>コメント行（先頭に<code>#</code>）を使ってファイル内にメモを残すことも可能です。例：</p>
+                            <p><code># Updated 2025-03-03 by Admin</code></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-code-branch"></i></span>
+                        OWNERDOMAIN と MANAGERDOMAIN
+                    </h2>
+                    <div class="content">
+                        <p>2022年にIAB Tech Labが公開したads.txt 1.1の規格での新ディレクティブ：</p>
+                        
+                        <div class="hand-drawn-box">
+                            <p><strong>OWNERDOMAIN</strong>：サイトやアプリの所有者を示します</p>
+                            <div class="example-box">
+                                OWNERDOMAIN=example-publisher.com
+                            </div>
+                        </div>
+                        
+                        <div class="hand-drawn-box">
+                            <p><strong>MANAGERDOMAIN</strong>：パブリッシャーの広告収益化を管理する事業者を示します</p>
+                            <div class="example-box">
+                                MANAGERDOMAIN=sales-house.com<br>
+                                MANAGERDOMAIN=eu-sales-partner.com, EU
+                            </div>
+                        </div>
+                        
+                        <div class="warning-box">
+                            <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> 注意点</div>
+                            <p>同じ国に複数のMANAGERDOMAINを設定するとエラーとなります</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Column 2 -->
+            <div class="column">
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-laptop"></i></span>
+                        設置手順（ウェブサイト）
+                    </h2>
+                    <div class="content">
+                        <div class="step-diagram">
+                            <div class="step-box">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <strong>ファイルの作成</strong>
+                                    <p>テキストエディタで「ads.txt」というファイル名のテキストファイルを作成し、フォーマットに従って記述</p>
+                                </div>
+                            </div>
+                            <div class="connection-line"></div>
+                            <div class="step-box">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <strong>ファイルのアップロード</strong>
+                                    <p>完成したads.txtファイルを自社サイトの<span class="highlight">ルートドメイン直下</span>にアップロード</p>
+                                    <p>例：<code>https://example.com/ads.txt</code></p>
+                                </div>
+                            </div>
+                            <div class="connection-line"></div>
+                            <div class="step-box">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <strong>設置確認</strong>
+                                    <p>ブラウザで実際に <code>https://ドメイン名/ads.txt</code> にアクセスし、ファイル内容が表示されることを確認</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="key-point">
+                            <p class="emoji-bullet idea-bullet">複数の独自ドメインを運営している場合、ドメインごとにads.txtを配置する必要があります</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-mobile-alt"></i></span>
+                        設置手順（モバイルアプリ）
+                    </h2>
+                    <div class="content">
+                        <div class="step-diagram">
+                            <div class="step-box">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <strong>デベロッパーサイトの用意</strong>
+                                    <p>app-ads.txtはアプリ単体ではなく<span class="highlight">開発者サイト上</span>に設置します</p>
+                                </div>
+                            </div>
+                            <div class="connection-line"></div>
+                            <div class="step-box">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <strong>ファイルの作成</strong>
+                                    <p>基本フォーマットはads.txtと同じです。ファイル名は「app-ads.txt」とします</p>
+                                </div>
+                            </div>
+                            <div class="connection-line"></div>
+                            <div class="step-box">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <strong>ファイルのアップロード</strong>
+                                    <p>対象のウェブサイトのルートドメイン直下にアップロード</p>
+                                    <p>例：<code>https://example.com/app-ads.txt</code></p>
+                                </div>
+                            </div>
+                            <div class="connection-line"></div>
+                            <div class="step-box">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <strong>ストアでの確認</strong>
+                                    <p>設置後、Google AdMob管理画面などで検出確認</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                        よくある設置ミスと防ぐ方法
+                    </h2>
+                    <div class="content">
+                        <div class="warning-box">
+                            <div class="warning-title"><i class="fas fa-map-pin"></i> ファイルの置き場所の誤り</div>
+                            <p>ads.txtをルート以外のディレクトリに置くと正しく検出されません</p>
+                            <p><strong>対策:</strong> 指定通り「ドメイン直下」に正確なファイル名で配置</p>
+                        </div>
+                        
+                        <div class="warning-box">
+                            <div class="warning-title"><i class="fas fa-keyboard"></i> 記述フォーマットのミス</div>
+                            <p>カンマの入れ忘れや全角文字の混入、余分な空白・改行</p>
+                            <p><strong>対策:</strong> パートナーから提供された文字列をそのまま使用</p>
+                        </div>
+                        
+                        <div class="warning-box">
+                            <div class="warning-title"><i class="fas fa-id-card"></i> パートナー情報の間違い</div>
+                            <p>広告パートナーから指定されたIDやドメインの誤記載</p>
+                            <p><strong>対策:</strong> 情報ソースからコピーペーストして正確に記載</p>
+                        </div>
+                        
+                        <div class="warning-box">
+                            <div class="warning-title"><i class="fas fa-link"></i> アプリのドメイン不整合</div>
+                            <p>ストアに登録した開発者サイトURLと実際のファイルURLの不一致</p>
+                            <p><strong>対策:</strong> アプリのストア情報で指定したドメインを確認</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-tools"></i></span>
+                        クロスチェックツールを活用した検証
+                    </h2>
+                    <div class="content">
+                        <p>ads.txt/app-ads.txtの設定が正しいかを確認するには、専用の検証ツールを利用：</p>
+                        
+                        <div class="emoji-bullet check-bullet">構文エラーチェック</div>
+                        <div class="emoji-bullet check-bullet">重複エントリの特定</div>
+                        <div class="emoji-bullet check-bullet">Sellers.jsonとの照合</div>
+                        <div class="emoji-bullet check-bullet">関係性の検証</div>
+                        <div class="emoji-bullet check-bullet">OWNERDOMAIN/MANAGERDOMAINの検証</div>
+                        
+                        <div class="hand-drawn-box">
+                            <span class="note-tag">使用手順</span>
+                            <ol style="padding-left: 20px;">
+                                <li>AdsTxt Inspector等のChrome拡張機能をインストール</li>
+                                <li>検証したいウェブサイトにアクセス</li>
+                                <li>ツールを起動して分析を実行</li>
+                                <li>レポートを確認し、問題点があれば修正</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Column 3 -->
+            <div class="column">
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-bug"></i></span>
+                        トラブルシューティング
+                    </h2>
+                    <div class="content">
+                        <div class="faq-box">
+                            <div class="faq-question">誤記・エラーへの対処</div>
+                            <div class="faq-answer">
+                                <p>フォーマットエラー、無効なIDやドメイン、コメントアウト漏れ、エンコードの不整合などを確認。修正後は通常48時間以内に広告システム側に変更が認識されます。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-box">
+                            <div class="faq-question">重複記載の問題と修正</div>
+                            <div class="faq-answer">
+                                <p>同一内容の重複行がads.txt内に存在すると警告の対象になることがあります。ファイルをエディタで開き、内容が重複している行がないか確認し、一つを残して削除します。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="hand-drawn-box">
+                            <span class="note-tag">チェックポイント</span>
+                            <div class="emoji-bullet check-bullet">各行が規定のフィールド数・順序になっているか</div>
+                            <div class="emoji-bullet check-bullet">カンマ区切りの位置やスペルに誤りがないか</div>
+                            <div class="emoji-bullet check-bullet">DIRECTとRESELLERの綴りが正しいか</div>
+                            <div class="emoji-bullet check-bullet">アカウントIDが正確か</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-sync-alt"></i></span>
+                        更新の必要性とメンテナンス手順
+                    </h2>
+                    <div class="content">
+                        <p>ads.txt/app-ads.txtは一度設置して終わりではなく、<span class="highlight">継続的なメンテナンスが必要</span>です。</p>
+                        
+                        <div class="two-column">
+                            <div>
+                                <div class="emoji-bullet check-bullet">新規パートナーの追加</div>
+                                <div class="emoji-bullet check-bullet">不要なエントリの削除</div>
+                            </div>
+                            <div>
+                                <div class="emoji-bullet check-bullet">定期レビューと社内フロー</div>
+                                <div class="emoji-bullet check-bullet">プラットフォームからの通知確認</div>
+                            </div>
+                        </div>
+                        
+                        <div class="key-point">
+                            <p>広告運用担当者は、<span class="highlight">定期的（例：月次または四半期ごと）にads.txtの内容レビュー</span>を行う習慣を付けましょう。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="circle-badge">事例集</div>
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-book"></i></span>
+                        具体的な事例とケーススタディ
+                    </h2>
+                    <div class="content">
+                        <div class="case-study">
+                            <div class="case-study-title">ケース1: 設置ミスによる広告配信停止</div>
+                            <p>ファイルをルートではなく<code>/blog/</code>ディレクトリ下に置いたため、広告配信停止。ルート直下に再配置後、問題解決。</p>
+                            <div class="tag">教訓</div>
+                            <p>設置後のURL動作確認の徹底と、警告表示の早期発見・対処が重要</p>
+                        </div>
+                        
+                        <div class="case-study">
+                            <div class="case-study-title">ケース2: 誤った記述修正後に収益が激減</div>
+                            <p>ads.txt内の記述ミスを修正したら収益が半減。原因は修正により一部の広告在庫が排除された可能性。数日で回復。</p>
+                            <div class="tag">教訓</div>
+                            <p>修正内容を再確認し、変更前後の収益動向もモニタリングする</p>
+                        </div>
+                        
+                        <div class="case-study">
+                            <div class="case-study-title">ケース5: OWNERDOMAIN/MANAGERDOMAINの導入効果</div>
+                            <p>グローバルメディア企業がOWNERDOMAINとMANAGERDOMAINを適切に設定したことで、DSPが適切な販売代理店を特定できるようになり、収益が20%向上。</p>
+                            <div class="tag">教訓</div>
+                            <p>新しいディレクティブの適切な活用が収益改善に寄与</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card">
+                    <h2 class="section-title">
+                        <span class="section-icon"><i class="fas fa-award"></i></span>
+                        運用フロー改善のベストプラクティス
+                    </h2>
+                    <div class="content">
+                        <div class="emoji-bullet check-bullet"><strong>責任の明確化:</strong> ファイル管理の担当者を明確に定める</div>
+                        <div class="emoji-bullet check-bullet"><strong>情報共有と承認プロセス:</strong> 変更依頼は文書化して承認を得る</div>
+                        <div class="emoji-bullet check-bullet"><strong>変更履歴の管理:</strong> いつ誰がどの内容を変更したか記録を残す</div>
+                        <div class="emoji-bullet check-bullet"><strong>定期メンテナンス:</strong> 定期的にads.txt/app-ads.txtを点検</div>
+                        <div class="emoji-bullet check-bullet"><strong>警告モニタリング:</strong> 広告プラットフォームのダッシュボードを頻繁に確認</div>
+                        <div class="emoji-bullet check-bullet"><strong>検証ツールの定期利用:</strong> 検証ツールで定期的にエラーチェック</div>
+                        <div class="emoji-bullet check-bullet"><strong>Sellers.jsonとの整合性確認:</strong> パートナーのSellers.jsonと照合</div>
+                        <div class="emoji-bullet check-bullet"><strong>周辺知識のアップデート:</strong> IAB Tech Labからの新情報をウォッチ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>出典: <a href="https://note.com/miyaichi/n/nd11a3ad7fe37">ads.txt / app-ads.txt 実践導入・運用ガイド | © 2025</a></p>
+        </footer>
+    </div>
+</body>
+</html>
