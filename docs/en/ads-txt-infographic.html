@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ads.txt / app-ads.txt 実践導入・運用ガイド</title>
+    <title>ads.txt / app-ads.txt Implementation and Operation Guide</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -70,7 +70,7 @@
       }
 
       .title {
-        font-family: 'Montserrat', serif;
+        font-family: 'Montserrat', sans-serif;
         font-size: 32px;
         font-weight: 700;
         background: linear-gradient(90deg, var(--color-1), var(--color-5));
@@ -123,7 +123,7 @@
       }
 
       .section-title {
-        font-family: 'Montserrat', serif;
+        font-family: 'Montserrat', sans-serif;
         font-size: 18px;
         color: var(--text-heading);
         margin-bottom: 15px;
@@ -221,7 +221,7 @@
       }
 
       .example-box::before {
-        content: '例';
+        content: 'Example';
         position: absolute;
         top: 0;
         right: 0;
@@ -560,10 +560,12 @@
     <div class="container">
       <header>
         <div>
-          <h1 class="title">ads.txt / app-ads.txt 実践導入・運用ガイド</h1>
-          <p class="subtitle">オンライン広告の信頼性と透明性を高めるための完全ガイド</p>
+          <h1 class="title">ads.txt / app-ads.txt Implementation and Operation Guide</h1>
+          <p class="subtitle">
+            A Complete Guide to Enhancing Trust and Transparency in Online Advertising
+          </p>
         </div>
-        <div class="date">2025年3月版</div>
+        <div class="date">March 2025 Edition</div>
       </header>
 
       <div class="main-content">
@@ -572,38 +574,41 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-question"></i></span>
-              ads.txt/app-ads.txtとは？
+              What are ads.txt/app-ads.txt?
             </h2>
             <div class="content">
               <p>
-                <span class="highlight">ads.txt（Authorized Digital Sellers）</span
-                >は、ウェブサイトの広告枠を販売できる<span class="highlight"
-                  >正規の事業者を公開リスト化</span
-                >するためのテキストファイルです。
+                <span class="highlight">ads.txt (Authorized Digital Sellers)</span> is a text file
+                that <span class="highlight">publicly lists authorized vendors</span> who can sell a
+                website's ad inventory.
               </p>
 
               <div class="hand-drawn-box">
-                <span class="note-tag">効果</span>
+                <span class="note-tag">Benefits</span>
                 <p>
-                  悪質なドメインなりすましや無許可の広告販売を防ぎ、オンライン広告の透明性を高め広告詐欺を減らす取り組み
+                  Prevents malicious domain spoofing and unauthorized ad sales, increasing
+                  transparency in online advertising and reducing ad fraud
                 </p>
               </div>
 
               <p>
-                同様に、モバイルアプリ向けには<span class="highlight">app-ads.txt</span
-                >というファイルを用います。
+                Similarly, <span class="highlight">app-ads.txt</span> is used for mobile
+                applications.
               </p>
 
               <div class="key-point">
                 <p>
-                  設置されたads.txtやapp-ads.txtは誰でも閲覧可能で、広告主や広告取引システムがその内容をクロール（自動取得）して、正規の販売者情報を確認できます。
+                  The implemented ads.txt and app-ads.txt files are publicly viewable, allowing
+                  advertisers and ad trading systems to crawl (automatically retrieve) this
+                  information to verify authorized seller information.
                 </p>
               </div>
 
               <div class="hand-drawn-box">
-                <span class="note-tag">管理主体</span>
+                <span class="note-tag">Management</span>
                 <p>
-                  サイトやアプリの運営者（パブリッシャー）が自社ドメイン上にファイルを設置し、許可する広告販売者の情報を維持管理します。
+                  Site or app operators (publishers) place the file on their own domain and maintain
+                  information about authorized ad sellers.
                 </p>
               </div>
             </div>
@@ -612,27 +617,30 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-link"></i></span>
-              Sellers.json および SupplyChain
+              Sellers.json and SupplyChain
             </h2>
             <div class="content">
               <div class="two-column">
                 <div>
                   <h3 class="banner">ads.txt</h3>
-                  <p class="emoji-bullet check-bullet">パブリッシャーが認定する販売者を示す</p>
-                  <p class="emoji-bullet check-bullet">サイト/アプリ運営者が管理</p>
+                  <p class="emoji-bullet check-bullet">
+                    Indicates sellers authorized by the publisher
+                  </p>
+                  <p class="emoji-bullet check-bullet">Managed by site/app operators</p>
                 </div>
                 <div>
                   <h3 class="banner">Sellers.json</h3>
                   <p class="emoji-bullet check-bullet">
-                    SSP/エクスチェンジが扱うパブリッシャーや仲介者を公開
+                    Discloses publishers and intermediaries handled by SSPs/exchanges
                   </p>
-                  <p class="emoji-bullet check-bullet">広告プラットフォームが管理</p>
+                  <p class="emoji-bullet check-bullet">Managed by ad platforms</p>
                 </div>
               </div>
 
               <div class="speech-bubble">
-                この三位一体の仕組み（ads.txt/app-ads.txt、Sellers.json、SupplyChain
-                Object）により、デジタル広告エコシステム全体の透明性が向上し、不正な広告取引を排除することが可能になります。
+                This trinity of mechanisms (ads.txt/app-ads.txt, Sellers.json, and SupplyChain
+                Object) improves transparency across the digital advertising ecosystem and enables
+                the elimination of fraudulent ad transactions.
               </div>
             </div>
           </div>
@@ -640,32 +648,31 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-file-code"></i></span>
-              ads.txt / app-ads.txtの記述フォーマット
+              ads.txt / app-ads.txt Format
             </h2>
             <div class="content">
               <p>
-                ads.txtおよびapp-ads.txtはプレーンテキスト形式のファイルで、1行に1社ずつ<span
-                  class="highlight"
-                  >許可する広告販売者の情報</span
-                >を記載します。
+                Both ads.txt and app-ads.txt are plain text files that list
+                <span class="highlight">authorized ad seller information</span> with one company per
+                line.
               </p>
 
               <div class="numbered-list">
                 <li>
-                  <strong>広告システムのドメイン名</strong> –
-                  広告取引を行うSSPや広告エクスチェンジのドメイン
+                  <strong>Ad system domain name</strong> – The domain of the SSP or ad exchange
+                  conducting ad transactions
                 </li>
                 <li>
-                  <strong>サイト運営者の識別子（アカウントID）</strong> –
-                  上記システムにおけるパブリッシャーのアカウントID
+                  <strong>Publisher ID (Account ID)</strong> – The publisher's account ID in the
+                  above system
                 </li>
                 <li>
-                  <strong>関係性（アカウント種別）</strong> –
-                  <code>DIRECT</code>（直接取引）または<code>RESELLER</code>（再販経由）
+                  <strong>Relationship (Account type)</strong> – <code>DIRECT</code> (direct
+                  transaction) or <code>RESELLER</code> (via reseller)
                 </li>
                 <li>
-                  <strong>認証局ID（オプション）</strong> –
-                  広告システムが認定を受けている認証機関のID
+                  <strong>Certification Authority ID (Optional)</strong> – ID of the certification
+                  authority that has certified the ad system
                 </li>
               </div>
 
@@ -675,7 +682,8 @@
 
               <div class="key-point">
                 <p>
-                  コメント行（先頭に<code>#</code>）を使ってファイル内にメモを残すことも可能です。例：
+                  You can use comment lines (starting with <code>#</code>) to leave notes in the
+                  file. Example:
                 </p>
                 <p><code># Updated 2025-03-03 by Admin</code></p>
               </div>
@@ -685,20 +693,22 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-code-branch"></i></span>
-              OWNERDOMAIN と MANAGERDOMAIN
+              OWNERDOMAIN and MANAGERDOMAIN
             </h2>
             <div class="content">
-              <p>2022年にIAB Tech Labが公開したads.txt 1.1の規格での新ディレクティブ：</p>
+              <p>
+                New directives in the ads.txt 1.1 specification released by IAB Tech Lab in 2022:
+              </p>
 
               <div class="hand-drawn-box">
-                <p><strong>OWNERDOMAIN</strong>：サイトやアプリの所有者を示します</p>
+                <p><strong>OWNERDOMAIN</strong>: Indicates the owner of the site or app</p>
                 <div class="example-box">OWNERDOMAIN=example-publisher.com</div>
               </div>
 
               <div class="hand-drawn-box">
                 <p>
-                  <strong>MANAGERDOMAIN</strong
-                  >：パブリッシャーの広告収益化を管理する事業者を示します
+                  <strong>MANAGERDOMAIN</strong>: Indicates the entity managing the publisher's ad
+                  monetization
                 </p>
                 <div class="example-box">
                   MANAGERDOMAIN=sales-house.com<br />
@@ -707,8 +717,8 @@
               </div>
 
               <div class="warning-box">
-                <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> 注意点</div>
-                <p>同じ国に複数のMANAGERDOMAINを設定するとエラーとなります</p>
+                <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> Caution</div>
+                <p>Setting multiple MANAGERDOMAINs for the same country will result in an error</p>
               </div>
             </div>
           </div>
@@ -719,16 +729,17 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-laptop"></i></span>
-              設置手順（ウェブサイト）
+              Implementation Procedure (Websites)
             </h2>
             <div class="content">
               <div class="step-diagram">
                 <div class="step-box">
                   <div class="step-number">1</div>
                   <div class="step-content">
-                    <strong>ファイルの作成</strong>
+                    <strong>Create the file</strong>
                     <p>
-                      テキストエディタで「ads.txt」というファイル名のテキストファイルを作成し、フォーマットに従って記述
+                      Create a text file named "ads.txt" using a text editor and write according to
+                      the format
                     </p>
                   </div>
                 </div>
@@ -736,24 +747,22 @@
                 <div class="step-box">
                   <div class="step-number">2</div>
                   <div class="step-content">
-                    <strong>ファイルのアップロード</strong>
+                    <strong>Upload the file</strong>
                     <p>
-                      完成したads.txtファイルを自社サイトの<span class="highlight"
-                        >ルートドメイン直下</span
-                      >にアップロード
+                      Upload the completed ads.txt file to the
+                      <span class="highlight">root domain</span> of your site
                     </p>
-                    <p>例：<code>https://example.com/ads.txt</code></p>
+                    <p>Example: <code>https://example.com/ads.txt</code></p>
                   </div>
                 </div>
                 <div class="connection-line"></div>
                 <div class="step-box">
                   <div class="step-number">3</div>
                   <div class="step-content">
-                    <strong>設置確認</strong>
+                    <strong>Verify implementation</strong>
                     <p>
-                      ブラウザで実際に
-                      <code>https://ドメイン名/ads.txt</code>
-                      にアクセスし、ファイル内容が表示されることを確認
+                      Access <code>https://your-domain-name/ads.txt</code> in your browser and
+                      confirm that the file contents are displayed
                     </p>
                   </div>
                 </div>
@@ -761,7 +770,7 @@
 
               <div class="key-point">
                 <p class="emoji-bullet idea-bullet">
-                  複数の独自ドメインを運営している場合、ドメインごとにads.txtを配置する必要があります
+                  If you operate multiple domains, you need to place ads.txt for each domain
                 </p>
               </div>
             </div>
@@ -770,17 +779,17 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-mobile-alt"></i></span>
-              設置手順（モバイルアプリ）
+              Implementation Procedure (Mobile Apps)
             </h2>
             <div class="content">
               <div class="step-diagram">
                 <div class="step-box">
                   <div class="step-number">1</div>
                   <div class="step-content">
-                    <strong>デベロッパーサイトの用意</strong>
+                    <strong>Prepare a developer site</strong>
                     <p>
-                      app-ads.txtはアプリ単体ではなく<span class="highlight">開発者サイト上</span
-                      >に設置します
+                      app-ads.txt is placed on the
+                      <span class="highlight">developer's website</span>, not within the app itself
                     </p>
                   </div>
                 </div>
@@ -788,25 +797,27 @@
                 <div class="step-box">
                   <div class="step-number">2</div>
                   <div class="step-content">
-                    <strong>ファイルの作成</strong>
-                    <p>基本フォーマットはads.txtと同じです。ファイル名は「app-ads.txt」とします</p>
+                    <strong>Create the file</strong>
+                    <p>The basic format is the same as ads.txt. Name the file "app-ads.txt"</p>
                   </div>
                 </div>
                 <div class="connection-line"></div>
                 <div class="step-box">
                   <div class="step-number">3</div>
                   <div class="step-content">
-                    <strong>ファイルのアップロード</strong>
-                    <p>対象のウェブサイトのルートドメイン直下にアップロード</p>
-                    <p>例：<code>https://example.com/app-ads.txt</code></p>
+                    <strong>Upload the file</strong>
+                    <p>Upload to the root domain of the target website</p>
+                    <p>Example: <code>https://example.com/app-ads.txt</code></p>
                   </div>
                 </div>
                 <div class="connection-line"></div>
                 <div class="step-box">
                   <div class="step-number">4</div>
                   <div class="step-content">
-                    <strong>ストアでの確認</strong>
-                    <p>設置後、Google AdMob管理画面などで検出確認</p>
+                    <strong>Verify in stores</strong>
+                    <p>
+                      After implementation, check detection in management screens like Google AdMob
+                    </p>
                   </div>
                 </div>
               </div>
@@ -816,37 +827,51 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-exclamation-triangle"></i></span>
-              よくある設置ミスと防ぐ方法
+              Common Implementation Mistakes and Prevention
             </h2>
             <div class="content">
               <div class="warning-box">
                 <div class="warning-title">
-                  <i class="fas fa-map-pin"></i> ファイルの置き場所の誤り
+                  <i class="fas fa-map-pin"></i> Incorrect file placement
                 </div>
-                <p>ads.txtをルート以外のディレクトリに置くと正しく検出されません</p>
-                <p><strong>対策:</strong> 指定通り「ドメイン直下」に正確なファイル名で配置</p>
+                <p>
+                  Placing ads.txt in a directory other than the root won't be detected correctly
+                </p>
+                <p>
+                  <strong>Solution:</strong> Place with the exact file name at the "domain root" as
+                  specified
+                </p>
+              </div>
+
+              <div class="warning-box">
+                <div class="warning-title"><i class="fas fa-keyboard"></i> Format errors</div>
+                <p>Missing commas, mixed full-width characters, extra spaces/line breaks</p>
+                <p><strong>Solution:</strong> Use the exact string provided by partners</p>
               </div>
 
               <div class="warning-box">
                 <div class="warning-title">
-                  <i class="fas fa-keyboard"></i> 記述フォーマットのミス
+                  <i class="fas fa-id-card"></i> Incorrect partner information
                 </div>
-                <p>カンマの入れ忘れや全角文字の混入、余分な空白・改行</p>
-                <p><strong>対策:</strong> パートナーから提供された文字列をそのまま使用</p>
+                <p>Mistyping IDs or domains specified by ad partners</p>
+                <p>
+                  <strong>Solution:</strong> Copy and paste from the source to list information
+                  accurately
+                </p>
               </div>
 
               <div class="warning-box">
                 <div class="warning-title">
-                  <i class="fas fa-id-card"></i> パートナー情報の間違い
+                  <i class="fas fa-link"></i> App domain inconsistency
                 </div>
-                <p>広告パートナーから指定されたIDやドメインの誤記載</p>
-                <p><strong>対策:</strong> 情報ソースからコピーペーストして正確に記載</p>
-              </div>
-
-              <div class="warning-box">
-                <div class="warning-title"><i class="fas fa-link"></i> アプリのドメイン不整合</div>
-                <p>ストアに登録した開発者サイトURLと実際のファイルURLの不一致</p>
-                <p><strong>対策:</strong> アプリのストア情報で指定したドメインを確認</p>
+                <p>
+                  Mismatch between the developer site URL registered in the store and the actual
+                  file URL
+                </p>
+                <p>
+                  <strong>Solution:</strong> Check the domain specified in the app's store
+                  information
+                </p>
               </div>
             </div>
           </div>
@@ -854,24 +879,27 @@
           <div class="glass-card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-tools"></i></span>
-              クロスチェックツールを活用した検証
+              Using Cross-Check Tools for Verification
             </h2>
             <div class="content">
-              <p>ads.txt/app-ads.txtの設定が正しいかを確認するには、専用の検証ツールを利用：</p>
+              <p>
+                Use dedicated verification tools to confirm whether ads.txt/app-ads.txt settings are
+                correct:
+              </p>
 
-              <div class="emoji-bullet check-bullet">構文エラーチェック</div>
-              <div class="emoji-bullet check-bullet">重複エントリの特定</div>
-              <div class="emoji-bullet check-bullet">Sellers.jsonとの照合</div>
-              <div class="emoji-bullet check-bullet">関係性の検証</div>
-              <div class="emoji-bullet check-bullet">OWNERDOMAIN/MANAGERDOMAINの検証</div>
+              <div class="emoji-bullet check-bullet">Syntax error check</div>
+              <div class="emoji-bullet check-bullet">Duplicate entry identification</div>
+              <div class="emoji-bullet check-bullet">Sellers.json cross-reference</div>
+              <div class="emoji-bullet check-bullet">Relationship verification</div>
+              <div class="emoji-bullet check-bullet">OWNERDOMAIN/MANAGERDOMAIN validation</div>
 
               <div class="hand-drawn-box">
-                <span class="note-tag">使用手順</span>
+                <span class="note-tag">Usage Steps</span>
                 <ol style="padding-left: 20px">
-                  <li>AdsTxt Inspector等のChrome拡張機能をインストール</li>
-                  <li>検証したいウェブサイトにアクセス</li>
-                  <li>ツールを起動して分析を実行</li>
-                  <li>レポートを確認し、問題点があれば修正</li>
+                  <li>Install a Chrome extension such as AdsTxt Inspector</li>
+                  <li>Access the website you want to verify</li>
+                  <li>Launch the tool and run the analysis</li>
+                  <li>Review the report and fix any issues</li>
                 </ol>
               </div>
             </div>
@@ -883,37 +911,43 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-bug"></i></span>
-              トラブルシューティング
+              Troubleshooting
             </h2>
             <div class="content">
               <div class="faq-box">
-                <div class="faq-question">誤記・エラーへの対処</div>
+                <div class="faq-question">Handling typos and errors</div>
                 <div class="faq-answer">
                   <p>
-                    フォーマットエラー、無効なIDやドメイン、コメントアウト漏れ、エンコードの不整合などを確認。修正後は数日以内に内に広告システム側に変更が認識されます。
+                    Check for format errors, invalid IDs or domains, missed comment markings, and
+                    encoding inconsistencies. Changes are typically recognized by ad systems within
+                    a few days after correction.
                   </p>
                 </div>
               </div>
 
               <div class="faq-box">
-                <div class="faq-question">重複記載の問題と修正</div>
+                <div class="faq-question">Duplicate entry issues and corrections</div>
                 <div class="faq-answer">
                   <p>
-                    同一内容の重複行がads.txt内に存在すると警告の対象になることがあります。ファイルをエディタで開き、内容が重複している行がないか確認し、一つを残して削除します。
+                    Duplicate lines in ads.txt can trigger warnings from some platforms. Open the
+                    file in an editor, check for duplicate lines, and delete all but one of the
+                    identical entries.
                   </p>
                 </div>
               </div>
 
               <div class="hand-drawn-box">
-                <span class="note-tag">チェックポイント</span>
+                <span class="note-tag">Checkpoints</span>
                 <div class="emoji-bullet check-bullet">
-                  各行が規定のフィールド数・順序になっているか
+                  Does each line have the required number of fields in the correct order?
                 </div>
                 <div class="emoji-bullet check-bullet">
-                  カンマ区切りの位置やスペルに誤りがないか
+                  Are there any errors in comma placement or spelling?
                 </div>
-                <div class="emoji-bullet check-bullet">DIRECTとRESELLERの綴りが正しいか</div>
-                <div class="emoji-bullet check-bullet">アカウントIDが正確か</div>
+                <div class="emoji-bullet check-bullet">
+                  Is the spelling of DIRECT and RESELLER correct?
+                </div>
+                <div class="emoji-bullet check-bullet">Are the account IDs accurate?</div>
               </div>
             </div>
           </div>
@@ -921,77 +955,94 @@
           <div class="card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-sync-alt"></i></span>
-              更新の必要性とメンテナンス手順
+              Update Necessity and Maintenance Procedures
             </h2>
             <div class="content">
               <p>
-                ads.txt/app-ads.txtは一度設置して終わりではなく、<span class="highlight"
-                  >継続的なメンテナンスが必要</span
-                >です。
+                ads.txt/app-ads.txt is not a one-time setup but requires
+                <span class="highlight">continuous maintenance</span>.
               </p>
 
               <div class="two-column">
                 <div>
-                  <div class="emoji-bullet check-bullet">新規パートナーの追加</div>
-                  <div class="emoji-bullet check-bullet">不要なエントリの削除</div>
+                  <div class="emoji-bullet check-bullet">Adding new partners</div>
+                  <div class="emoji-bullet check-bullet">Removing unnecessary entries</div>
                 </div>
                 <div>
-                  <div class="emoji-bullet check-bullet">定期レビューと社内フロー</div>
-                  <div class="emoji-bullet check-bullet">プラットフォームからの通知確認</div>
+                  <div class="emoji-bullet check-bullet">Regular review and internal flow</div>
+                  <div class="emoji-bullet check-bullet">Monitoring platform notifications</div>
                 </div>
               </div>
 
               <div class="key-point">
                 <p>
-                  広告運用担当者は、<span class="highlight"
-                    >定期的（例：月次または四半期ごと）にads.txtの内容レビュー</span
-                  >を行う習慣を付けましょう。
+                  Ad operation managers should develop a habit of
+                  <span class="highlight"
+                    >regularly reviewing ads.txt content (e.g., monthly or quarterly)</span
+                  >.
                 </p>
               </div>
             </div>
           </div>
 
           <div class="card">
-            <div class="circle-badge">事例集</div>
+            <div class="circle-badge">Case Studies</div>
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-book"></i></span>
-              具体的な事例とケーススタディ
+              Specific Examples and Case Studies
             </h2>
             <div class="content">
               <div class="case-study">
-                <div class="case-study-title">ケース1: 設置ミスによる広告配信停止</div>
+                <div class="case-study-title">
+                  Case 1: Ad Delivery Stopped Due to Implementation Error
+                </div>
                 <p>
-                  ファイルをルートではなく<code>/blog/</code>ディレクトリ下に置いたため、広告配信停止。ルート直下に再配置後、問題解決。
+                  A file was placed in the <code>/blog/</code> directory instead of the root,
+                  resulting in ad delivery stoppage. After relocating to the root, the problem was
+                  resolved.
                 </p>
-                <div class="tag">教訓</div>
-                <p>設置後のURL動作確認の徹底と、警告表示の早期発見・対処が重要</p>
+                <div class="tag">Lesson</div>
+                <p>
+                  Thoroughly checking URL operation after implementation and early detection of
+                  warning displays is important
+                </p>
               </div>
 
               <div class="case-study">
-                <div class="case-study-title">ケース2: 誤った記述修正後に収益が激減</div>
+                <div class="case-study-title">
+                  Case 2: Revenue Plummeted After Incorrect Description Correction
+                </div>
                 <p>
-                  ads.txt内の記述ミスを修正したら収益が半減。原因は修正により一部の広告在庫が排除された可能性。数日で回復。
+                  After correcting a description error in ads.txt, revenue halved. The cause was
+                  possibly the elimination of some ad inventory due to the correction. Revenue
+                  recovered after a few days.
                 </p>
-                <div class="tag">教訓</div>
-                <p>修正内容を再確認し、変更前後の収益動向もモニタリングする</p>
+                <div class="tag">Lesson</div>
+                <p>
+                  Re-check correction content and monitor revenue trends before and after changes
+                </p>
               </div>
 
               <div class="case-study">
-                <div class="case-study-title">ケー5: 言語設定によるクロール不具合</div>
+                <div class="case-study-title">Case 5: Crawling Issues Due to Language Settings</div>
                 <p>
-                  アプリの対応言語に「英語（米国）」を含めないと、一部のクローラーにはクロールされないケースがあとのことから、アプリストアの言語設定を変更し収益が向上。
+                  Revenue improved after adding "English (US)" to the app's supported languages, as
+                  some crawlers only crawl apps that support US language.
                 </p>
-                <div class="tag">教訓</div>
-                <p>日本語アプリでも言語設定で収益機会を逃す可能性あり</p>
+                <div class="tag">Lesson</div>
+                <p>Even for non-English apps, language settings can affect revenue opportunities</p>
               </div>
 
               <div class="case-study">
-                <div class="case-study-title">ケース6: OWNERDOMAIN/MANAGERDOMAINの導入効果</div>
+                <div class="case-study-title">
+                  Case 6: Effects of Implementing OWNERDOMAIN/MANAGERDOMAIN
+                </div>
                 <p>
-                  グローバルメディア企業がOWNERDOMAINとMANAGERDOMAINを適切に設定したことで、DSPが適切な販売代理店を特定できるようになり、収益が20%向上。
+                  A global media company properly set up OWNERDOMAIN and MANAGERDOMAIN, allowing
+                  DSPs to identify appropriate sales agencies and improving revenue by 20%.
                 </p>
-                <div class="tag">教訓</div>
-                <p>新しいディレクティブの適切な活用が収益改善に寄与</p>
+                <div class="tag">Lesson</div>
+                <p>Proper utilization of new directives contributes to revenue improvement</p>
               </div>
             </div>
           </div>
@@ -999,32 +1050,38 @@
           <div class="glass-card">
             <h2 class="section-title">
               <span class="section-icon"><i class="fas fa-award"></i></span>
-              運用フロー改善のベストプラクティス
+              Best Practices for Improving Operational Workflow
             </h2>
             <div class="content">
               <div class="emoji-bullet check-bullet">
-                <strong>責任の明確化:</strong> ファイル管理の担当者を明確に定める
+                <strong>Clarify responsibility:</strong> Clearly define who is responsible for file
+                management
               </div>
               <div class="emoji-bullet check-bullet">
-                <strong>情報共有と承認プロセス:</strong> 変更依頼は文書化して承認を得る
+                <strong>Information sharing and approval process:</strong> Document change requests
+                and obtain approval
               </div>
               <div class="emoji-bullet check-bullet">
-                <strong>変更履歴の管理:</strong> いつ誰がどの内容を変更したか記録を残す
+                <strong>Managing change history:</strong> Keep records of who changed what content
+                and when
               </div>
               <div class="emoji-bullet check-bullet">
-                <strong>定期メンテナンス:</strong> 定期的にads.txt/app-ads.txtを点検
+                <strong>Regular maintenance:</strong> Regularly inspect ads.txt/app-ads.txt
               </div>
               <div class="emoji-bullet check-bullet">
-                <strong>警告モニタリング:</strong> 広告プラットフォームのダッシュボードを頻繁に確認
+                <strong>Warning monitoring:</strong> Frequently check ad platform dashboards
               </div>
               <div class="emoji-bullet check-bullet">
-                <strong>検証ツールの定期利用:</strong> 検証ツールで定期的にエラーチェック
+                <strong>Regular use of verification tools:</strong> Regularly check for errors with
+                verification tools
               </div>
               <div class="emoji-bullet check-bullet">
-                <strong>Sellers.jsonとの整合性確認:</strong> パートナーのSellers.jsonと照合
+                <strong>Checking consistency with Sellers.json:</strong> Cross-reference with
+                partners' Sellers.json
               </div>
               <div class="emoji-bullet check-bullet">
-                <strong>周辺知識のアップデート:</strong> IAB Tech Labからの新情報をウォッチ
+                <strong>Updating peripheral knowledge:</strong> Watch for new information from IAB
+                Tech Lab
               </div>
             </div>
           </div>
@@ -1033,9 +1090,9 @@
 
       <footer>
         <p>
-          出典:
-          <a href="https://note.com/miyaichi/n/nd11a3ad7fe37"
-            >ads.txt / app-ads.txt 実践導入・運用ガイド | (c) 2025</a
+          Source:
+          <a href="https://note.com/miyaichi/n/n8f6e5b46a0ce"
+            >ads.txt / app-ads.txt Practical Implementation and Operation Guide | (c) 2025</a
           >
         </p>
       </footer>
