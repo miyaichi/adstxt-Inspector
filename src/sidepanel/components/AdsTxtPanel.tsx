@@ -172,7 +172,11 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                   appAdsTxt={checkAppAdsTxt}
                   content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}
                 >
-                  <span>{chrome.i18n.getMessage('download_file_without_errors', [checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'])}</span>
+                  <span>
+                    {chrome.i18n.getMessage('download_file_without_errors', [
+                      checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt',
+                    ])}
+                  </span>
                   <Download className="w-4 h-4" />
                 </DownloadPlainAdsTxt>
               </div>
