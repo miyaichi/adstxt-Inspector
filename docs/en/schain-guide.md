@@ -17,6 +17,7 @@ Before we dive into the technical details, let's understand what an advertising 
 In digital advertising, content publishers (website or app owners) want to show ads, and advertisers want to display their ads to users. However, between these two parties, there's often a complex network of companies that help connect publishers with advertisers. This network is called the "advertising supply chain."
 
 Think of it like a delivery service for ads:
+
 - **Publishers** own the space where ads appear (like a store with empty shelves)
 - **Advertisers** have the ads they want to show (like products)
 - The **supply chain** is all the companies that help get the right ads to the right spaces (like delivery trucks, warehouses, and distribution centers)
@@ -37,10 +38,12 @@ The SupplyChain Object (often abbreviated as "schain") is a technical standard d
 ### The Key Players
 
 1. **Publishers**: Owners of websites and apps where ads appear
+
    - They create the content that attracts visitors
    - They have ad spaces to sell (inventory)
 
 2. **SSPs / Exchanges**: Supply-Side Platforms and Ad Exchanges
+
    - Help publishers sell their ad inventory
    - Connect publishers to multiple potential buyers
    - Example: Google Ad Manager, Xandr, Magnite
@@ -74,6 +77,7 @@ flowchart LR
 </pre>
 
 When you visit a website or app:
+
 1. The publisher's ad space becomes available
 2. An ad request is sent through the supply chain
 3. Advertisers bid to show their ads in real-time
@@ -87,12 +91,14 @@ When you visit a website or app:
 This is a simple text file that publishers place on their websites to publicly declare which companies are authorized to sell their ad inventory.
 
 **Example:**
+
 ```
 exchange.com, 1234, DIRECT, ab123
 adnetwork.com, 5678, RESELLER, cd456
 ```
 
 This means:
+
 - `exchange.com` with ID `1234` can sell the publisher's inventory directly
 - `adnetwork.com` with ID `5678` can resell the publisher's inventory
 
@@ -101,6 +107,7 @@ This means:
 This is a file that SSPs and exchanges publish to identify all the sellers (publishers and intermediaries) they represent.
 
 **Example:**
+
 ```json
 {
   "sellers": [
@@ -115,6 +122,7 @@ This is a file that SSPs and exchanges publish to identify all the sellers (publ
 ```
 
 This means:
+
 - The exchange works with a seller identified as `1234`
 - This seller is "Example Publisher" with domain "example.com"
 - This seller is the actual content publisher (not a reseller)
@@ -124,6 +132,7 @@ This means:
 This is a data structure included in bid requests that shows the complete path an ad request takes through the supply chain.
 
 **Example:**
+
 ```json
 {
   "schain": {
@@ -146,6 +155,7 @@ This is a data structure included in bid requests that shows the complete path a
 ```
 
 This means:
+
 - The ad request started at `publisher-exchange.com` (with seller ID `1234`)
 - Then passed through `dsp-partner.com` (with seller ID `5678`)
 - The chain is complete (no missing information)
@@ -153,11 +163,13 @@ This means:
 ## What Publishers Need to Do
 
 1. **Maintain Accurate Ads.txt/App-ads.txt Files**
+
    - List all authorized selling partners
    - Specify correct relationships (DIRECT or RESELLER)
    - Update promptly when partnerships change
 
 2. **Verify SupplyChain Information**
+
    - Work with partners who properly implement supply chain transparency
    - Ensure your inventory is properly identified throughout the chain
 
@@ -169,11 +181,13 @@ This means:
 ## What SSPs/Exchanges Need to Do
 
 1. **Maintain Accurate Sellers.json Files**
+
    - List all publishers and resellers in your system
    - Include correct identification information
    - Update when publisher relationships change
 
 2. **Implement SupplyChain Support**
+
    - Properly pass supply chain information in bid requests
    - Ensure seller IDs match between systems
    - Maintain connection between Ads.txt/App-ads.txt and sellers.json information
