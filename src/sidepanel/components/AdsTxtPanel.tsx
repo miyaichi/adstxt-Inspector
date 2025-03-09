@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Download, ExternalLink } from 'lucide-react';
+import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
@@ -341,14 +341,18 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           {validity.isVerified ? (
                             <Check className="w-5 h-5 text-green-500" />
                           ) : (
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                            <CircleAlert className="w-5 h-5 text-red-500" />
                           )}
                         </div>
                       </div>
                       {!validity.isVerified && validity.reasons.length > 0 && (
                         <div className="flex flex-col text-red-600 space-y-1">
                           {validity.reasons.map((reason, idx) => (
-                            <span key={idx}>{reason}</span>
+                            <span key={idx}>
+                              {chrome.i18n.getMessage(reason.key, reason.placeholders)
+                                ? chrome.i18n.getMessage(reason.key, reason.placeholders)
+                                : reason.key}
+                            </span>
                           ))}
                         </div>
                       )}

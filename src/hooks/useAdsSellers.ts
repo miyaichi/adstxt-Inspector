@@ -16,7 +16,7 @@ export interface SellerAnalysis {
 
 export interface ValidityResult {
   isVerified: boolean;
-  reasons: string[];
+  reasons: { key: string; placeholders: string[] }[];
 }
 
 interface UseAdsSellersReturn {
@@ -118,45 +118,97 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
    * @returns ValidityResult
    */
   const isVerifiedEntry = (domain: string, entry: AdsTxt): ValidityResult => {
-    const reasons: string[] = [];
+    const reasons: { key: string; placeholders: string[] }[] = [];
     const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
+    const ownerDomain = adsTxtData?.variables?.ownerDomain || '';
+    const managerDomains = adsTxtData?.variables?.managerDomains || [];
+
+    // Test Case 11 & 16: Does the advertising system have a sellers.json file?
+    if (!currentAnalysis) {
+      const code = entry.relationship === 'DIRECT' ? '12010' : '13010';
+      return {
+        isVerified: false,
+        reasons: [{ key: `alert_${code}_missing_sellers.json`, placeholders: [domain] }],
+      };
+    }
+
+    // Test Case 12 & 17: Does the sellers.json file have the publisher account ID?
     const seller = currentAnalysis?.sellersJson?.data.find(
       (s) => String(s.seller_id) === String(entry.publisherId)
     );
 
     if (!seller) {
+      const code = entry.relationship === 'DIRECT' ? '12020' : '13020';
       return {
         isVerified: false,
-        reasons: [chrome.i18n.getMessage('seller_not_found')],
+        reasons: [
+          { key: `error_${code}_publisher_id_not_listed`, placeholders: [entry.publisherId] },
+        ],
       };
     }
 
-    // SELLER_TYPE and relationship validation
-    const relationshipMapping: Record<string, string> = {
-      PUBLISHER: 'DIRECT',
-      INTERMEDIARY: 'RESELLER',
-    };
-    const expectedRelationship = relationshipMapping[seller.seller_type];
-    if (expectedRelationship && entry.relationship !== expectedRelationship) {
-      reasons.push(
-        chrome.i18n.getMessage('seller_type_mismatch', [seller.seller_type, expectedRelationship])
-      );
-    }
+    // Now we have a valid seller, continue with other checks
+    if (entry.relationship === 'DIRECT') {
+      // Test Case 13: Check domain relationship for DIRECT entries
+      if (
+        seller.domain &&
+        seller.domain !== ownerDomain &&
+        (seller.seller_type === 'PUBLISHER' || seller.seller_type === 'BOTH')
+      ) {
+        reasons.push({
+          key: 'alert_12030_domain_mismatch',
+          placeholders: [seller.domain],
+        });
+      }
 
-    // OWNERDOMAIN validation
-    const ownerDomain = adsTxtData?.variables?.ownerDomain;
-    if (ownerDomain && (seller.seller_type === 'PUBLISHER' || seller.seller_type === 'BOTH')) {
-      if (seller.domain !== ownerDomain) {
-        reasons.push(chrome.i18n.getMessage('owner_domain_mismatch', [ownerDomain, seller.domain]));
+      // Test Case 14: Check seller type for DIRECT entries
+      if (seller.seller_type === 'BOTH') {
+        reasons.push({ key: 'alert_12040_relationship_type_both', placeholders: [] });
+      } else if (seller.seller_type === 'INTERMEDIARY') {
+        reasons.push({ key: 'alert_12050_relationship_mismat', placeholders: [] });
+      }
+    } else if (entry.relationship === 'RESELLER') {
+      // Test Case 18: Check domain for RESELLER entries
+      if (
+        seller.domain &&
+        seller.domain !== ownerDomain &&
+        !managerDomains.includes(seller.domain)
+      ) {
+        reasons.push({
+          key: 'alert_13030_domain_mismatch',
+          placeholders: [seller.domain],
+        });
+      }
+
+      // Test Case 19: Check seller type for RESELLER entries
+      if (seller.seller_type === 'BOTH') {
+        reasons.push({ key: 'alert_13040_relationship_type_both', placeholders: [] });
+      } else if (seller.seller_type === 'PUBLISHER') {
+        reasons.push({ key: 'error_13050_relationship_mismatch', placeholders: [] });
       }
     }
 
-    // MANAGERDOMAIN validation
-    if (adsTxtData?.variables?.managerDomains && adsTxtData.variables.managerDomains.length > 0) {
-      // Whether inventory is provided from both the owner and the seller
-      if (seller.domain === ownerDomain && seller.seller_type !== 'RESELLER') {
-        reasons.push(chrome.i18n.getMessage('inventory_from_both_domains'));
-      }
+    // Test Case 15 & 20: Is the seller_id used only once?
+    const sellersWithSameId = currentAnalysis.sellersJson?.data.filter(
+      (s) => String(s.seller_id) === String(entry.publisherId)
+    );
+
+    if (sellersWithSameId && sellersWithSameId.length > 1) {
+      const code = entry.relationship === 'DIRECT' ? '12060' : '13060';
+      const severity = entry.relationship === 'DIRECT' ? 'error' : 'alert';
+      reasons.push({
+        key: `${severity}_${code}_duplicate_seller_id`,
+        placeholders: [entry.publisherId],
+      });
+    }
+
+    // OWNERDOMAIN and MANAGERDOMAIN checks
+    const managerDomain = managerDomains.find((d) => d.split(',')[0] === seller.domain);
+    if (managerDomain && ownerDomain && seller.domain === ownerDomain) {
+      reasons.push({
+        key: 'alert_inventory_from_both_domains',
+        placeholders: [],
+      });
     }
 
     return {

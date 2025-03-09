@@ -256,7 +256,18 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
               errors.push({
                 line: lineNumber,
                 content: line,
-                message: chrome.i18n.getMessage('invalid_domain', [value]),
+                message: chrome.i18n.getMessage('error_14020_invalid_url', [value]),
+              });
+              return;
+            }
+            if (variables.ownerDomain && !isSubdomain(value, variables.ownerDomain)) {
+              errors.push({
+                line: lineNumber,
+                content: line,
+                message: chrome.i18n.getMessage('error_14030_invalid_subdomain', [
+                  value,
+                  rootDomain,
+                ]),
               });
               return;
             }
@@ -300,13 +311,26 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
       }
     }
 
-    // Process ads.txt entry lines
-    const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
-    if (fields.length < 3) {
+    // Are there 2 commas per line (indicating the 3 required fields)?
+    const commaCount = (trimmedLine.match(/,/g) || []).length;
+    if (commaCount < 2 || commaCount > 3) {
       errors.push({
         line: lineNumber,
         content: line,
-        message: chrome.i18n.getMessage('insufficient_fields'),
+        message: chrome.i18n.getMessage('error_11010_missing_required_fields'),
+      });
+      return;
+    }
+
+    // Process ads.txt entry lines
+    const fields = trimmedLine.split(/,\s*|\s+/).filter((field) => field !== '');
+
+    // Does the field contain tabs, commas, whitespace?
+    if (fields.length < 3 || fields.length > 4) {
+      errors.push({
+        line: lineNumber,
+        content: line,
+        message: chrome.i18n.getMessage('error_11010_missing_required_fields'),
       });
       return;
     }
@@ -314,22 +338,22 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
     const [domainField, publisherId, relationshipField, certificationAuthorityId] = fields;
     const relationship = relationshipField.toUpperCase();
 
-    // Validate the relationship type. Only 'DIRECT' and 'RESELLER' are allowed.
+    // Does the third required field have either DIRECT or RESELLER in it?
     if (relationship !== 'DIRECT' && relationship !== 'RESELLER') {
       errors.push({
         line: lineNumber,
         content: line,
-        message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
+        message: chrome.i18n.getMessage('error_11020_invalid_relationship', [relationshipField]),
       });
       return;
     }
 
-    // Validate the domain name
+    // Do Advertising System domains listed obey RFC 1123?
     if (!isValidDomain(domainField)) {
       errors.push({
         line: lineNumber,
         content: line,
-        message: chrome.i18n.getMessage('invalid_domain', [domainField]),
+        message: chrome.i18n.getMessage('error_11030_invalid_domain'),
       });
       return;
     }
@@ -383,6 +407,15 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
       entries.push(entry);
     }
   });
+
+  // Is there at least one valid entry?
+  if (entries.length === 0) {
+    errors.push({
+      line: 0,
+      content: '',
+      message: chrome.i18n.getMessage('error_11040_empty_file'),
+    });
+  }
 
   // Return the entries sorted by domain name and publisher ID
   return {

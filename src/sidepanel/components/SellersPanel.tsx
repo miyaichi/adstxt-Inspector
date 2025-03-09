@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Download, ExternalLink } from 'lucide-react';
+import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import type { SellerAnalysis } from '../../hooks/useAdsSellers';
 import type { FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
@@ -203,7 +203,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
               <div className="panel-content">
                 {analysis.sellersJson?.error ? (
                   <div className="alert alert-error">
-                    <AlertTriangle className="w-5 h-5" />
+                    <CircleAlert className="w-5 h-5" />
                     <span>{analysis.sellersJson.error}</span>
                   </div>
                 ) : (

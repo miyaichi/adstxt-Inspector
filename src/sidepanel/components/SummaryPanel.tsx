@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react';
+import { CircleAlert } from 'lucide-react';
 import React, { useMemo } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
@@ -274,7 +274,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       {analysis.riskFactors.length > 0 && (
         <div className="rounded-lg border border-red-200 p-4 bg-red-50">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <CircleAlert className="w-5 h-5 text-red-500" />
             Risk Factors
           </h3>
           <ul className="space-y-2">
