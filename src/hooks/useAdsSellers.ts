@@ -165,7 +165,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       if (seller.seller_type === 'BOTH') {
         reasons.push({ key: 'alert_12040_relationship_type_both', placeholders: [] });
       } else if (seller.seller_type === 'INTERMEDIARY') {
-        reasons.push({ key: 'alert_12050_relationship_mismat', placeholders: [] });
+        reasons.push({ key: 'alert_12050_relationship_mismatch', placeholders: [] });
       }
     } else if (entry.relationship === 'RESELLER') {
       // Test Case 18: Check domain for RESELLER entries
