@@ -1,4 +1,5 @@
 import * as psl from 'psl';
+import { FetchTimeoutError, fetchWithTimeout } from './fetchWithTimeout';
 
 // Type definitions
 export interface AdsTxt {
@@ -35,16 +36,17 @@ export interface FetchAdsTxtResult {
  * Fetches and parses the ads.txt file for the specified domain.
  * @param domain Domain name to fetch ads.txt for
  * @param appAdsTxt Whether to fetch app-ads.txt instead of ads.txt
+ * @param timeout Timeout duration in milliseconds
  * @returns FetchAdsTxtResult object
  */
 export const fetchAdsTxt = async (
   domain: string,
-  appAdsTxt: boolean = false
+  appAdsTxt: boolean = false,
+  timeout: number = 5000
 ): Promise<FetchAdsTxtResult> => {
   const rootDomain = getRootDomain(domain);
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
 
-  // Retrive ads.txt of the root domain
   const adsTxtUrls = appAdsTxt
     ? [`https://${rootDomain}/app-ads.txt`, `http://${rootDomain}/app-ads.txt`]
     : [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
@@ -52,7 +54,7 @@ export const fetchAdsTxt = async (
   let adsTxtUrl = '';
 
   for (const url of adsTxtUrls) {
-    const result = await tryFetchUrl(url, rootDomain);
+    const result = await tryFetchUrl(url, rootDomain, timeout);
     if (result) {
       adsTxtContent = result.content;
       adsTxtUrl = result.finalUrl;
@@ -64,12 +66,10 @@ export const fetchAdsTxt = async (
     throw new Error(`No valid ads.txt found for ${domain}`);
   }
 
-  // Check if the root domain's ads.txt contains a subdomain declaration
-  // If it does, fetch the ads.txt of the subdomain
   if (isSubdomainDomain) {
     const declaredSubdomains = extractDeclaredSubdomains(adsTxtContent);
     if (declaredSubdomains.includes(domain)) {
-      const subdomainResult = await tryFetchSubdomainAdsTxt(domain);
+      const subdomainResult = await tryFetchSubdomainAdsTxt(domain, timeout);
       if (subdomainResult) {
         adsTxtContent = subdomainResult.content;
         adsTxtUrl = subdomainResult.finalUrl;
@@ -77,7 +77,6 @@ export const fetchAdsTxt = async (
     }
   }
 
-  // Parse the ads.txt content
   const { entries, variables, errors, duplicates } = parseAdsTxtContent(adsTxtContent, rootDomain);
 
   return {
@@ -133,32 +132,26 @@ interface FetchResult {
  * @param rootDomain Root domain name
  * @returns FetchResult object
  */
-const tryFetchUrl = async (url: string, rootDomain: string): Promise<FetchResult | null> => {
+const tryFetchUrl = async (
+  url: string,
+  rootDomain: string,
+  timeout: number
+): Promise<FetchResult | null> => {
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       redirect: 'follow',
-      headers: {
-        Accept: 'text/plain',
-      },
+      headers: { Accept: 'text/plain' },
+      timeout,
     });
     const finalUrl = response.url;
     const finalDomain = new URL(finalUrl).hostname;
     if (response.ok && isWithinScope(finalDomain, rootDomain)) {
       return { content: await response.text(), finalUrl };
     }
-
-    // Redirect (301, 302) case
-    if (
-      (response.status === 301 || response.status === 302) &&
-      finalDomain &&
-      isWithinScope(finalDomain, rootDomain)
-    ) {
-      const redirectResponse = await fetch(finalUrl);
-      if (redirectResponse.ok) {
-        return { content: await redirectResponse.text(), finalUrl };
-      }
-    }
   } catch (error) {
+    if (error instanceof FetchTimeoutError) {
+      throw new Error(`Timeout fetching ads.txt from ${url}: ${error.message}`);
+    }
     throw new Error(`Error fetching ads.txt from ${url}: ${(error as Error).message}`);
   }
   return null;
@@ -169,20 +162,24 @@ const tryFetchUrl = async (url: string, rootDomain: string): Promise<FetchResult
  * @param domain Subdomain name
  * @returns FetchResult object
  */
-const tryFetchSubdomainAdsTxt = async (domain: string): Promise<FetchResult | null> => {
+const tryFetchSubdomainAdsTxt = async (
+  domain: string,
+  timeout: number
+): Promise<FetchResult | null> => {
   try {
     const url = `https://${domain}/ads.txt`;
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       redirect: 'follow',
-      headers: {
-        Accept: 'text/plain',
-      },
+      headers: { Accept: 'text/plain' },
+      timeout,
     });
     if (response.ok) {
       return { content: await response.text(), finalUrl: response.url };
     }
   } catch (error) {
-    // Ignore if fetching ads.txt from the subdomain fails
+    if (error instanceof FetchTimeoutError) {
+      throw new Error(`Timeout fetching ads.txt from ${domain}: ${error.message}`);
+    }
   }
   return null;
 };
