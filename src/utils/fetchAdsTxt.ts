@@ -46,8 +46,18 @@ export const fetchAdsTxt = async (
 
   // Retrive ads.txt of the root domain
   const adsTxtUrls = appAdsTxt
-    ? [`https://${rootDomain}/app-ads.txt`, `http://${rootDomain}/app-ads.txt`]
-    : [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
+    ? [
+        `https://${rootDomain}/app-ads.txt`,
+        `http://${rootDomain}/app-ads.txt`,
+        `https://www.${rootDomain}/app-ads.txt`,
+        `http://www.${rootDomain}/app-ads.txt`,
+      ]
+    : [
+        `https://${rootDomain}/ads.txt`,
+        `http://${rootDomain}/ads.txt`,
+        `https://www.${rootDomain}/ads.txt`,
+        `http://www.${rootDomain}/ads.txt`,
+      ];
   let adsTxtContent = '';
   let adsTxtUrl = '';
 
