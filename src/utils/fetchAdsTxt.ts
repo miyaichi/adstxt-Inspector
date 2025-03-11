@@ -1,5 +1,4 @@
 import * as psl from 'psl';
-import { FetchTimeoutError, fetchWithTimeout } from './fetchWithTimeout';
 
 // Type definitions
 export interface AdsTxt {
@@ -36,17 +35,16 @@ export interface FetchAdsTxtResult {
  * Fetches and parses the ads.txt file for the specified domain.
  * @param domain Domain name to fetch ads.txt for
  * @param appAdsTxt Whether to fetch app-ads.txt instead of ads.txt
- * @param timeout Timeout duration in milliseconds
  * @returns FetchAdsTxtResult object
  */
 export const fetchAdsTxt = async (
   domain: string,
-  appAdsTxt: boolean = false,
-  timeout: number = 5000
+  appAdsTxt: boolean = false
 ): Promise<FetchAdsTxtResult> => {
   const rootDomain = getRootDomain(domain);
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
 
+  // Retrive ads.txt of the root domain
   const adsTxtUrls = appAdsTxt
     ? [`https://${rootDomain}/app-ads.txt`, `http://${rootDomain}/app-ads.txt`]
     : [`https://${rootDomain}/ads.txt`, `http://${rootDomain}/ads.txt`];
@@ -54,7 +52,7 @@ export const fetchAdsTxt = async (
   let adsTxtUrl = '';
 
   for (const url of adsTxtUrls) {
-    const result = await tryFetchUrl(url, rootDomain, timeout);
+    const result = await tryFetchUrl(url, rootDomain);
     if (result) {
       adsTxtContent = result.content;
       adsTxtUrl = result.finalUrl;
@@ -66,10 +64,12 @@ export const fetchAdsTxt = async (
     throw new Error(`No valid ads.txt found for ${domain}`);
   }
 
+  // Check if the root domain's ads.txt contains a subdomain declaration
+  // If it does, fetch the ads.txt of the subdomain
   if (isSubdomainDomain) {
     const declaredSubdomains = extractDeclaredSubdomains(adsTxtContent);
     if (declaredSubdomains.includes(domain)) {
-      const subdomainResult = await tryFetchSubdomainAdsTxt(domain, timeout);
+      const subdomainResult = await tryFetchSubdomainAdsTxt(domain);
       if (subdomainResult) {
         adsTxtContent = subdomainResult.content;
         adsTxtUrl = subdomainResult.finalUrl;
@@ -77,6 +77,7 @@ export const fetchAdsTxt = async (
     }
   }
 
+  // Parse the ads.txt content
   const { entries, variables, errors, duplicates } = parseAdsTxtContent(adsTxtContent, rootDomain);
 
   return {
@@ -132,26 +133,32 @@ interface FetchResult {
  * @param rootDomain Root domain name
  * @returns FetchResult object
  */
-const tryFetchUrl = async (
-  url: string,
-  rootDomain: string,
-  timeout: number
-): Promise<FetchResult | null> => {
+const tryFetchUrl = async (url: string, rootDomain: string): Promise<FetchResult | null> => {
   try {
-    const response = await fetchWithTimeout(url, {
+    const response = await fetch(url, {
       redirect: 'follow',
-      headers: { Accept: 'text/plain' },
-      timeout,
+      headers: {
+        Accept: 'text/plain',
+      },
     });
     const finalUrl = response.url;
     const finalDomain = new URL(finalUrl).hostname;
     if (response.ok && isWithinScope(finalDomain, rootDomain)) {
       return { content: await response.text(), finalUrl };
     }
-  } catch (error) {
-    if (error instanceof FetchTimeoutError) {
-      throw new Error(`Timeout fetching ads.txt from ${url}: ${error.message}`);
+
+    // Redirect (301, 302) case
+    if (
+      (response.status === 301 || response.status === 302) &&
+      finalDomain &&
+      isWithinScope(finalDomain, rootDomain)
+    ) {
+      const redirectResponse = await fetch(finalUrl);
+      if (redirectResponse.ok) {
+        return { content: await redirectResponse.text(), finalUrl };
+      }
     }
+  } catch (error) {
     throw new Error(`Error fetching ads.txt from ${url}: ${(error as Error).message}`);
   }
   return null;
@@ -162,24 +169,20 @@ const tryFetchUrl = async (
  * @param domain Subdomain name
  * @returns FetchResult object
  */
-const tryFetchSubdomainAdsTxt = async (
-  domain: string,
-  timeout: number
-): Promise<FetchResult | null> => {
+const tryFetchSubdomainAdsTxt = async (domain: string): Promise<FetchResult | null> => {
   try {
     const url = `https://${domain}/ads.txt`;
-    const response = await fetchWithTimeout(url, {
+    const response = await fetch(url, {
       redirect: 'follow',
-      headers: { Accept: 'text/plain' },
-      timeout,
+      headers: {
+        Accept: 'text/plain',
+      },
     });
     if (response.ok) {
       return { content: await response.text(), finalUrl: response.url };
     }
   } catch (error) {
-    if (error instanceof FetchTimeoutError) {
-      throw new Error(`Timeout fetching ads.txt from ${domain}: ${error.message}`);
-    }
+    // Ignore if fetching ads.txt from the subdomain fails
   }
   return null;
 };
@@ -253,18 +256,7 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
               errors.push({
                 line: lineNumber,
                 content: line,
-                message: chrome.i18n.getMessage('error_14020_invalid_url', [value]),
-              });
-              return;
-            }
-            if (variables.ownerDomain && !isSubdomain(value, variables.ownerDomain)) {
-              errors.push({
-                line: lineNumber,
-                content: line,
-                message: chrome.i18n.getMessage('error_14030_invalid_subdomain', [
-                  value,
-                  rootDomain,
-                ]),
+                message: chrome.i18n.getMessage('invalid_domain', [value]),
               });
               return;
             }
@@ -308,26 +300,13 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
       }
     }
 
-    // Are there 2 commas per line (indicating the 3 required fields)?
-    const commaCount = (trimmedLine.match(/,/g) || []).length;
-    if (commaCount < 2 || commaCount > 3) {
-      errors.push({
-        line: lineNumber,
-        content: line,
-        message: chrome.i18n.getMessage('error_11010_missing_required_fields'),
-      });
-      return;
-    }
-
     // Process ads.txt entry lines
-    const fields = trimmedLine.split(/,\s*|\s+/).filter((field) => field !== '');
-
-    // Does the field contain tabs, commas, whitespace?
-    if (fields.length < 3 || fields.length > 4) {
+    const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
+    if (fields.length < 3) {
       errors.push({
         line: lineNumber,
         content: line,
-        message: chrome.i18n.getMessage('error_11010_missing_required_fields'),
+        message: chrome.i18n.getMessage('insufficient_fields'),
       });
       return;
     }
@@ -335,22 +314,22 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
     const [domainField, publisherId, relationshipField, certificationAuthorityId] = fields;
     const relationship = relationshipField.toUpperCase();
 
-    // Does the third required field have either DIRECT or RESELLER in it?
+    // Validate the relationship type. Only 'DIRECT' and 'RESELLER' are allowed.
     if (relationship !== 'DIRECT' && relationship !== 'RESELLER') {
       errors.push({
         line: lineNumber,
         content: line,
-        message: chrome.i18n.getMessage('error_11020_invalid_relationship', [relationshipField]),
+        message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
       });
       return;
     }
 
-    // Do Advertising System domains listed obey RFC 1123?
+    // Validate the domain name
     if (!isValidDomain(domainField)) {
       errors.push({
         line: lineNumber,
         content: line,
-        message: chrome.i18n.getMessage('error_11030_invalid_domain'),
+        message: chrome.i18n.getMessage('invalid_domain', [domainField]),
       });
       return;
     }
@@ -404,15 +383,6 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
       entries.push(entry);
     }
   });
-
-  // Is there at least one valid entry?
-  if (entries.length === 0) {
-    errors.push({
-      line: 0,
-      content: '',
-      message: chrome.i18n.getMessage('error_11040_empty_file'),
-    });
-  }
 
   // Return the entries sorted by domain name and publisher ID
   return {
