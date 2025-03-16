@@ -56,9 +56,6 @@
   "owner_domain_not_specified": {
     "message": "Owner domain not specified"
   },
-  "managerdomain_is_registered_as_a_seller": {
-    "message": "MANAGERDOMAIN is registered as a seller"
-  },
   "contact_information_missing": {
     "message": "Contact information missing"
   },
@@ -68,17 +65,11 @@
   "owner_domain_not_listed_as_publisher_in_sellers_json": {
     "message": "Owner domain not listed as publisher in Sellers.json"
   },
-  "confidential_sellers_detected": {
-    "message": "Confidential sellers detected"
+  "managerdomain_is_registered_as_a_seller": {
+    "message": "MANAGERDOMAIN is registered as a seller"
   },
   "some_sellers_does_not_disclose_information": {
     "message": "Some sellers do not disclose information"
-  },
-  "insufficient_fields": {
-    "message": "Insufficient number of fields. Expected at least 3 fields."
-  },
-  "invalid_relationship_type": {
-    "message": "Invalid relationship type: $1. Expected DIRECT or RESELLER."
   },
   "invalid_domain": {
     "message": "Invalid domain format: $1."
@@ -94,9 +85,6 @@
   },
   "no_seller_json_data": {
     "message": "No Sellers.json data available"
-  },
-  "no_matching_entries_found": {
-    "message": "No matching entries found in Sellers.json"
   },
   "both": {
     "message": "Both a PUBLISHER and an INTERMEDIARY, selling their own ad inventory and reselling ad inventory."
@@ -115,16 +103,6 @@
   },
   "matches_owner_domain": {
     "message": "Matches OWNERDOMAIN"
-  },
-  "seller_not_found": {
-    "message": "Seller not found in Sellers.json"
-  },
-  "seller_type_mismatch": {
-    "message": "seller_type is $1, so $2.",
-    "description": "Error message shown when the seller_type does not match the expected relationship type in ads.txt."
-  },
-  "owner_domain_mismatch": {
-    "message": "OWNERDOMAIN mismatch: Expected $1, found $2"
   },
   "multiple_manager_domain_declarations": {
     "message": "Multiple MANAGERDOMAIN declarations for country $1"
@@ -149,5 +127,83 @@
   },
   "filter_options": {
     "message": "Filter Options"
+  },
+  "error_10010_file_not_found": {
+    "message": "ads.txt or app-ads.txt is missing.(e:10010)"
+  },
+  "error_10020_invalid_content_type": {
+    "message": "File missing text/plain header.(e:10020)"
+  },
+  "error_10030_connection_timeout": {
+    "message": "Unable to access ads.txt within time limit.(e:10030)"
+  },
+  "error_10040_too_many_redirects": {
+    "message": "Exceeds 5 redirects within root domain.(e:10040)"
+  },
+  "error_10050_external_redirect_limit": {
+    "message": "Exceeds 1 redirect outside root domain.(e:10050)"
+  },
+  "error_11010_missing_required_fields": {
+    "message": "Each line must contain 3 fields.(e:11010)"
+  },
+  "error_11020_invalid_relationship": {
+    "message": "Third field must be DIRECT or RESELLER.(e:11020)"
+  },
+  "error_11030_invalid_domain": {
+    "message": "Advertising system domain is not valid.(e:11030)"
+  },
+  "error_11040_empty_file": {
+    "message": "At least one valid entry is required.(e:11040)"
+  },
+  "error_11050_invalid_characters": {
+    "message": "Fields contain unescaped tabs, commas or spaces.(e:11050)"
+  },
+  "alert_12010_missing_sellers_json": {
+    "message": "Advertising system lacks sellers.json file.(a:12010)"
+  },
+  "error_12020_publisher_id_not_listed": {
+    "message": "Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt.(e:12020)"
+  },
+  "alert_12030_domain_mismatch": {
+    "message": "Seller domain $1 does not match OWNERDOMAIN.(a:12030)"
+  },
+  "alert_12040_relationship_type_both": {
+    "message": "Publisher ID is registered as BOTH.(a:12040)"
+  },
+  "alert_12050_relationship_mismatch": {
+    "message": "Publisher ID listed as INTERMEDIARY instead of PUBLISHER.(a:12050)"
+  },
+  "error_12060_duplicate_seller_id": {
+    "message": "Publisher ID appears multiple times in sellers.json.(e:12060)"
+  },
+  "alert_13010_missing_sellers_json": {
+    "message": "The sellers.json file is missing for this advertising system. Request the administrator of the advertising system to install sellers.json.(a:13010)"
+  },
+  "error_13020_publisher_id_not_listed": {
+    "message": "Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt.(e:13020)"
+  },
+  "alert_13030_domain_mismatch": {
+    "message": "Check the reseller domain $1 is correct.(a:13030)"
+  },
+  "alert_13040_relationship_type_both": {
+    "message": "Publisher ID is registered as BOTH.(a:13040)"
+  },
+  "error_13050_relationship_mismatch": {
+    "message": "Publisher ID registered as INTERMEDIARY instead of PUBLISHER.(e:13050)"
+  },
+  "alert_13060_duplicate_seller_id": {
+    "message": "Publisher ID appears multiple times in sellers.json.(a:13060)"
+  },
+  "error_14020_invalid_subdomain": {
+    "message": "The subdomain is not a valid domain.(e:14020)"
+  },
+  "error_14030_invalid_subdomain": {
+    "message": "Not a subdomain of the root domain.(e:14030)"
+  },
+  "error_fetching_file": {
+    "message": "Error fetching $1"
+  },
+  "error_unknown_error": {
+    "message": "Unknown error occurred"
   }
 }

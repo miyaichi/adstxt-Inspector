@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Download, ExternalLink } from 'lucide-react';
+import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import type { SellerAnalysis } from '../../hooks/useAdsSellers';
 import type { FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
@@ -135,6 +135,19 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
     );
   }
 
+  if (adsTxtData?.fetchError) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+          <div className="font-semibold mb-2">
+            {chrome.i18n.getMessage('error_fetching_file', ['Ads.txt'])}:
+          </div>
+          <div>{chrome.i18n.getMessage(adsTxtData.fetchError) || adsTxtData.fetchError}</div>
+        </div>
+      </div>
+    );
+  }
+  
   if (sellerAnalysis.length === 0) {
     return (
       <div className="p-4">
@@ -203,7 +216,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
               <div className="panel-content">
                 {analysis.sellersJson?.error ? (
                   <div className="alert alert-error">
-                    <AlertTriangle className="w-5 h-5" />
+                    <CircleAlert className="w-5 h-5" />
                     <span>{analysis.sellersJson.error}</span>
                   </div>
                 ) : (

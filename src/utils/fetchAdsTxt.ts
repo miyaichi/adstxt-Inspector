@@ -1,4 +1,5 @@
 import * as psl from 'psl';
+import { fetchFromUrls } from './fetchFromUrls';
 
 // Type definitions
 export interface AdsTxt {
@@ -25,11 +26,17 @@ export interface SupportedVariables {
 export interface FetchAdsTxtResult {
   adsTxtUrl: string;
   adsTxtContent: string;
+  fetchError?: string;
   data: AdsTxt[];
   variables: SupportedVariables;
   errors: ErrorDetail[];
   duplicates: ErrorDetail[];
 }
+
+const DEFAULT_FETCH_OPTIONS = {
+  responseType: 'text/plain' as const,
+  timeout: 5000,
+};
 
 /**
  * Fetches and parses the ads.txt file for the specified domain.
@@ -44,60 +51,96 @@ export const fetchAdsTxt = async (
   const rootDomain = getRootDomain(domain);
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
 
-  // Retrive ads.txt of the root domain
-  const adsTxtUrls = appAdsTxt
-    ? [
-        `https://${rootDomain}/app-ads.txt`,
-        `http://${rootDomain}/app-ads.txt`,
-        `https://www.${rootDomain}/app-ads.txt`,
-        `http://www.${rootDomain}/app-ads.txt`,
-      ]
-    : [
-        `https://${rootDomain}/ads.txt`,
-        `http://${rootDomain}/ads.txt`,
-        `https://www.${rootDomain}/ads.txt`,
-        `http://www.${rootDomain}/ads.txt`,
-      ];
-  let adsTxtContent = '';
-  let adsTxtUrl = '';
+  try {
+    // Retrieve ads.txt from root domain first
+    const rootDomainResult = await fetchAdsTxtForDomain(rootDomain, appAdsTxt);
+    let adsTxtContent = rootDomainResult.content;
+    let adsTxtUrl = rootDomainResult.finalUrl;
 
-  for (const url of adsTxtUrls) {
-    const result = await tryFetchUrl(url, rootDomain);
-    if (result) {
-      adsTxtContent = result.content;
-      adsTxtUrl = result.finalUrl;
-      break;
+    // Check if the file is empty
+    if (!adsTxtContent) {
+      throw new Error('error_11040_empty_file');
     }
-  }
 
-  if (!adsTxtContent) {
-    throw new Error(`No valid ads.txt found for ${domain}`);
-  }
-
-  // Check if the root domain's ads.txt contains a subdomain declaration
-  // If it does, fetch the ads.txt of the subdomain
-  if (isSubdomainDomain) {
-    const declaredSubdomains = extractDeclaredSubdomains(adsTxtContent);
-    if (declaredSubdomains.includes(domain)) {
-      const subdomainResult = await tryFetchSubdomainAdsTxt(domain);
-      if (subdomainResult) {
+    // If this is a subdomain and the root domain's ads.txt contains a subdomain declaration,
+    // fetch the ads.txt from the subdomain
+    if (!appAdsTxt && isSubdomainDomain) {
+      const declaredSubdomains = extractDeclaredSubdomains(adsTxtContent);
+      
+      if (declaredSubdomains.includes(domain)) {
+        const subdomainResult = await fetchAdsTxtForDomain(domain, appAdsTxt);
         adsTxtContent = subdomainResult.content;
         adsTxtUrl = subdomainResult.finalUrl;
       }
     }
+
+    // Parse the ads.txt content
+    const { entries, variables, errors, duplicates } = parseAdsTxtContent(
+      adsTxtContent,
+      rootDomain
+    );
+
+    // Throw an error if no entries are found
+    if (entries.length === 0) {
+      throw new Error('error_11050_no_entries');
+    }
+
+    return {
+      adsTxtUrl,
+      adsTxtContent,
+      fetchError: undefined,
+      data: entries,
+      variables,
+      errors,
+      duplicates,
+    };
+  } catch (error) {
+    return createErrorResult(error as Error);
   }
+};
 
-  // Parse the ads.txt content
-  const { entries, variables, errors, duplicates } = parseAdsTxtContent(adsTxtContent, rootDomain);
+/**
+ * Fetches ads.txt content for a specific domain
+ * @param domain Domain to fetch ads.txt for
+ * @param appAdsTxt Whether to fetch app-ads.txt instead
+ * @returns Fetch result with content and URL
+ */
+const fetchAdsTxtForDomain = async (domain: string, appAdsTxt: boolean): Promise<{content: string, finalUrl: string}> => {
+  const urls = generateAdsTxtUrls(domain, appAdsTxt);
+  return await fetchFromUrls(urls, DEFAULT_FETCH_OPTIONS);
+};
 
+/**
+ * Create an error result object
+ * @param error The error that occurred
+ * @returns Empty FetchAdsTxtResult with error information
+ */
+const createErrorResult = (error: Error): FetchAdsTxtResult => {
   return {
-    adsTxtUrl,
-    adsTxtContent,
-    data: entries,
-    variables,
-    errors,
-    duplicates,
+    adsTxtUrl: '',
+    adsTxtContent: '',
+    fetchError: error.message,
+    data: [],
+    variables: {},
+    errors: [],
+    duplicates: [],
   };
+};
+
+/**
+ * Generate URLs for ads.txt and app-ads.txt files
+ * @param domain Domain name
+ * @param appAdsTxt Whether to generate URLs for app-ads.txt
+ * @returns Array of URLs
+ */
+const generateAdsTxtUrls = (domain: string, appAdsTxt: boolean = false): string[] => {
+  const file = appAdsTxt ? 'app-ads.txt' : 'ads.txt';
+  const protocols = ['https', 'http'];
+  const subdomains = ['', 'www.'];
+
+  return protocols.flatMap((protocol) =>
+    subdomains.map((subdomain) => `${protocol}://${subdomain}${domain}/${file}`)
+  );
 };
 
 /**
@@ -109,10 +152,10 @@ export const fetchAdsTxt = async (
 export const commentErrorAdsTxtLines = (content: string, errors: ErrorDetail[]): string => {
   const lines = content.split(/\r?\n/);
 
-  // Set of line numbers for duplicate entries
+  // Set of line numbers for error entries
   const lineNumbers = new Set<number>(errors.map((d) => d.line));
 
-  // For each line, add "#" to the beginning if it's a error entry
+  // For each line, add "#" to the beginning if it's an error entry
   const newLines = lines.map((line, index) => {
     const lineNumber = index + 1;
     if (lineNumbers.has(lineNumber)) {
@@ -127,74 +170,6 @@ export const commentErrorAdsTxtLines = (content: string, errors: ErrorDetail[]):
 
   // Return the concatenated lines as the new content string
   return newLines.join('\n');
-};
-
-// Helper functions
-
-interface FetchResult {
-  content: string;
-  finalUrl: string;
-}
-
-/**
- * Retrive ads.txt from the specified URL
- * (if the domain of the final URL is within the scope, even if its redirected, the text will be returned)
- * @param url URL to fetch ads.txt from
- * @param rootDomain Root domain name
- * @returns FetchResult object
- */
-const tryFetchUrl = async (url: string, rootDomain: string): Promise<FetchResult | null> => {
-  try {
-    const response = await fetch(url, {
-      redirect: 'follow',
-      headers: {
-        Accept: 'text/plain',
-      },
-    });
-    const finalUrl = response.url;
-    const finalDomain = new URL(finalUrl).hostname;
-    if (response.ok && isWithinScope(finalDomain, rootDomain)) {
-      return { content: await response.text(), finalUrl };
-    }
-
-    // Redirect (301, 302) case
-    if (
-      (response.status === 301 || response.status === 302) &&
-      finalDomain &&
-      isWithinScope(finalDomain, rootDomain)
-    ) {
-      const redirectResponse = await fetch(finalUrl);
-      if (redirectResponse.ok) {
-        return { content: await redirectResponse.text(), finalUrl };
-      }
-    }
-  } catch (error) {
-    throw new Error(`Error fetching ads.txt from ${url}: ${(error as Error).message}`);
-  }
-  return null;
-};
-
-/**
- * Retrieve ads.txt from the subdomain
- * @param domain Subdomain name
- * @returns FetchResult object
- */
-const tryFetchSubdomainAdsTxt = async (domain: string): Promise<FetchResult | null> => {
-  try {
-    const url = `https://${domain}/ads.txt`;
-    const response = await fetch(url, {
-      redirect: 'follow',
-      headers: {
-        Accept: 'text/plain',
-      },
-    });
-    if (response.ok) {
-      return { content: await response.text(), finalUrl: response.url };
-    }
-  } catch (error) {
-    // Ignore if fetching ads.txt from the subdomain fails
-  }
-  return null;
 };
 
 /**
@@ -257,156 +232,245 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
     }
 
     // Process variable declaration lines
-    for (const [key, regex] of Object.entries(VARIABLE_REGEXES)) {
-      if (regex.test(trimmedLine)) {
-        const value = trimmedLine.split('=')[1]?.trim();
-        if (value) {
-          if (key === 'subDomain') {
-            if (!isValidDomain(value)) {
-              errors.push({
-                line: lineNumber,
-                content: line,
-                message: chrome.i18n.getMessage('invalid_domain', [value]),
-              });
-              return;
-            }
-
-            variables.subDomains = variables.subDomains || [];
-            if (!variables.subDomains.includes(value)) {
-              variables.subDomains.push(value);
-            }
-          } else if (key === 'managerDomain') {
-            variables.managerDomains = variables.managerDomains || [];
-            const [managerDomain, countryCode] = value.split(',').map((s) => s.trim());
-            if (!isValidDomain(managerDomain)) {
-              errors.push({
-                line: lineNumber,
-                content: line,
-                message: chrome.i18n.getMessage('invalid_domain', [managerDomain]),
-              });
-              return;
-            }
-
-            const managerDomainCount = Object.entries(variables).filter(
-              ([k, v]) =>
-                k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
-            ).length;
-            if (managerDomainCount > 1) {
-              errors.push({
-                line: lineNumber,
-                content: line,
-                message: chrome.i18n.getMessage('multiple_manager_domain_declarations', [
-                  countryCode,
-                ]),
-              });
-            } else {
-              variables.managerDomains.push(value);
-            }
-          } else {
-            (variables as any)[key] = value;
-          }
-        }
-        return;
-      }
+    if (processVariableLine(trimmedLine, line, lineNumber, variables, errors, VARIABLE_REGEXES)) {
+      return;
     }
 
     // Process ads.txt entry lines
-    const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
-    if (fields.length < 3) {
-      errors.push({
-        line: lineNumber,
-        content: line,
-        message: chrome.i18n.getMessage('insufficient_fields'),
-      });
-      return;
-    }
-
-    const [domainField, publisherId, relationshipField, certificationAuthorityId] = fields;
-    const relationship = relationshipField.toUpperCase();
-
-    // Validate the relationship type. Only 'DIRECT' and 'RESELLER' are allowed.
-    if (relationship !== 'DIRECT' && relationship !== 'RESELLER') {
-      errors.push({
-        line: lineNumber,
-        content: line,
-        message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
-      });
-      return;
-    }
-
-    // Validate the domain name
-    if (!isValidDomain(domainField)) {
-      errors.push({
-        line: lineNumber,
-        content: line,
-        message: chrome.i18n.getMessage('invalid_domain', [domainField]),
-      });
-      return;
-    }
-
-    // Validate the publisher ID and certification authority
-    if (!publisherId.match(/^[a-zA-Z0-9.\-_=]+$/)) {
-      errors.push({
-        line: lineNumber,
-        content: line,
-        message: chrome.i18n.getMessage('invalid_publisher_id', [publisherId]),
-      });
-      return;
-    }
-
-    // Validate the certification authority ID
-    if (certificationAuthorityId && !certificationAuthorityId.match(/^[a-zA-Z0-9.\-_]+$/)) {
-      errors.push({
-        line: lineNumber,
-        content: line,
-        message: chrome.i18n.getMessage('invalid_certification_authority_id', [
-          certificationAuthorityId,
-        ]),
-      });
-      return;
-    }
-
-    const entry: AdsTxt = {
-      domain: domainField.toLowerCase(),
-      publisherId,
-      relationship: relationship as 'DIRECT' | 'RESELLER',
-    };
-
-    if (certificationAuthorityId) {
-      entry.certificationAuthorityId = certificationAuthorityId;
-    }
-
-    const isDuplicate = entries.some(
-      (e) =>
-        e.domain === entry.domain &&
-        e.publisherId === entry.publisherId &&
-        e.relationship === entry.relationship
-    );
-
-    if (isDuplicate) {
-      duplicates.push({
-        line: lineNumber,
-        content: line,
-        message: chrome.i18n.getMessage('duplicate_entries'),
-      });
-    } else {
-      entries.push(entry);
-    }
+    processEntryLine(trimmedLine, line, lineNumber, entries, errors, duplicates);
   });
 
   // Return the entries sorted by domain name and publisher ID
   return {
-    entries: entries.sort(
-      (a, b) =>
-        a.domain.localeCompare(b.domain) ||
-        a.publisherId.length - b.publisherId.length ||
-        a.publisherId.localeCompare(b.publisherId) ||
-        a.relationship.localeCompare(b.relationship)
-    ),
+    entries: sortEntries(entries),
     variables,
     errors,
     duplicates,
   };
+};
+
+/**
+ * Process a variable declaration line
+ * @returns true if the line was processed as a variable, false otherwise
+ */
+const processVariableLine = (
+  trimmedLine: string, 
+  originalLine: string, 
+  lineNumber: number, 
+  variables: SupportedVariables, 
+  errors: ErrorDetail[],
+  regexes: Record<string, RegExp>
+): boolean => {
+  for (const [key, regex] of Object.entries(regexes)) {
+    if (regex.test(trimmedLine)) {
+      const value = trimmedLine.split('=')[1]?.trim();
+      if (value) {
+        if (key === 'subDomain') {
+          processSubDomainVariable(value, originalLine, lineNumber, variables, errors);
+        } else if (key === 'managerDomain') {
+          processManagerDomainVariable(value, originalLine, lineNumber, variables, errors);
+        } else {
+          (variables as any)[key] = value;
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Process a SUBDOMAIN variable declaration
+ */
+const processSubDomainVariable = (
+  value: string, 
+  originalLine: string, 
+  lineNumber: number, 
+  variables: SupportedVariables, 
+  errors: ErrorDetail[]
+): void => {
+  if (!isValidDomain(value)) {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('invalid_domain', [value]),
+    });
+    return;
+  }
+
+  variables.subDomains = variables.subDomains || [];
+  if (!variables.subDomains.includes(value)) {
+    variables.subDomains.push(value);
+  }
+};
+
+/**
+ * Process a MANAGERDOMAIN variable declaration
+ */
+const processManagerDomainVariable = (
+  value: string, 
+  originalLine: string, 
+  lineNumber: number, 
+  variables: SupportedVariables, 
+  errors: ErrorDetail[]
+): void => {
+  variables.managerDomains = variables.managerDomains || [];
+  const [managerDomain, countryCode] = value.split(',').map((s) => s.trim());
+  
+  if (!isValidDomain(managerDomain)) {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('invalid_domain', [managerDomain]),
+    });
+    return;
+  }
+
+  const managerDomainCount = Object.entries(variables).filter(
+    ([k, v]) =>
+      k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
+  ).length;
+  
+  if (managerDomainCount > 1) {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('multiple_manager_domain_declarations', [
+        countryCode,
+      ]),
+    });
+  } else {
+    variables.managerDomains.push(value);
+  }
+};
+
+/**
+ * Process an ads.txt entry line
+ */
+const processEntryLine = (
+  trimmedLine: string, 
+  originalLine: string, 
+  lineNumber: number, 
+  entries: AdsTxt[], 
+  errors: ErrorDetail[],
+  duplicates: ErrorDetail[]
+): void => {
+  const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
+  
+  if (fields.length < 3) {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('insufficient_fields'),
+    });
+    return;
+  }
+
+  const [domainField, publisherId, relationshipField, certificationAuthorityId] = fields;
+  const relationship = relationshipField.toUpperCase();
+
+  // Validate the relationship type. Only 'DIRECT' and 'RESELLER' are allowed.
+  if (relationship !== 'DIRECT' && relationship !== 'RESELLER') {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
+    });
+    return;
+  }
+
+  // Validate the domain name
+  if (!isValidDomain(domainField)) {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('invalid_domain', [domainField]),
+    });
+    return;
+  }
+
+  // Validate the publisher ID
+  if (!isValidPublisherId(publisherId)) {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('invalid_publisher_id', [publisherId]),
+    });
+    return;
+  }
+
+  // Validate the certification authority ID
+  if (certificationAuthorityId && !isValidCertificationAuthorityId(certificationAuthorityId)) {
+    errors.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('invalid_certification_authority_id', [
+        certificationAuthorityId,
+      ]),
+    });
+    return;
+  }
+
+  const entry: AdsTxt = {
+    domain: domainField.toLowerCase(),
+    publisherId,
+    relationship: relationship as 'DIRECT' | 'RESELLER',
+  };
+
+  if (certificationAuthorityId) {
+    entry.certificationAuthorityId = certificationAuthorityId;
+  }
+
+  const isDuplicate = checkForDuplicate(entry, entries);
+
+  if (isDuplicate) {
+    duplicates.push({
+      line: lineNumber,
+      content: originalLine,
+      message: chrome.i18n.getMessage('duplicate_entries'),
+    });
+  } else {
+    entries.push(entry);
+  }
+};
+
+/**
+ * Check if an entry is a duplicate
+ */
+const checkForDuplicate = (entry: AdsTxt, entries: AdsTxt[]): boolean => {
+  return entries.some(
+    (e) =>
+      e.domain === entry.domain &&
+      e.publisherId === entry.publisherId &&
+      e.relationship === entry.relationship
+  );
+};
+
+/**
+ * Sort entries by domain, publisher ID, and relationship
+ */
+const sortEntries = (entries: AdsTxt[]): AdsTxt[] => {
+  return [...entries].sort(
+    (a, b) =>
+      a.domain.localeCompare(b.domain) ||
+      a.publisherId.length - b.publisherId.length ||
+      a.publisherId.localeCompare(b.publisherId) ||
+      a.relationship.localeCompare(b.relationship)
+  );
+};
+
+/**
+ * Validate a publisher ID
+ */
+const isValidPublisherId = (publisherId: string): boolean => {
+  return !!publisherId.match(/^[a-zA-Z0-9.\-_=]+$/);
+};
+
+/**
+ * Validate a certification authority ID
+ */
+const isValidCertificationAuthorityId = (certificationAuthorityId: string): boolean => {
+  return !!certificationAuthorityId.match(/^[a-zA-Z0-9.\-_]+$/);
 };
 
 // Utility functions
@@ -443,7 +507,7 @@ const isSubdomain = (domain: string, rootDomain: string): boolean => {
 };
 
 /**
- * Wether the domain string is valid or not
+ * Whether the domain string is valid or not
  * @param domain Domain name to validate
  * @returns True if the domain is valid, false otherwise
  */

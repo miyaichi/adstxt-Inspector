@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Download, ExternalLink } from 'lucide-react';
+import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
@@ -150,6 +150,22 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
       </div>
     );
   }
+  
+  // Display fetch error if present
+  if (adsTxtData.fetchError) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+          <div className="font-semibold mb-2">
+            {chrome.i18n.getMessage('error_fetching_file', [
+              checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'
+            ])}:
+          </div>
+          <div>{chrome.i18n.getMessage(adsTxtData.fetchError) || adsTxtData.fetchError}</div>
+        </div>
+      </div>
+    );
+  }
 
   // If duplicate check is enabled, include duplicates in the error count
   const errors = duplicateCheck
@@ -172,7 +188,11 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                   appAdsTxt={checkAppAdsTxt}
                   content={commentErrorAdsTxtLines(adsTxtData.adsTxtContent, errors)}
                 >
-                  <span>{chrome.i18n.getMessage('download_file_without_errors', [checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'])}</span>
+                  <span>
+                    {chrome.i18n.getMessage('download_file_without_errors', [
+                      checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt',
+                    ])}
+                  </span>
                   <Download className="w-4 h-4" />
                 </DownloadPlainAdsTxt>
               </div>
@@ -304,7 +324,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                     className={`entry-card ${
                       validity.isVerified
                         ? 'border-green-200 bg-green-50'
-                        : 'border-red-200 bg-red-50'
+                        : validity.reasons.some(reason => reason.key.startsWith('error_'))
+                          ? 'border-red-200 bg-red-50'
+                          : 'border-yellow-200 bg-yellow-50'
                     }`}
                   >
                     <div className="entry-card-content">
@@ -337,14 +359,18 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           {validity.isVerified ? (
                             <Check className="w-5 h-5 text-green-500" />
                           ) : (
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                            <CircleAlert className="w-5 h-5 text-red-500" />
                           )}
                         </div>
                       </div>
                       {!validity.isVerified && validity.reasons.length > 0 && (
                         <div className="flex flex-col text-red-600 space-y-1">
                           {validity.reasons.map((reason, idx) => (
-                            <span key={idx}>{reason}</span>
+                            <span key={idx}>
+                              {chrome.i18n.getMessage(reason.key, reason.placeholders)
+                                ? chrome.i18n.getMessage(reason.key, reason.placeholders)
+                                : reason.key}
+                            </span>
                           ))}
                         </div>
                       )}

@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react';
+import { CircleAlert } from 'lucide-react';
 import React, { useMemo } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
@@ -124,6 +124,21 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       <div className="p-4">
         <div className="bg-blue-50 text-blue-700 p-4 rounded-lg">
           {chrome.i18n.getMessage('analyzing')}
+        </div>
+      </div>
+    );
+  }
+
+  if (adsTxtData?.fetchError) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+          <div className="font-semibold mb-2">
+            {chrome.i18n.getMessage('error_fetching_file', [
+              checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'
+            ])}:
+          </div>
+          <div>{chrome.i18n.getMessage(adsTxtData.fetchError) || adsTxtData.fetchError}</div>
         </div>
       </div>
     );
@@ -274,7 +289,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       {analysis.riskFactors.length > 0 && (
         <div className="rounded-lg border border-red-200 p-4 bg-red-50">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <CircleAlert className="w-5 h-5 text-red-500" />
             Risk Factors
           </h3>
           <ul className="space-y-2">

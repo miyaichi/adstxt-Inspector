@@ -151,7 +151,9 @@ export default function App() {
 
             {/* Explanation Message */}
             <div className="text-sm text-gray-500">
-              {chrome.i18n.getMessage('analyse_button_description', [checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'])}
+              {chrome.i18n.getMessage('analyse_button_description', [
+                checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt',
+              ])}
             </div>
           </div>
         </div>
