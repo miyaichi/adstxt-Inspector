@@ -129,76 +129,76 @@
     "message": "Filter Options"
   },
   "error_10010_file_not_found": {
-    "message": "Error (10010): ads.txt or app-ads.txt is missing."
+    "message": "ads.txt or app-ads.txt is missing.(e:10010)"
   },
   "error_10020_invalid_content_type": {
-    "message": "Error (10020): File missing text/plain header."
+    "message": "File missing text/plain header.(e:10020)"
   },
   "error_10030_connection_timeout": {
-    "message": "Error (10030): Unable to access ads.txt within time limit."
+    "message": "Unable to access ads.txt within time limit.(e:10030)"
   },
   "error_10040_too_many_redirects": {
-    "message": "Error (10040): Exceeds 5 redirects within root domain."
+    "message": "Exceeds 5 redirects within root domain.(e:10040)"
   },
   "error_10050_external_redirect_limit": {
-    "message": "Error (10050): Exceeds 1 redirect outside root domain."
+    "message": "Exceeds 1 redirect outside root domain.(e:10050)"
   },
   "error_11010_missing_required_fields": {
-    "message": "Error (11010): Each line must contain 3 fields."
+    "message": "Each line must contain 3 fields.(e:11010)"
   },
   "error_11020_invalid_relationship": {
-    "message": "Error (11020): Third field must be DIRECT or RESELLER."
+    "message": "Third field must be DIRECT or RESELLER.(e:11020)"
   },
   "error_11030_invalid_domain": {
-    "message": "Error (11030): Advertising system domain is not valid."
+    "message": "Advertising system domain is not valid.(e:11030)"
   },
   "error_11040_empty_file": {
-    "message": "Error (11040): At least one valid entry is required."
+    "message": "At least one valid entry is required.(e:11040)"
   },
   "error_11050_invalid_characters": {
-    "message": "Error (11050): Fields contain unescaped tabs, commas or spaces."
+    "message": "Fields contain unescaped tabs, commas or spaces.(e:11050)"
   },
   "alert_12010_missing_sellers_json": {
-    "message": "Alert (12010): Advertising system lacks sellers.json file."
+    "message": "Advertising system lacks sellers.json file.(a:12010)"
   },
   "error_12020_publisher_id_not_listed": {
-    "message": "Error (12020): Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt."
+    "message": "Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt.(e:12020)"
   },
   "alert_12030_domain_mismatch": {
-    "message": "Alert (12030): Seller domain $1 does not match OWNERDOMAIN."
+    "message": "Seller domain $1 does not match OWNERDOMAIN.(a:12030)"
   },
   "alert_12040_relationship_type_both": {
-    "message": "Alert (12040): Publisher ID is registered as BOTH."
+    "message": "Publisher ID is registered as BOTH.(a:12040)"
   },
   "alert_12050_relationship_mismatch": {
-    "message": "Alert (12050): Publisher ID listed as INTERMEDIARY instead of PUBLISHER."
+    "message": "Publisher ID listed as INTERMEDIARY instead of PUBLISHER.(a:12050)"
   },
   "error_12060_duplicate_seller_id": {
-    "message": "Error (12060): Publisher ID appears multiple times in sellers.json."
+    "message": "Publisher ID appears multiple times in sellers.json.(e:12060)"
   },
   "alert_13010_missing_sellers_json": {
-    "message": "Alert (13010): The sellers.json file is missing for this advertising system. Request the administrator of the advertising system to install sellers.json."
+    "message": "The sellers.json file is missing for this advertising system. Request the administrator of the advertising system to install sellers.json.(a:13010)"
   },
   "error_13020_publisher_id_not_listed": {
-    "message": "Error (13020): Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt."
+    "message": "Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt.(e:13020)"
   },
   "alert_13030_domain_mismatch": {
-    "message": "Alert (13030): Check the reseller domain $1 is correct."
+    "message": "Check the reseller domain $1 is correct.(a:13030)"
   },
   "alert_13040_relationship_type_both": {
-    "message": "Alert (13040): Publisher ID is registered as BOTH."
+    "message": "Publisher ID is registered as BOTH.(a:13040)"
   },
   "error_13050_relationship_mismatch": {
-    "message": "Error (13050): Publisher ID registered as INTERMEDIARY instead of PUBLISHER."
+    "message": "Publisher ID registered as INTERMEDIARY instead of PUBLISHER.(e:13050)"
   },
   "alert_13060_duplicate_seller_id": {
-    "message": "Publisher ID appears multiple times in sellers.json."
+    "message": "Publisher ID appears multiple times in sellers.json.(a:13060)"
   },
   "error_14020_invalid_subdomain": {
-    "message": "Error (14020): The subdomain is not a valid domain."
+    "message": "The subdomain is not a valid domain.(e:14020)"
   },
   "error_14030_invalid_subdomain": {
-    "message": "Error (14030): Not a subdomain of the root domain."
+    "message": "Not a subdomain of the root domain.(e:14030)"
   },
   "error_fetching_file": {
     "message": "Error fetching $1"

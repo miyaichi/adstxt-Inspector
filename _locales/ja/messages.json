@@ -129,76 +129,76 @@
     "message": "フィルターオプション"
   },
   "error_10010_file_not_found": {
-    "message": "Error (10010): ads.txtまたはapp-ads.txtが存在しません。"
+    "message": "ads.txtまたはapp-ads.txtが存在しません。(e:10010)"
   },
   "error_10020_invalid_content_type": {
-    "message": "Error (10020): ファイルにtext/plainヘッダーがありません。"
+    "message": "ファイルにtext/plainヘッダーがありません。(e:10020)"
   },
   "error_10030_connection_timeout": {
-    "message": "Error (10030): 時間内にads.txtにアクセスできません。"
+    "message": "時間内にads.txtにアクセスできません。(e:10030)"
   },
   "error_10040_too_many_redirects": {
-    "message": "Error (10040): ルートドメイン内で5回を超えるリダイレクトが発生しています。"
+    "message": "ルートドメイン内で5回を超えるリダイレクトが発生しています。(e:10040)"
   },
   "error_10050_external_redirect_limit": {
-    "message": "Error (10050): ルートドメイン外への1回のリダイレクト制限を超えています。"
+    "message": "ルートドメイン外への1回のリダイレクト制限を超えています。(e:10050)"
   },
   "error_11010_missing_required_fields": {
-    "message": "Error (11010): 各行には3つのフィールドが必要です。"
+    "message": "各行には3つのフィールドが必要です。(e:11010)"
   },
   "error_11020_invalid_relationship": {
-    "message": "Error (11020): 3番目のフィールドはDIRECTまたはRESELLERでなければなりません。"
+    "message": "3番目のフィールドはDIRECTまたはRESELLERでなければなりません。(e:11020)"
   },
   "error_11030_invalid_domain": {
-    "message": "Error (11030): 広告システムドメインが有効ではありません。"
+    "message": "広告システムドメインが有効ではありません。(e:11030)"
   },
   "error_11040_empty_file": {
-    "message": "Error (11040): 少なくとも1つの有効なエントリが必要です。"
+    "message": "少なくとも1つの有効なエントリが必要です。(e:11040)"
   },
   "error_11050_invalid_characters": {
-    "message": "Error (11050): フィールドにエスケープされていないタブ、カンマ、または空白が含まれています。"
+    "message": "フィールドにエスケープされていないタブ、カンマ、または空白が含まれています。(e:11050)"
   },
   "alert_12010_missing_sellers_json": {
-    "message": "Alert (12010): 広告システムに sellers.json ファイルがありません。"
+    "message": "広告システムに sellers.json ファイルがありません。(a:12010)"
   },
   "error_12020_publisher_id_not_listed": {
-    "message": "Error (12020): Publisher ID が sellers.json にありません。ID の登録を依頼するか、Ads.txt からこの ID を削除してください。"
+    "message": "Publisher ID が sellers.json にありません。ID の登録を依頼するか、Ads.txt からこの ID を削除してください。(e:12020)"
   },
   "alert_12030_domain_mismatch": {
-    "message": "Alert (12030): セラーのドメイン $1 が OWNERDOMAIN と一致しません。"
+    "message": "セラーのドメイン $1 が OWNERDOMAIN と一致しません。(a:12030)"
   },
   "alert_12040_relationship_type_both": {
-    "message": "Alert (12040): Publisher ID は BOTH として登録されています。"
+    "message": "Publisher ID は BOTH として登録されています。(a:12040)"
   },
   "alert_12050_relationship_mismatch": {
-    "message": "Alert (12050): Publisher ID が PUBLISHER ではなく INTERMEDIARYとして登録されています。"
+    "message": "Publisher ID が PUBLISHER ではなく INTERMEDIARYとして登録されています。(a:12050)"
   },
   "error_12060_duplicate_seller_id": {
-    "message": "Error (12060): Publisher ID が sellers.json に複数回登録されています。"
+    "message": "Publisher ID が sellers.json に複数回登録されています。(e:12060)"
   },
   "alert_13010_missing_sellers_json": {
-    "message": "Alert (13010): この広告システムの sellers.json がありません。広告システムの管理者に sellers.json の設置を依頼してください。"
+    "message": "この広告システムの sellers.json がありません。広告システムの管理者に sellers.json の設置を依頼してください。(a:13010)"
   },
   "error_13020_publisher_id_not_listed": {
-    "message": "Error (13020): Publisher ID が sellers.json にありません。ID の登録を依頼するか、Ads.txt からこの ID を削除してください。"
+    "message": "Publisher ID が sellers.json にありません。ID の登録を依頼するか、Ads.txt からこの ID を削除してください。(e:13020)"
   },
   "alert_13030_domain_mismatch": {
-    "message": "Alert (13030): リセラーのドメイン $1 が正しいか確認してください。"
+    "message": "リセラーのドメイン $1 が正しいか確認してください。(a:13030)"
   },
   "alert_13040_relationship_type_both": {
-    "message": "Alert (13040): Publisher ID は BOTH として登録されています。"
+    "message": "Publisher ID は BOTH として登録されています。(a:13040)"
   },
   "error_13050_relationship_mismatch": {
-    "message": "Error (13050): Publisher ID が INTERMEDIARY ではなく PUBLISHER として登録されています。"
+    "message": "Publisher ID が INTERMEDIARY ではなく PUBLISHER として登録されています。(e:13050)"
   },
   "alert_13060_duplicate_seller_id": {
-    "message": "Alert (13060): Publisher ID が sellers.json に複数回登録されています。"
+    "message": "Publisher ID が sellers.json に複数回登録されています。(a:13060)"
   },
   "error_14020_invalid_subdomain": {
-    "message": "Error (14020): サブドメインが有効なドメインではありません。"
+    "message": "サブドメインが有効なドメインではありません。(e:14020)"
   },
   "error_14030_invalid_subdomain": {
-    "message": "Error (14030): ルートドメインのサブドメインではありません。"
+    "message": "ルートドメインのサブドメインではありません。(e:14030)"
   },
   "error_fetching_file": {
     "message": "$1 の取得中にエラーが発生しました"
