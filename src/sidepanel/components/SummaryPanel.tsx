@@ -129,6 +129,21 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     );
   }
 
+  if (adsTxtData?.fetchError) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+          <div className="font-semibold mb-2">
+            {chrome.i18n.getMessage('error_fetching_file', [
+              checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'
+            ])}:
+          </div>
+          <div>{chrome.i18n.getMessage(adsTxtData.fetchError) || adsTxtData.fetchError}</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!analysis) {
     return (
       <div className="p-4">

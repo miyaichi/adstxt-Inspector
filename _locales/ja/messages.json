@@ -199,5 +199,11 @@
   },
   "error_14030_invalid_subdomain": {
     "message": "Error (14030): ルートドメインのサブドメインではありません。"
+  },
+  "error_fetching_file": {
+    "message": "$1 の取得中にエラーが発生しました"
+  },
+  "error_unknown_error": {
+    "message": "不明なエラーが発生しました"
   }
 }

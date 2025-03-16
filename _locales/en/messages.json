@@ -199,5 +199,11 @@
   },
   "error_14030_invalid_subdomain": {
     "message": "Error (14030): Not a subdomain of the root domain."
+  },
+  "error_fetching_file": {
+    "message": "Error fetching $1"
+  },
+  "error_unknown_error": {
+    "message": "Unknown error occurred"
   }
 }

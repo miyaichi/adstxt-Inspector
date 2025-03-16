@@ -135,6 +135,19 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
     );
   }
 
+  if (adsTxtData?.fetchError) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+          <div className="font-semibold mb-2">
+            {chrome.i18n.getMessage('error_fetching_file', ['Ads.txt'])}:
+          </div>
+          <div>{chrome.i18n.getMessage(adsTxtData.fetchError) || adsTxtData.fetchError}</div>
+        </div>
+      </div>
+    );
+  }
+  
   if (sellerAnalysis.length === 0) {
     return (
       <div className="p-4">
