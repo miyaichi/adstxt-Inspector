@@ -109,15 +109,32 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     (acc, analysis) => acc + (analysis.sellersJson?.data.length || 0),
     0
   );
-  const verifiedSellerCount =
-    adsTxtData?.data.reduce(
-      (acc, entry) => acc + (isVerifiedEntry(entry.domain, entry).isVerified ? 1 : 0),
-      0
-    ) || 0;
+  
+  // Get verification data for all entries
+  const verificationData = adsTxtData?.data.map(entry => {
+    const result = isVerifiedEntry(entry.domain, entry);
+    return {
+      isVerified: result.isVerified,
+      // Check if there are any error reasons (those starting with "error_")
+      hasNoErrors: !result.reasons.some(reason => reason.key.startsWith('error_'))
+    };
+  }) || [];
+  
+  // Count verified sellers
+  const verifiedSellerCount = verificationData.filter(data => data.isVerified).length;
+  
+  // Count non-verified but no-error sellers
+  const nonVerifiedNoErrorCount = verificationData.filter(data => !data.isVerified && data.hasNoErrors).length;
+  
+  // Total sellers with no errors (verified + non-verified with no errors)
+  const totalNoErrorCount = verifiedSellerCount + nonVerifiedNoErrorCount;
+  
   const SellerExistingRate =
     totalAdsTxtEntries === 0 ? 0 : (existingSellerCoun / totalAdsTxtEntries) * 100;
   const sellerVerificationRate =
     totalAdsTxtEntries === 0 ? 0 : (verifiedSellerCount / totalAdsTxtEntries) * 100;
+  const noErrorSellerRate =
+    totalAdsTxtEntries === 0 ? 0 : (totalNoErrorCount / totalAdsTxtEntries) * 100;
 
   if (analyzing) {
     return (
@@ -234,6 +251,31 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <span>Total: {totalAdsTxtEntries}</span>
             </div>
           </div>
+          
+          {/* No-Error Sellers (Verified + Non-verified without errors) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">No-Error Sellers</span>
+              <span className="text-sm font-bold">{noErrorSellerRate.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-yellow-500 h-2 rounded-full"
+                style={{ width: `${noErrorSellerRate}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>
+                <span className="text-green-600">Verified: {verifiedSellerCount}</span>
+                {' + '}
+                <span className="text-yellow-600">Alert: {nonVerifiedNoErrorCount}</span>
+                {' = '}
+                <span className="font-semibold">{totalNoErrorCount}</span>
+              </span>
+              <span>Total: {totalAdsTxtEntries}</span>
+            </div>
+          </div>
+          
           {/* Existing Sellers */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
