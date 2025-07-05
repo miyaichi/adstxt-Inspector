@@ -147,7 +147,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
       </div>
     );
   }
-  
+
   if (sellerAnalysis.length === 0) {
     return (
       <div className="p-4">

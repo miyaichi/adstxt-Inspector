@@ -5,6 +5,8 @@ import type {
   SellersJson,
 } from '../types/types';
 import { SellersJsonCache } from './sellersJsonCache';
+import { SellersJsonApi } from './sellersJsonApi';
+import { getApiConfig, isApiConfigured } from '../config/api';
 
 /**
  * Special domains with non-standard sellers.json URLs
@@ -18,6 +20,26 @@ const SPECIAL_DOMAINS: Record<string, string> = {
  * Class responsible for fetching and processing sellers.json files
  */
 export class SellersJsonFetcher {
+  private static apiClient: SellersJsonApi | null = null;
+
+  /**
+   * Gets or initializes the API client
+   */
+  private static async getApiClient(): Promise<SellersJsonApi | null> {
+    try {
+      const config = await getApiConfig();
+
+      if (!isApiConfigured(config)) {
+        return null;
+      }
+
+      // Always create a new client with the current config to ensure settings are up to date
+      return new SellersJsonApi(config);
+    } catch (error) {
+      console.error('Failed to get API configuration:', error);
+      return null;
+    }
+  }
   /**
    * Fetches a sellers.json file from a domain
    * @param domain - The domain to fetch the sellers.json from
@@ -28,12 +50,7 @@ export class SellersJsonFetcher {
     domain: string,
     options: FetchSellersJsonOptions = {}
   ): Promise<FetchSellersJsonResult> {
-    const { 
-      timeout = 5000, 
-      retries = 2, 
-      retryDelay = 1000, 
-      bypassCache = false 
-    } = options;
+    const { timeout = 5000, retries = 2, retryDelay = 1000, bypassCache = false } = options;
 
     // Check cache first unless bypassing is requested
     if (!bypassCache) {
@@ -45,7 +62,7 @@ export class SellersJsonFetcher {
 
     // Determine the URL for the sellers.json
     const url = this.getSellersJsonUrl(domain);
-    
+
     return await this.attemptFetch(domain, url, { timeout, retries, retryDelay });
   }
 
@@ -95,7 +112,7 @@ export class SellersJsonFetcher {
         }
 
         const data = await this.performFetch(url, timeout);
-        
+
         if (!this.isValidSellersJson(data)) {
           return { domain, error: 'Invalid sellers.json format' };
         }
@@ -145,7 +162,7 @@ export class SellersJsonFetcher {
    */
   private static async performFetch(url: string, timeout: number): Promise<any> {
     const signal = AbortSignal.timeout(timeout);
-    
+
     const response = await fetch(url, {
       signal,
       headers: {
@@ -165,7 +182,7 @@ export class SellersJsonFetcher {
    * @param ms - Milliseconds to delay
    */
   private static delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -174,12 +191,7 @@ export class SellersJsonFetcher {
    * @returns Whether the data is a valid sellers.json
    */
   private static isValidSellersJson(data: any): data is SellersJson {
-    return (
-      data && 
-      typeof data === 'object' && 
-      'version' in data && 
-      Array.isArray(data.sellers)
-    );
+    return data && typeof data === 'object' && 'version' in data && Array.isArray(data.sellers);
   }
 
   /**
@@ -190,6 +202,201 @@ export class SellersJsonFetcher {
    */
   static filterSellersByIds(sellers: Seller[], sellerIds: string[]): Seller[] {
     return sellers.filter((seller) => sellerIds.includes(seller.seller_id));
+  }
+
+  /**
+   * Fetches a specific seller from a domain, using API first, then fallback to full sellers.json
+   * @param domain - The domain to fetch from
+   * @param sellerId - The seller ID to fetch
+   * @param options - Fetch options
+   * @returns The seller data or null if not found
+   * @deprecated Use fetchSellers() for better performance with batch API
+   */
+  static async fetchSeller(
+    domain: string,
+    sellerId: string,
+    options: FetchSellersJsonOptions = {}
+  ): Promise<{ seller: Seller | null; source: 'api' | 'fallback'; error?: string }> {
+    // Use fetchSellers for consistency and better performance
+    const results = await this.fetchSellers([{ domain, sellerId }], options);
+    const result = results[0];
+
+    if (result.seller) {
+      return {
+        seller: result.seller,
+        source: result.source,
+      };
+    } else {
+      return {
+        seller: null,
+        source: result.source,
+        error: result.error,
+      };
+    }
+  }
+
+  /**
+   * Fetches multiple sellers from multiple domains, using API first with fallback
+   * @param requests - Array of {domain, sellerId} requests
+   * @param options - Fetch options
+   * @returns Array of seller results
+   */
+  static async fetchSellers(
+    requests: Array<{ domain: string; sellerId: string }>,
+    options: FetchSellersJsonOptions = {}
+  ): Promise<
+    Array<{
+      domain: string;
+      sellerId: string;
+      seller: Seller | null;
+      source: 'api' | 'fallback';
+      error?: string;
+    }>
+  > {
+    const apiClient = await this.getApiClient();
+    const results: Array<{
+      domain: string;
+      sellerId: string;
+      seller: Seller | null;
+      source: 'api' | 'fallback';
+      error?: string;
+    }> = [];
+
+    // Try API first if configured
+    if (apiClient) {
+      try {
+        const apiResponses = await apiClient.fetchSellers(requests, options.bypassCache);
+
+        const fallbackRequests: Array<{ domain: string; sellerId: string }> = [];
+
+        for (let i = 0; i < requests.length; i++) {
+          const request = requests[i];
+          const apiResponse = apiResponses[i];
+
+          if (apiResponse.success && apiResponse.data?.seller) {
+            results.push({
+              domain: request.domain,
+              sellerId: request.sellerId,
+              seller: apiResponse.data.seller,
+              source: 'api',
+            });
+          } else if (
+            apiResponse.error?.includes('404') ||
+            apiResponse.error?.includes('not found')
+          ) {
+            // Seller definitely doesn't exist - no fallback needed
+            results.push({
+              domain: request.domain,
+              sellerId: request.sellerId,
+              seller: null,
+              source: 'api',
+              error: apiResponse.error,
+            });
+          } else {
+            // API failed - add to fallback list
+            fallbackRequests.push(request);
+          }
+        }
+
+        // Process fallback requests if any
+        if (fallbackRequests.length > 0) {
+          const fallbackResults = await this.processFallbackRequests(fallbackRequests, options);
+          results.push(...fallbackResults);
+        }
+
+        return results;
+      } catch (error) {
+        // API completely failed, fallback for all requests
+      }
+    }
+
+    // Fallback for all requests
+    return await this.processFallbackRequests(requests, options);
+  }
+
+  /**
+   * Processes requests using the traditional sellers.json method
+   * @param requests - Array of requests to process
+   * @param options - Fetch options
+   * @returns Array of results
+   */
+  private static async processFallbackRequests(
+    requests: Array<{ domain: string; sellerId: string }>,
+    options: FetchSellersJsonOptions
+  ): Promise<
+    Array<{
+      domain: string;
+      sellerId: string;
+      seller: Seller | null;
+      source: 'fallback';
+      error?: string;
+    }>
+  > {
+    // Group requests by domain to minimize sellers.json fetches
+    const domainGroups = new Map<string, string[]>();
+
+    for (const { domain, sellerId } of requests) {
+      if (!domainGroups.has(domain)) {
+        domainGroups.set(domain, []);
+      }
+      domainGroups.get(domain)!.push(sellerId);
+    }
+
+    const results: Array<{
+      domain: string;
+      sellerId: string;
+      seller: Seller | null;
+      source: 'fallback';
+      error?: string;
+    }> = [];
+
+    // Fetch sellers.json for each domain
+    const domainPromises = Array.from(domainGroups.entries()).map(async ([domain, sellerIds]) => {
+      const sellersJsonResult = await this.fetch(domain, options);
+
+      if (sellersJsonResult.error) {
+        // Add error results for all seller IDs in this domain
+        for (const sellerId of sellerIds) {
+          results.push({
+            domain,
+            sellerId,
+            seller: null,
+            source: 'fallback',
+            error: sellersJsonResult.error,
+          });
+        }
+        return;
+      }
+
+      if (sellersJsonResult.data) {
+        const matchingSellers = this.filterSellersByIds(sellersJsonResult.data.sellers, sellerIds);
+        const sellerMap = new Map(matchingSellers.map((seller) => [seller.seller_id, seller]));
+
+        for (const sellerId of sellerIds) {
+          results.push({
+            domain,
+            sellerId,
+            seller: sellerMap.get(sellerId) || null,
+            source: 'fallback',
+          });
+        }
+      } else {
+        // No data available
+        for (const sellerId of sellerIds) {
+          results.push({
+            domain,
+            sellerId,
+            seller: null,
+            source: 'fallback',
+            error: 'No sellers.json data available',
+          });
+        }
+      }
+    });
+
+    await Promise.allSettled(domainPromises);
+
+    return results;
   }
 
   /**

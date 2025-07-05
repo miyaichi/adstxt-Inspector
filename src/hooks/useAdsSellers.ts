@@ -39,16 +39,26 @@ const fetchSellerAnalysisForDomain = async (
   domain: string,
   adsTxtEntries: AdsTxt[]
 ): Promise<SellerAnalysis> => {
-  const sellersJsonResult = await SellersJsonFetcher.fetch(domain, FETCH_OPTIONS);
-  const filteredSellers = sellersJsonResult.data
-    ? sellersJsonResult.data.sellers.filter((seller) =>
-        adsTxtEntries.some((entry) => String(entry.publisherId) === String(seller.seller_id))
-      )
-    : [];
+  // Extract seller IDs from ads.txt entries
+  const sellerIds = adsTxtEntries.map((entry) => String(entry.publisherId));
+  const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
+
+  // Use the new fetchSellers method with API-first approach
+  const sellersResults = await SellersJsonFetcher.fetchSellers(requests, FETCH_OPTIONS);
+
+  // Extract successful sellers and any errors
+  const filteredSellers = sellersResults
+    .filter((result) => result.seller !== null)
+    .map((result) => result.seller!);
+
+  // Collect any errors from the results
+  const errors = sellersResults.filter((result) => result.error).map((result) => result.error!);
+
+  const error = errors.length > 0 ? errors.join('; ') : undefined;
 
   return {
     domain,
-    sellersJson: { data: filteredSellers, error: sellersJsonResult.error },
+    sellersJson: { data: filteredSellers, error },
     adsTxtEntries,
   };
 };

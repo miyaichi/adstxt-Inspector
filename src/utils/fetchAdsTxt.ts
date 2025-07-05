@@ -66,7 +66,7 @@ export const fetchAdsTxt = async (
     // fetch the ads.txt from the subdomain
     if (!appAdsTxt && isSubdomainDomain) {
       const declaredSubdomains = extractDeclaredSubdomains(adsTxtContent);
-      
+
       if (declaredSubdomains.includes(domain)) {
         const subdomainResult = await fetchAdsTxtForDomain(domain, appAdsTxt);
         adsTxtContent = subdomainResult.content;
@@ -105,7 +105,10 @@ export const fetchAdsTxt = async (
  * @param appAdsTxt Whether to fetch app-ads.txt instead
  * @returns Fetch result with content and URL
  */
-const fetchAdsTxtForDomain = async (domain: string, appAdsTxt: boolean): Promise<{content: string, finalUrl: string}> => {
+const fetchAdsTxtForDomain = async (
+  domain: string,
+  appAdsTxt: boolean
+): Promise<{ content: string; finalUrl: string }> => {
   const urls = generateAdsTxtUrls(domain, appAdsTxt);
   return await fetchFromUrls(urls, DEFAULT_FETCH_OPTIONS);
 };
@@ -254,10 +257,10 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
  * @returns true if the line was processed as a variable, false otherwise
  */
 const processVariableLine = (
-  trimmedLine: string, 
-  originalLine: string, 
-  lineNumber: number, 
-  variables: SupportedVariables, 
+  trimmedLine: string,
+  originalLine: string,
+  lineNumber: number,
+  variables: SupportedVariables,
   errors: ErrorDetail[],
   regexes: Record<string, RegExp>
 ): boolean => {
@@ -283,10 +286,10 @@ const processVariableLine = (
  * Process a SUBDOMAIN variable declaration
  */
 const processSubDomainVariable = (
-  value: string, 
-  originalLine: string, 
-  lineNumber: number, 
-  variables: SupportedVariables, 
+  value: string,
+  originalLine: string,
+  lineNumber: number,
+  variables: SupportedVariables,
   errors: ErrorDetail[]
 ): void => {
   if (!isValidDomain(value)) {
@@ -308,15 +311,15 @@ const processSubDomainVariable = (
  * Process a MANAGERDOMAIN variable declaration
  */
 const processManagerDomainVariable = (
-  value: string, 
-  originalLine: string, 
-  lineNumber: number, 
-  variables: SupportedVariables, 
+  value: string,
+  originalLine: string,
+  lineNumber: number,
+  variables: SupportedVariables,
   errors: ErrorDetail[]
 ): void => {
   variables.managerDomains = variables.managerDomains || [];
   const [managerDomain, countryCode] = value.split(',').map((s) => s.trim());
-  
+
   if (!isValidDomain(managerDomain)) {
     errors.push({
       line: lineNumber,
@@ -327,17 +330,14 @@ const processManagerDomainVariable = (
   }
 
   const managerDomainCount = Object.entries(variables).filter(
-    ([k, v]) =>
-      k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
+    ([k, v]) => k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
   ).length;
-  
+
   if (managerDomainCount > 1) {
     errors.push({
       line: lineNumber,
       content: originalLine,
-      message: chrome.i18n.getMessage('multiple_manager_domain_declarations', [
-        countryCode,
-      ]),
+      message: chrome.i18n.getMessage('multiple_manager_domain_declarations', [countryCode]),
     });
   } else {
     variables.managerDomains.push(value);
@@ -348,15 +348,15 @@ const processManagerDomainVariable = (
  * Process an ads.txt entry line
  */
 const processEntryLine = (
-  trimmedLine: string, 
-  originalLine: string, 
-  lineNumber: number, 
-  entries: AdsTxt[], 
+  trimmedLine: string,
+  originalLine: string,
+  lineNumber: number,
+  entries: AdsTxt[],
   errors: ErrorDetail[],
   duplicates: ErrorDetail[]
 ): void => {
   const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
-  
+
   if (fields.length < 3) {
     errors.push({
       line: lineNumber,

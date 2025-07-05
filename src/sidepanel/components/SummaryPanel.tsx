@@ -109,26 +109,29 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     (acc, analysis) => acc + (analysis.sellersJson?.data.length || 0),
     0
   );
-  
+
   // Get verification data for all entries
-  const verificationData = adsTxtData?.data.map(entry => {
-    const result = isVerifiedEntry(entry.domain, entry);
-    return {
-      isVerified: result.isVerified,
-      // Check if there are any error reasons (those starting with "error_")
-      hasNoErrors: !result.reasons.some(reason => reason.key.startsWith('error_'))
-    };
-  }) || [];
-  
+  const verificationData =
+    adsTxtData?.data.map((entry) => {
+      const result = isVerifiedEntry(entry.domain, entry);
+      return {
+        isVerified: result.isVerified,
+        // Check if there are any error reasons (those starting with "error_")
+        hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
+      };
+    }) || [];
+
   // Count verified sellers
-  const verifiedSellerCount = verificationData.filter(data => data.isVerified).length;
-  
+  const verifiedSellerCount = verificationData.filter((data) => data.isVerified).length;
+
   // Count non-verified but no-error sellers
-  const nonVerifiedNoErrorCount = verificationData.filter(data => !data.isVerified && data.hasNoErrors).length;
-  
+  const nonVerifiedNoErrorCount = verificationData.filter(
+    (data) => !data.isVerified && data.hasNoErrors
+  ).length;
+
   // Total sellers with no errors (verified + non-verified with no errors)
   const totalNoErrorCount = verifiedSellerCount + nonVerifiedNoErrorCount;
-  
+
   const SellerExistingRate =
     totalAdsTxtEntries === 0 ? 0 : (existingSellerCoun / totalAdsTxtEntries) * 100;
   const sellerVerificationRate =
@@ -152,8 +155,9 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         <div className="bg-red-50 text-red-700 p-4 rounded-lg">
           <div className="font-semibold mb-2">
             {chrome.i18n.getMessage('error_fetching_file', [
-              checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'
-            ])}:
+              checksAppAdsTxt ? 'App-ads.txt' : 'Ads.txt',
+            ])}
+            :
           </div>
           <div>{chrome.i18n.getMessage(adsTxtData.fetchError) || adsTxtData.fetchError}</div>
         </div>
@@ -251,7 +255,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <span>Total: {totalAdsTxtEntries}</span>
             </div>
           </div>
-          
+
           {/* No-Error Sellers (Verified + Non-verified without errors) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -275,7 +279,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <span>Total: {totalAdsTxtEntries}</span>
             </div>
           </div>
-          
+
           {/* Existing Sellers */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">

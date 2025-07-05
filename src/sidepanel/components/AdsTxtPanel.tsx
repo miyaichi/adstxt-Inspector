@@ -150,7 +150,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
       </div>
     );
   }
-  
+
   // Display fetch error if present
   if (adsTxtData.fetchError) {
     return (
@@ -158,8 +158,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         <div className="bg-red-50 text-red-700 p-4 rounded-lg">
           <div className="font-semibold mb-2">
             {chrome.i18n.getMessage('error_fetching_file', [
-              checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt'
-            ])}:
+              checkAppAdsTxt ? 'App-ads.txt' : 'Ads.txt',
+            ])}
+            :
           </div>
           <div>{chrome.i18n.getMessage(adsTxtData.fetchError) || adsTxtData.fetchError}</div>
         </div>
@@ -324,7 +325,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                     className={`entry-card ${
                       validity.isVerified
                         ? 'border-green-200 bg-green-50'
-                        : validity.reasons.some(reason => reason.key.startsWith('error_'))
+                        : validity.reasons.some((reason) => reason.key.startsWith('error_'))
                           ? 'border-red-200 bg-red-50'
                           : 'border-yellow-200 bg-yellow-50'
                     }`}
