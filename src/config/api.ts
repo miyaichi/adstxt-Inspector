@@ -5,7 +5,6 @@ import type { SellersJsonApiConfig } from '../utils/sellersJsonApi';
  */
 const DEFAULT_API_CONFIG: SellersJsonApiConfig = {
   baseUrl: 'https://adstxt-manager.jp/api/v1',
-  apiKey: 'test-api-key-1',
 };
 
 /**
@@ -14,10 +13,9 @@ const DEFAULT_API_CONFIG: SellersJsonApiConfig = {
  */
 export const getApiConfig = async (): Promise<SellersJsonApiConfig> => {
   try {
-    const result = await chrome.storage.sync.get(['apiBaseUrl', 'apiKey']);
+    const result = await chrome.storage.sync.get(['apiBaseUrl']);
     return {
       baseUrl: result.apiBaseUrl || DEFAULT_API_CONFIG.baseUrl,
-      apiKey: result.apiKey || DEFAULT_API_CONFIG.apiKey,
     };
   } catch (error) {
     // Fallback to default config if storage access fails
@@ -33,7 +31,6 @@ export const setApiConfig = async (config: SellersJsonApiConfig): Promise<void> 
   try {
     await chrome.storage.sync.set({
       apiBaseUrl: config.baseUrl,
-      apiKey: config.apiKey,
     });
   } catch (error) {
     console.error('Failed to save API configuration:', error);
@@ -52,5 +49,5 @@ export const API_CONFIG: SellersJsonApiConfig = DEFAULT_API_CONFIG;
  * @returns Whether the API configuration is valid
  */
 export const isApiConfigured = (config: SellersJsonApiConfig = API_CONFIG): boolean => {
-  return !!(config.baseUrl && config.apiKey);
+  return !!config.baseUrl;
 };

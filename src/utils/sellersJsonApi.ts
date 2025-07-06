@@ -2,7 +2,6 @@ import type { Seller } from '../types/types';
 
 export interface SellersJsonApiConfig {
   baseUrl: string;
-  apiKey: string;
 }
 
 export interface SellersJsonApiResponse {
@@ -93,7 +92,6 @@ export class SellersJsonApi {
       const response = await fetch(finalUrl, {
         method: 'GET',
         headers: {
-          'X-API-Key': this.config.apiKey,
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
@@ -227,7 +225,6 @@ export class SellersJsonApi {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'X-API-Key': this.config.apiKey,
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
