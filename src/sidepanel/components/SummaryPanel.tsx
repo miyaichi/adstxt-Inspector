@@ -125,22 +125,17 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       return;
     }
 
-    const verifyEntries = async () => {
-      const results = await Promise.all(
-        adsTxtData.data.map(async (entry) => {
-          const result = await isVerifiedEntryAsync(entry.domain, entry);
-          return {
-            isVerified: result.isVerified,
-            // Check if there are any error reasons (those starting with "error_")
-            hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
-          };
-        })
-      );
-      setVerificationData(results);
-    };
-
-    verifyEntries();
-  }, [adsTxtData, isVerifiedEntry]);
+    // Use sync verification to avoid overwhelming sellers.json requests
+    const results = adsTxtData.data.map((entry) => {
+      const result = isVerifiedEntry(entry.domain, entry);
+      return {
+        isVerified: result.isVerified,
+        // Check if there are any error reasons (those starting with "error_")
+        hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
+      };
+    });
+    setVerificationData(results);
+  }, [adsTxtData?.adsTxtUrl, adsTxtData?.data?.length, isVerifiedEntry]); // Include sync verification function
 
   // Count verified sellers
   const verifiedSellerCount = verificationData.filter((data) => data.isVerified).length;

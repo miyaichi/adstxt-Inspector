@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
@@ -137,18 +137,19 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
    * @param entry
    * @returns ValidityResult
    */
-  const isVerifiedEntryAsync = async (domain: string, entry: AdsTxt): Promise<ValidityResult> => {
+  const isVerifiedEntryAsync = useCallback(async (domain: string, entry: AdsTxt): Promise<ValidityResult> => {
     try {
       const ownerDomain = adsTxtData?.variables?.ownerDomain;
       const managerDomains = adsTxtData?.variables?.managerDomains;
       
-      // Create cache key for this validation
-      const cacheKey = `${domain}-${adsTxtData?.adsTxtUrl || ''}`;
+      // Create cache key for this validation session
+      const cacheKey = `${adsTxtData?.adsTxtUrl || 'unknown'}`;
       
-      // Check if we have cached validated entries for this domain
+      // Check if we have cached validated entries for this ads.txt
       let validatedEntries = validatedEntriesCache.get(cacheKey);
       
       if (!validatedEntries && adsTxtData) {
+        console.log('Cache miss - performing full validation for:', cacheKey);
         // Parse and validate ads.txt content using ads-txt-validator
         const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
         
@@ -162,7 +163,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         
         // Cross-check with sellers.json
         const crossCheckResult = await crossCheckAdsTxtRecords(
-          ownerDomain || domain,
+          ownerDomain || new URL(adsTxtData.adsTxtUrl).hostname,
           parsedEntries,
           null, // No cached content for duplicate check yet
           sellersProvider
@@ -173,14 +174,14 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         
         // Cache the results
         validatedEntriesCache.set(cacheKey, validatedEntries);
+        console.log('Cached validation results for:', cacheKey, 'entries:', validatedEntries.length);
+      } else if (validatedEntries) {
+        console.log('Cache hit - using cached validation for:', cacheKey, 'entries:', validatedEntries.length);
       }
       
       if (!validatedEntries) {
-        // Fallback to basic validation if ads-txt-validator fails
-        return {
-          isVerified: false,
-          reasons: [{ key: 'error_unknown_error', placeholders: [] }],
-        };
+        // Fallback to legacy validation if ads-txt-validator fails
+        return isVerifiedEntryLegacy(domain, entry);
       }
       
       // Find the matching validated entry
@@ -197,31 +198,25 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       ) as ParsedAdsTxtRecord | undefined;
       
       if (!matchingEntry) {
-        // Entry not found in validated results
-        return {
-          isVerified: false,
-          reasons: [{ key: 'error_unknown_error', placeholders: [] }],
-        };
+        // Entry not found in validated results, use legacy validation
+        return isVerifiedEntryLegacy(domain, entry);
       }
       
       // Convert ads-txt-validator result to ValidityResult format
       return convertToValidityResult(matchingEntry, ownerDomain, managerDomains);
       
     } catch (error) {
-      logger.error('Error in isVerifiedEntry:', error);
-      // Fallback to simple check
-      return {
-        isVerified: false,
-        reasons: [{ key: 'error_unknown_error', placeholders: [] }],
-      };
+      logger.error('Error in isVerifiedEntryAsync:', error);
+      // Fallback to legacy validation
+      return isVerifiedEntryLegacy(domain, entry);
     }
-  };
+  }, [adsTxtData?.adsTxtUrl, adsTxtData?.adsTxtContent]); // Only depend on stable data
 
   /**
    * Legacy validation function (synchronous)
    * Kept for backward compatibility during migration
    */
-  const isVerifiedEntryLegacy = (domain: string, entry: AdsTxt): ValidityResult => {
+  const isVerifiedEntryLegacy = useCallback((domain: string, entry: AdsTxt): ValidityResult => {
     const reasons: { key: string; placeholders: string[] }[] = [];
     const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
     const ownerDomain = adsTxtData?.variables?.ownerDomain || '';
@@ -319,7 +314,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       isVerified: reasons.length === 0,
       reasons,
     };
-  };
+  }, [adsTxtData?.variables, sellerAnalysis]); // Stable dependencies
 
   return {
     analyzing,

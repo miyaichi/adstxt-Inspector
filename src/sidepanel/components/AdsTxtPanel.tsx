@@ -1,5 +1,5 @@
 import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { commentErrorAdsTxtLines } from '../../utils/fetchAdsTxt';
@@ -12,6 +12,7 @@ interface AdsTxtPanelProps {
   checkAppAdsTxt: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
+  isVerifiedEntryAsync: (domain: string, entry: AdsTxt) => Promise<ValidityResult>;
   duplicateCheck: boolean;
 }
 
@@ -20,6 +21,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   checkAppAdsTxt,
   adsTxtData,
   isVerifiedEntry,
+  isVerifiedEntryAsync,
   duplicateCheck,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +30,8 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     relationship: '',
     validity: '',
   });
+  // Use sync validation only for now to avoid complexity
+  const [useAsyncValidation] = useState(false);
 
   // Filter options definition
   const filters = {
@@ -45,6 +49,15 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
         { value: 'invalid', label: 'INVALID' },
       ],
     },
+  };
+
+  // Simplified: Use sync validation for stability
+  // TODO: Re-enable async validation once stability issues are resolved
+
+  // Simplified validation result getter
+  const getValidationResult = (domain: string, entry: AdsTxt): ValidityResult => {
+    // For now, always use sync validation for stability
+    return isVerifiedEntry(domain, entry);
   };
 
   // Entry memoized processed
@@ -97,7 +110,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             : true;
 
           // Validity filter
-          const validity = isVerifiedEntry(domain, entry);
+          const validity = getValidationResult(domain, entry);
           const matchesValidity = selectedFilters.validity
             ? (selectedFilters.validity === 'valid') === validity.isVerified
             : true;
@@ -318,7 +331,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             </div>
             <div className="space-y-2 ml-4">
               {entries.map((entry, index) => {
-                const validity = isVerifiedEntry(domain, entry);
+                const validity = getValidationResult(domain, entry);
                 return (
                   <div
                     key={`${domain}-${index}`}
