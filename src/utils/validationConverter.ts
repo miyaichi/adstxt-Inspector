@@ -1,7 +1,6 @@
 import type {
   ParsedAdsTxtRecord,
   CrossCheckValidationResult,
-  VALIDATION_KEYS,
 } from '@miyaichi/ads-txt-validator';
 import type { ValidityResult } from '../hooks/useAdsSellers';
 

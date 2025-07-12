@@ -13,7 +13,6 @@ interface AdsTxtPanelProps {
   checkAppAdsTxt: boolean;
   adsTxtData: FetchAdsTxtResult | null;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
-  isVerifiedEntryAsync: (domain: string, entry: AdsTxt) => Promise<ValidityResult>;
   duplicateCheck: boolean;
 }
 
@@ -22,7 +21,6 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   checkAppAdsTxt,
   adsTxtData,
   isVerifiedEntry,
-  isVerifiedEntryAsync,
   duplicateCheck,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');

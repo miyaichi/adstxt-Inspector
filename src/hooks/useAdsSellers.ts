@@ -1,10 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
-import { parseAdsTxtContent, crossCheckAdsTxtRecords, type ParsedAdsTxtRecord, type ParsedAdsTxtEntry, isAdsTxtRecord } from '@miyaichi/ads-txt-validator';
-import { AdsTxtInspectorSellersProvider } from '../utils/AdsTxtInspectorSellersProvider';
-import { convertToValidityResult } from '../utils/validationConverter';
 import { ValidationManager } from '../utils/ValidationManager';
 
 const logger = new Logger('useAdsSellers');

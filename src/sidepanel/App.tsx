@@ -184,7 +184,6 @@ export default function App() {
                 adsTxtData={adsTxtData}
                 checkAppAdsTxt={checksAppAdsTxt}
                 isVerifiedEntry={isVerifiedEntry}
-                isVerifiedEntryAsync={isVerifiedEntryAsync}
                 duplicateCheck={duplicateCheck}
               />
             </TabPanel>
