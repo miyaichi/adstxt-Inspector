@@ -19,7 +19,7 @@ interface UpdateInfo {
 
 export default function App() {
   const [tabInfo, setTabInfo] = useState<TabInfo | null>(null);
-  const { analyzing, adsTxtData, sellerAnalysis, analyze, isVerifiedEntry } = useAdsSellers();
+  const { analyzing, adsTxtData, sellerAnalysis, analyze, isVerifiedEntry, isVerifiedEntryAsync } = useAdsSellers();
   const [checksAppAdsTxt, setChecksAppAdsTxt] = useState<boolean>(false);
   const [duplicateCheck, setDuplicateCheck] = useState<boolean>(false);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
@@ -174,6 +174,7 @@ export default function App() {
                 adsTxtData={adsTxtData}
                 sellerAnalysis={sellerAnalysis}
                 isVerifiedEntry={isVerifiedEntry}
+                isVerifiedEntryAsync={isVerifiedEntryAsync}
               />
             </TabPanel>
 

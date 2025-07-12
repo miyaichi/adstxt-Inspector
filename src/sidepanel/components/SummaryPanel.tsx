@@ -1,5 +1,5 @@
 import { CircleAlert } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { Tooltip } from './Tooltip';
@@ -10,6 +10,7 @@ interface SummaryPanelProps {
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
+  isVerifiedEntryAsync: (domain: string, entry: AdsTxt) => Promise<ValidityResult>;
 }
 
 export const SummaryPanel: React.FC<SummaryPanelProps> = ({
@@ -18,6 +19,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   adsTxtData,
   sellerAnalysis,
   isVerifiedEntry,
+  isVerifiedEntryAsync,
 }) => {
   const analysis = useMemo(() => {
     if (!adsTxtData || sellerAnalysis.length === 0) return null;
@@ -110,16 +112,35 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     0
   );
 
-  // Get verification data for all entries
-  const verificationData =
-    adsTxtData?.data.map((entry) => {
-      const result = isVerifiedEntry(entry.domain, entry);
-      return {
-        isVerified: result.isVerified,
-        // Check if there are any error reasons (those starting with "error_")
-        hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
-      };
-    }) || [];
+  // State for verification data
+  const [verificationData, setVerificationData] = useState<Array<{
+    isVerified: boolean;
+    hasNoErrors: boolean;
+  }>>([]);
+
+  // Effect to handle async verification
+  useEffect(() => {
+    if (!adsTxtData?.data) {
+      setVerificationData([]);
+      return;
+    }
+
+    const verifyEntries = async () => {
+      const results = await Promise.all(
+        adsTxtData.data.map(async (entry) => {
+          const result = await isVerifiedEntryAsync(entry.domain, entry);
+          return {
+            isVerified: result.isVerified,
+            // Check if there are any error reasons (those starting with "error_")
+            hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
+          };
+        })
+      );
+      setVerificationData(results);
+    };
+
+    verifyEntries();
+  }, [adsTxtData, isVerifiedEntry]);
 
   // Count verified sellers
   const verifiedSellerCount = verificationData.filter((data) => data.isVerified).length;

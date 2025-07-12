@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
+import { parseAdsTxtContent, crossCheckAdsTxtRecords, type ParsedAdsTxtRecord, type ParsedAdsTxtEntry, isAdsTxtRecord } from '@miyaichi/ads-txt-validator';
+import { AdsTxtInspectorSellersProvider } from '../utils/AdsTxtInspectorSellersProvider';
+import { convertToValidityResult } from '../utils/validationConverter';
 
 const logger = new Logger('useAdsSellers');
 
@@ -25,7 +28,13 @@ interface UseAdsSellersReturn {
   sellerAnalysis: SellerAnalysis[];
   analyze: (url: string, appAdsTxt: boolean) => void;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
+  isVerifiedEntryAsync: (domain: string, entry: AdsTxt) => Promise<ValidityResult>;
 }
+
+// Cache for validated entries to avoid re-validation
+const validatedEntriesCache = new Map<string, ParsedAdsTxtEntry[]>();
+// Cache for sellers providers to avoid recreating
+const sellersProviderCache = new Map<string, AdsTxtInspectorSellersProvider>();
 
 const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
 
@@ -123,11 +132,96 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
   /**
    * Validate whether the specified ads.txt/app-ads.txt entry is valid
+   * Enhanced async version using ads-txt-validator
    * @param domain
    * @param entry
    * @returns ValidityResult
    */
-  const isVerifiedEntry = (domain: string, entry: AdsTxt): ValidityResult => {
+  const isVerifiedEntryAsync = async (domain: string, entry: AdsTxt): Promise<ValidityResult> => {
+    try {
+      const ownerDomain = adsTxtData?.variables?.ownerDomain;
+      const managerDomains = adsTxtData?.variables?.managerDomains;
+      
+      // Create cache key for this validation
+      const cacheKey = `${domain}-${adsTxtData?.adsTxtUrl || ''}`;
+      
+      // Check if we have cached validated entries for this domain
+      let validatedEntries = validatedEntriesCache.get(cacheKey);
+      
+      if (!validatedEntries && adsTxtData) {
+        // Parse and validate ads.txt content using ads-txt-validator
+        const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
+        
+        // Get or create sellers provider (cached)
+        const providerKey = `${FETCH_OPTIONS.timeout}-${FETCH_OPTIONS.retries}`;
+        let sellersProvider = sellersProviderCache.get(providerKey);
+        if (!sellersProvider) {
+          sellersProvider = new AdsTxtInspectorSellersProvider(FETCH_OPTIONS);
+          sellersProviderCache.set(providerKey, sellersProvider);
+        }
+        
+        // Cross-check with sellers.json
+        const crossCheckResult = await crossCheckAdsTxtRecords(
+          ownerDomain || domain,
+          parsedEntries,
+          null, // No cached content for duplicate check yet
+          sellersProvider
+        );
+        
+        // Filter only record entries for validation
+        validatedEntries = crossCheckResult.filter(isAdsTxtRecord);
+        
+        // Cache the results
+        validatedEntriesCache.set(cacheKey, validatedEntries);
+      }
+      
+      if (!validatedEntries) {
+        // Fallback to basic validation if ads-txt-validator fails
+        return {
+          isVerified: false,
+          reasons: [{ key: 'error_unknown_error', placeholders: [] }],
+        };
+      }
+      
+      // Find the matching validated entry
+      const matchingEntry = validatedEntries.find(
+        (validatedEntry) => {
+          if (validatedEntry.is_variable) return false;
+          const record = validatedEntry as ParsedAdsTxtRecord;
+          return (
+            record.domain === domain &&
+            record.account_id === entry.publisherId &&
+            record.relationship === entry.relationship
+          );
+        }
+      ) as ParsedAdsTxtRecord | undefined;
+      
+      if (!matchingEntry) {
+        // Entry not found in validated results
+        return {
+          isVerified: false,
+          reasons: [{ key: 'error_unknown_error', placeholders: [] }],
+        };
+      }
+      
+      // Convert ads-txt-validator result to ValidityResult format
+      return convertToValidityResult(matchingEntry, ownerDomain, managerDomains);
+      
+    } catch (error) {
+      logger.error('Error in isVerifiedEntry:', error);
+      // Fallback to simple check
+      return {
+        isVerified: false,
+        reasons: [{ key: 'error_unknown_error', placeholders: [] }],
+      };
+    }
+  };
+
+  /**
+   * Legacy validation function (synchronous)
+   * Kept for backward compatibility during migration
+   */
+  const isVerifiedEntryLegacy = (domain: string, entry: AdsTxt): ValidityResult => {
     const reasons: { key: string; placeholders: string[] }[] = [];
     const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
     const ownerDomain = adsTxtData?.variables?.ownerDomain || '';
@@ -232,6 +326,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     adsTxtData,
     sellerAnalysis,
     analyze,
-    isVerifiedEntry,
+    isVerifiedEntry: isVerifiedEntryLegacy,
+    isVerifiedEntryAsync,
   };
 };
