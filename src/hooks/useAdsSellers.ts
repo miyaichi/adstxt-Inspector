@@ -130,16 +130,13 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   };
 
   /**
-   * Legacy validation function (synchronous)
-   * Kept for backward compatibility during migration
+   * Simple fallback validation function when ValidationManager is not available
+   * Uses basic validation without ads-txt-validator package
    */
-  const isVerifiedEntryLegacy = useCallback((domain: string, entry: AdsTxt): ValidityResult => {
-    const reasons: { key: string; placeholders: string[] }[] = [];
+  const simpleFallbackValidation = useCallback((domain: string, entry: AdsTxt): ValidityResult => {
     const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
-    const ownerDomain = adsTxtData?.variables?.ownerDomain || '';
-    const managerDomains = adsTxtData?.variables?.managerDomains || [];
 
-    // Test Case 11 & 16: Does the advertising system have a sellers.json file?
+    // Basic check: Does the advertising system have a sellers.json file?
     if (!currentAnalysis) {
       const code = entry.relationship === 'DIRECT' ? '12010' : '13010';
       return {
@@ -148,7 +145,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       };
     }
 
-    // Test Case 12 & 17: Does the sellers.json file have the publisher account ID?
+    // Basic check: Does the sellers.json file have the publisher account ID?
     const seller = currentAnalysis?.sellersJson?.data.find(
       (s) => String(s.seller_id) === String(entry.publisherId)
     );
@@ -163,75 +160,9 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       };
     }
 
-    // Now we have a valid seller, continue with other checks
-    if (entry.relationship === 'DIRECT') {
-      // Test Case 13: Check domain relationship for DIRECT entries
-      if (
-        seller.domain &&
-        seller.domain !== ownerDomain &&
-        (seller.seller_type === 'PUBLISHER' || seller.seller_type === 'BOTH')
-      ) {
-        reasons.push({
-          key: 'alert_12030_domain_mismatch',
-          placeholders: [seller.domain],
-        });
-      }
-
-      // Test Case 14: Check seller type for DIRECT entries
-      if (seller.seller_type === 'BOTH') {
-        reasons.push({ key: 'alert_12040_relationship_type_both', placeholders: [] });
-      } else if (seller.seller_type === 'INTERMEDIARY') {
-        reasons.push({ key: 'alert_12050_relationship_mismatch', placeholders: [] });
-      }
-    } else if (entry.relationship === 'RESELLER') {
-      // Test Case 18: Check domain for RESELLER entries
-      if (
-        seller.domain &&
-        seller.domain !== ownerDomain &&
-        !managerDomains.includes(seller.domain)
-      ) {
-        reasons.push({
-          key: 'alert_13030_domain_mismatch',
-          placeholders: [seller.domain],
-        });
-      }
-
-      // Test Case 19: Check seller type for RESELLER entries
-      if (seller.seller_type === 'BOTH') {
-        reasons.push({ key: 'alert_13040_relationship_type_both', placeholders: [] });
-      } else if (seller.seller_type === 'PUBLISHER') {
-        reasons.push({ key: 'error_13050_relationship_mismatch', placeholders: [] });
-      }
-    }
-
-    // Test Case 15 & 20: Is the seller_id used only once?
-    const sellersWithSameId = currentAnalysis.sellersJson?.data.filter(
-      (s) => String(s.seller_id) === String(entry.publisherId)
-    );
-
-    if (sellersWithSameId && sellersWithSameId.length > 1) {
-      const code = entry.relationship === 'DIRECT' ? '12060' : '13060';
-      const severity = entry.relationship === 'DIRECT' ? 'error' : 'alert';
-      reasons.push({
-        key: `${severity}_${code}_duplicate_seller_id`,
-        placeholders: [entry.publisherId],
-      });
-    }
-
-    // OWNERDOMAIN and MANAGERDOMAIN checks
-    const managerDomain = managerDomains.find((d) => d.split(',')[0] === seller.domain);
-    if (managerDomain && ownerDomain && seller.domain === ownerDomain) {
-      reasons.push({
-        key: 'alert_inventory_from_both_domains',
-        placeholders: [],
-      });
-    }
-
-    return {
-      isVerified: reasons.length === 0,
-      reasons,
-    };
-  }, [adsTxtData?.variables, sellerAnalysis]); // Stable dependencies
+    // If we have the seller, consider it verified for basic validation
+    return { isVerified: true, reasons: [] };
+  }, [sellerAnalysis]);
 
   /**
    * Validate whether the specified ads.txt/app-ads.txt entry is valid
@@ -242,7 +173,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
    */
   const isVerifiedEntryAsync = useCallback(async (domain: string, entry: AdsTxt): Promise<ValidityResult> => {
     if (!adsTxtData) {
-      return isVerifiedEntryLegacy(domain, entry);
+      return simpleFallbackValidation(domain, entry);
     }
 
     try {
@@ -250,20 +181,20 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         domain,
         entry,
         adsTxtData,
-        isVerifiedEntryLegacy // Fallback function
+        simpleFallbackValidation // Fallback function
       );
     } catch (error) {
       logger.error('Error in isVerifiedEntryAsync:', error);
-      return isVerifiedEntryLegacy(domain, entry);
+      return simpleFallbackValidation(domain, entry);
     }
-  }, [adsTxtData?.adsTxtUrl, adsTxtData?.adsTxtContent, isVerifiedEntryLegacy]); // Optimized dependencies
+  }, [adsTxtData?.adsTxtUrl, adsTxtData?.adsTxtContent, simpleFallbackValidation]); // Optimized dependencies
 
   return {
     analyzing,
     adsTxtData,
     sellerAnalysis,
     analyze,
-    isVerifiedEntry: isVerifiedEntryLegacy,
+    isVerifiedEntry: simpleFallbackValidation,
     isVerifiedEntryAsync,
   };
 };
