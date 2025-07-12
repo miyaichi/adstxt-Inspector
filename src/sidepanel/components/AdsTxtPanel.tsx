@@ -29,9 +29,11 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     relationship: '',
     validity: '',
   });
-  
+
   // State for async validation
-  const [validationResults, setValidationResults] = useState<Map<string, ValidityResult>>(new Map());
+  const [validationResults, setValidationResults] = useState<Map<string, ValidityResult>>(
+    new Map()
+  );
   const [validationProgress, setValidationProgress] = useState<ValidationProgress | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
@@ -64,18 +66,23 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
 
     const performValidation = async () => {
       setIsValidating(true);
-      setValidationProgress({ total: adsTxtData.data.length, completed: 0, inProgress: 0, failed: 0 });
-      
+      setValidationProgress({
+        total: adsTxtData.data.length,
+        completed: 0,
+        inProgress: 0,
+        failed: 0,
+      });
+
       try {
         const validationManager = ValidationManager.getInstance();
-        
+
         // Create validation requests
         const requests = adsTxtData.data.map((entry, index) => ({
           domain: entry.domain,
           entry,
-          requestId: `${entry.domain}-${entry.publisherId}-${index}`
+          requestId: `${entry.domain}-${entry.publisherId}-${index}`,
         }));
-        
+
         // Perform batch validation with progress updates
         const validationResults = await validationManager.validateEntries(
           requests,
@@ -85,19 +92,18 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             setValidationProgress(progress);
           }
         );
-        
+
         // Convert results to map for fast lookup
         const resultsMap = new Map<string, ValidityResult>();
         validationResults.forEach((result) => {
           const key = `${result.domain}-${result.entry.publisherId}-${result.entry.relationship}`;
           resultsMap.set(key, result.result);
         });
-        
+
         setValidationResults(resultsMap);
-        
       } catch (error) {
         console.error('AdsTxtPanel: Validation failed, falling back to sync:', error);
-        
+
         // Fallback to sync validation
         const resultsMap = new Map<string, ValidityResult>();
         adsTxtData.data.forEach((entry) => {
@@ -119,16 +125,16 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   const getValidationResult = (domain: string, entry: AdsTxt): ValidityResult => {
     const key = `${domain}-${entry.publisherId}-${entry.relationship}`;
     const result = validationResults.get(key);
-    
+
     if (result) {
       return result;
     }
-    
+
     // If validation is in progress, show loading state
     if (isValidating) {
       return { isVerified: false, reasons: [{ key: 'validating', placeholders: [] }] };
     }
-    
+
     // Fallback to sync validation if no async result available
     return isVerifiedEntry(domain, entry);
   };
@@ -271,17 +277,22 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Validating entries with ads-txt-validator...</span>
-                <span>{validationProgress.completed} / {validationProgress.total} ({Math.round((validationProgress.completed / validationProgress.total) * 100)}%)</span>
+                <span>
+                  {validationProgress.completed} / {validationProgress.total} (
+                  {Math.round((validationProgress.completed / validationProgress.total) * 100)}%)
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
-                <div 
+                <div
                   className="bg-blue-600 h-3 rounded-full transition-all duration-500 flex items-center justify-center text-xs text-white font-medium"
-                  style={{ 
+                  style={{
                     width: `${Math.max(5, (validationProgress.completed / validationProgress.total) * 100)}%`,
-                    minWidth: validationProgress.completed > 0 ? '20px' : '0'
+                    minWidth: validationProgress.completed > 0 ? '20px' : '0',
                   }}
                 >
-                  {validationProgress.completed > 0 && Math.round((validationProgress.completed / validationProgress.total) * 100) + '%'}
+                  {validationProgress.completed > 0 &&
+                    Math.round((validationProgress.completed / validationProgress.total) * 100) +
+                      '%'}
                 </div>
               </div>
               {validationProgress.failed > 0 && (
@@ -293,7 +304,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Errors Section */}
       {errors.length > 0 && (
         <div className="panel-section">
@@ -438,7 +449,8 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             <div className="space-y-2 ml-4">
               {entries.map((entry, index) => {
                 const validity = getValidationResult(domain, entry);
-                const isEntryValidating = isValidating && validity.reasons.some(r => r.key === 'validating');
+                const isEntryValidating =
+                  isValidating && validity.reasons.some((r) => r.key === 'validating');
                 return (
                   <div
                     key={`${domain}-${index}`}
@@ -489,17 +501,18 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                         </div>
                       </div>
                       {!validity.isVerified && validity.reasons.length > 0 && (
-                        <div className={`flex flex-col space-y-1 ${
-                          isEntryValidating ? 'text-blue-600' : 'text-red-600'
-                        }`}>
+                        <div
+                          className={`flex flex-col space-y-1 ${
+                            isEntryValidating ? 'text-blue-600' : 'text-red-600'
+                          }`}
+                        >
                           {validity.reasons.map((reason, idx) => (
                             <span key={idx}>
-                              {reason.key === 'validating' 
+                              {reason.key === 'validating'
                                 ? 'Validating...'
                                 : chrome.i18n.getMessage(reason.key, reason.placeholders)
                                   ? chrome.i18n.getMessage(reason.key, reason.placeholders)
-                                  : reason.key
-                              }
+                                  : reason.key}
                             </span>
                           ))}
                         </div>

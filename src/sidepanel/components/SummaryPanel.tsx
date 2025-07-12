@@ -112,11 +112,13 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   );
 
   // State for verification data
-  const [verificationData, setVerificationData] = useState<Array<{
-    isVerified: boolean;
-    hasNoErrors: boolean;
-  }>>([]);
-  
+  const [verificationData, setVerificationData] = useState<
+    Array<{
+      isVerified: boolean;
+      hasNoErrors: boolean;
+    }>
+  >([]);
+
   // State for validation progress
   const [validationProgress, setValidationProgress] = useState<ValidationProgress | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -132,18 +134,23 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
 
     const performValidation = async () => {
       setIsValidating(true);
-      setValidationProgress({ total: adsTxtData.data.length, completed: 0, inProgress: 0, failed: 0 });
-      
+      setValidationProgress({
+        total: adsTxtData.data.length,
+        completed: 0,
+        inProgress: 0,
+        failed: 0,
+      });
+
       try {
         const validationManager = ValidationManager.getInstance();
-        
+
         // Create validation requests
         const requests = adsTxtData.data.map((entry, index) => ({
           domain: entry.domain,
           entry,
-          requestId: `${entry.domain}-${entry.publisherId}-${index}`
+          requestId: `${entry.domain}-${entry.publisherId}-${index}`,
         }));
-        
+
         // Perform batch validation with progress updates
         const validationResults = await validationManager.validateEntries(
           requests,
@@ -153,20 +160,19 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
             setValidationProgress(progress);
           }
         );
-        
+
         // Convert results to verification data format
         const results = validationResults.map((validationResult) => ({
           isVerified: validationResult.result.isVerified,
-          hasNoErrors: !validationResult.result.reasons.some((reason) => 
+          hasNoErrors: !validationResult.result.reasons.some((reason) =>
             reason.key.startsWith('error_')
           ),
         }));
-        
+
         setVerificationData(results);
-        
       } catch (error) {
         console.error('Validation failed, falling back to sync:', error);
-        
+
         // Fallback to sync validation
         const results = adsTxtData.data.map((entry) => {
           const result = isVerifiedEntry(entry.domain, entry);
@@ -248,17 +254,21 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-gray-600">
               <span>Validating entries with ads-txt-validator...</span>
-              <span>{validationProgress.completed} / {validationProgress.total} ({Math.round((validationProgress.completed / validationProgress.total) * 100)}%)</span>
+              <span>
+                {validationProgress.completed} / {validationProgress.total} (
+                {Math.round((validationProgress.completed / validationProgress.total) * 100)}%)
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
+              <div
                 className="bg-blue-600 h-3 rounded-full transition-all duration-500 flex items-center justify-center text-xs text-white font-medium"
-                style={{ 
+                style={{
                   width: `${Math.max(5, (validationProgress.completed / validationProgress.total) * 100)}%`,
-                  minWidth: validationProgress.completed > 0 ? '20px' : '0'
+                  minWidth: validationProgress.completed > 0 ? '20px' : '0',
                 }}
               >
-                {validationProgress.completed > 0 && Math.round((validationProgress.completed / validationProgress.total) * 100) + '%'}
+                {validationProgress.completed > 0 &&
+                  Math.round((validationProgress.completed / validationProgress.total) * 100) + '%'}
               </div>
             </div>
             {validationProgress.failed > 0 && (
@@ -269,7 +279,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Supply Chain Overview */}
       <div className="rounded-lg border p-4">
         <h3 className="text-lg font-semibold mb-4">Supply Chain Overview</h3>

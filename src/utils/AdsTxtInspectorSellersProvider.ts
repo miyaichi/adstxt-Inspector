@@ -4,7 +4,7 @@ import type {
   SellersJsonMetadata,
   CacheInfo,
   SellerResult,
-  Seller
+  Seller,
 } from '@miyaichi/ads-txt-validator';
 import { SellersJsonFetcher } from './fetchSellersJson';
 
@@ -30,7 +30,7 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
   async batchGetSellers(domain: string, sellerIds: string[]): Promise<BatchSellersResult> {
     // Check if sellers.json exists first
     const hasSellerJson = await this.hasSellerJson(domain);
-    
+
     if (!hasSellerJson) {
       // Return early if no sellers.json
       return {
@@ -50,10 +50,10 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
     }
 
     const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
-    
+
     try {
       const sellersResults = await SellersJsonFetcher.fetchSellers(requests, this.fetchOptions);
-      
+
       const results: SellerResult[] = sellersResults.map((result) => ({
         sellerId: result.sellerId,
         seller: result.seller ? this.convertToValidatorSeller(result.seller) : null,
@@ -103,9 +103,9 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
     try {
       // Use the SellersJsonFetcher.fetch method to get full sellers.json
       const fetchResult = await SellersJsonFetcher.fetch(domain, this.fetchOptions);
-      
+
       const metadata: SellersJsonMetadata = {};
-      
+
       if (fetchResult.data) {
         // Extract metadata from sellers.json response
         metadata.version = fetchResult.data.version;
@@ -114,10 +114,10 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
         metadata.seller_count = fetchResult.data.sellers?.length || 0;
         metadata.identifiers = fetchResult.data.identifiers;
       }
-      
+
       // Cache the result
       this.metadataCache.set(domain, metadata);
-      
+
       return metadata;
     } catch {
       const emptyMetadata = {};
@@ -138,12 +138,12 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
     try {
       // Use the SellersJsonFetcher.fetch method to check existence
       const fetchResult = await SellersJsonFetcher.fetch(domain, this.fetchOptions);
-      
+
       const exists = !fetchResult.error && fetchResult.data !== null;
-      
+
       // Cache the result
       this.sellersJsonExistenceCache.set(domain, exists);
-      
+
       return exists;
     } catch {
       // Cache negative result

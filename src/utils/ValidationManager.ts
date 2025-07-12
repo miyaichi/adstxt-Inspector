@@ -1,7 +1,11 @@
 import type { AdsTxt, FetchAdsTxtResult } from './fetchAdsTxt';
 import type { ValidityResult } from '../hooks/useAdsSellers';
 import type { ParsedAdsTxtRecord, ParsedAdsTxtEntry } from '@miyaichi/ads-txt-validator';
-import { parseAdsTxtContent, crossCheckAdsTxtRecords, isAdsTxtRecord } from '@miyaichi/ads-txt-validator';
+import {
+  parseAdsTxtContent,
+  crossCheckAdsTxtRecords,
+  isAdsTxtRecord,
+} from '@miyaichi/ads-txt-validator';
 import { AdsTxtInspectorSellersProvider } from './AdsTxtInspectorSellersProvider';
 import { convertToValidityResult } from './validationConverter';
 import { Logger } from './logger';
@@ -38,19 +42,19 @@ export interface ValidationProgress {
  */
 export class ValidationManager {
   private static instance: ValidationManager | null = null;
-  
+
   // Cache for parsed and validated entries per ads.txt URL
   private readonly validatedEntriesCache = new Map<string, ParsedAdsTxtEntry[]>();
-  
+
   // Cache for validation results per request
   private readonly resultsCache = new Map<string, ValidityResult>();
-  
+
   // Track ongoing validations to prevent duplicates
   private readonly ongoingValidations = new Map<string, Promise<ParsedAdsTxtEntry[]>>();
-  
+
   // Sellers provider cache
   private readonly sellersProviderCache = new Map<string, AdsTxtInspectorSellersProvider>();
-  
+
   private readonly fetchOptions = { timeout: 5000, retries: 1 };
 
   private constructor() {}
@@ -95,12 +99,12 @@ export class ValidationManager {
   private getSellersProvider(): AdsTxtInspectorSellersProvider {
     const providerKey = `${this.fetchOptions.timeout}-${this.fetchOptions.retries}`;
     let provider = this.sellersProviderCache.get(providerKey);
-    
+
     if (!provider) {
       provider = new AdsTxtInspectorSellersProvider(this.fetchOptions);
       this.sellersProviderCache.set(providerKey, provider);
     }
-    
+
     return provider;
   }
 
@@ -108,11 +112,9 @@ export class ValidationManager {
    * Perform full validation for an ads.txt file
    * This is done once per ads.txt and cached
    */
-  private async performFullValidation(
-    adsTxtData: FetchAdsTxtResult
-  ): Promise<ParsedAdsTxtEntry[]> {
+  private async performFullValidation(adsTxtData: FetchAdsTxtResult): Promise<ParsedAdsTxtEntry[]> {
     const cacheKey = this.getAdsTxtCacheKey(adsTxtData);
-    
+
     // Check if validation is already in progress
     const ongoing = this.ongoingValidations.get(cacheKey);
     if (ongoing) {
@@ -130,17 +132,17 @@ export class ValidationManager {
     // Start new validation
     logger.debug('Starting full validation for:', cacheKey);
     const validationPromise = this.doFullValidation(adsTxtData, cacheKey);
-    
+
     // Track ongoing validation
     this.ongoingValidations.set(cacheKey, validationPromise);
-    
+
     try {
       const result = await validationPromise;
-      
+
       // Cache the result
       this.validatedEntriesCache.set(cacheKey, result);
       logger.debug('Cached validation results for:', cacheKey, 'entries:', result.length);
-      
+
       return result;
     } finally {
       // Remove from ongoing validations
@@ -156,14 +158,14 @@ export class ValidationManager {
     cacheKey: string
   ): Promise<ParsedAdsTxtEntry[]> {
     const ownerDomain = adsTxtData.variables?.ownerDomain;
-    
+
     // Parse ads.txt content
     const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
     logger.debug('Parsed', parsedEntries.length, 'entries for', cacheKey);
-    
+
     // Get sellers provider
     const sellersProvider = this.getSellersProvider();
-    
+
     // Cross-check with sellers.json
     const crossCheckResult = await crossCheckAdsTxtRecords(
       ownerDomain || new URL(adsTxtData.adsTxtUrl).hostname,
@@ -171,9 +173,9 @@ export class ValidationManager {
       null, // No cached content for duplicate check yet
       sellersProvider
     );
-    
+
     logger.debug('Cross-check completed for', cacheKey, 'results:', crossCheckResult.length);
-    
+
     return crossCheckResult;
   }
 
@@ -187,7 +189,7 @@ export class ValidationManager {
     fallbackFunction?: (domain: string, entry: AdsTxt) => ValidityResult
   ): Promise<ValidityResult> {
     const entryKey = this.getEntryKey(domain, entry);
-    
+
     // Check entry cache first
     const cached = this.resultsCache.get(entryKey);
     if (cached) {
@@ -197,10 +199,10 @@ export class ValidationManager {
     try {
       // Get validated entries for this ads.txt
       const validatedEntries = await this.performFullValidation(adsTxtData);
-      
+
       // Filter only record entries
       const recordEntries = validatedEntries.filter(isAdsTxtRecord) as ParsedAdsTxtRecord[];
-      
+
       // Find matching entry
       const matchingEntry = recordEntries.find((validatedEntry) => {
         return (
@@ -211,7 +213,7 @@ export class ValidationManager {
       });
 
       let result: ValidityResult;
-      
+
       if (matchingEntry) {
         // Convert ads-txt-validator result
         const ownerDomain = adsTxtData.variables?.ownerDomain;
@@ -224,32 +226,31 @@ export class ValidationManager {
         } else {
           result = {
             isVerified: false,
-            reasons: [{ key: 'error_entry_not_found', placeholders: [] }]
+            reasons: [{ key: 'error_entry_not_found', placeholders: [] }],
           };
         }
       }
 
       // Cache the result
       this.resultsCache.set(entryKey, result);
-      
+
       return result;
-      
     } catch (error) {
       logger.error('Validation failed for entry:', entryKey, error);
-      
+
       // Use fallback if available
       if (fallbackFunction) {
         const fallbackResult = fallbackFunction(domain, entry);
         this.resultsCache.set(entryKey, fallbackResult);
         return fallbackResult;
       }
-      
+
       // Return error result
       const errorResult: ValidityResult = {
         isVerified: false,
-        reasons: [{ key: 'error_validation_failed', placeholders: [] }]
+        reasons: [{ key: 'error_validation_failed', placeholders: [] }],
       };
-      
+
       this.resultsCache.set(entryKey, errorResult);
       return errorResult;
     }
@@ -266,25 +267,25 @@ export class ValidationManager {
   ): Promise<ValidationResult[]> {
     const results: ValidationResult[] = [];
     const batchSize = 10; // Process in smaller batches
-    
+
     logger.debug('Starting batch validation for', requests.length, 'entries');
-    
+
     let completed = 0;
     let failed = 0;
-    
+
     for (let i = 0; i < requests.length; i += batchSize) {
       const batch = requests.slice(i, i + batchSize);
-      
+
       // Update progress
       if (progressCallback) {
         progressCallback({
           total: requests.length,
           completed,
           inProgress: batch.length,
-          failed
+          failed,
         });
       }
-      
+
       // Process batch
       const batchResults = await Promise.allSettled(
         batch.map(async (request) => {
@@ -294,17 +295,17 @@ export class ValidationManager {
             adsTxtData,
             fallbackFunction
           );
-          
+
           return {
             requestId: request.requestId,
             domain: request.domain,
             entry: request.entry,
             result,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           };
         })
       );
-      
+
       // Collect results
       for (const batchResult of batchResults) {
         if (batchResult.status === 'fulfilled') {
@@ -315,37 +316,37 @@ export class ValidationManager {
           failed++;
         }
       }
-      
+
       // Update progress after each batch
       if (progressCallback) {
         progressCallback({
           total: requests.length,
           completed,
           inProgress: 0,
-          failed
+          failed,
         });
       }
-      
+
       // Add small delay to make progress visible
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    
+
     // Final progress update
     if (progressCallback) {
       progressCallback({
         total: requests.length,
         completed,
         inProgress: 0,
-        failed
+        failed,
       });
     }
-    
+
     logger.debug('Batch validation completed:', {
       total: requests.length,
       completed,
-      failed
+      failed,
     });
-    
+
     return results;
   }
 
@@ -357,7 +358,7 @@ export class ValidationManager {
       cachedAdsTxtValidations: this.validatedEntriesCache.size,
       cachedEntryResults: this.resultsCache.size,
       ongoingValidations: this.ongoingValidations.size,
-      sellersProviders: this.sellersProviderCache.size
+      sellersProviders: this.sellersProviderCache.size,
     };
   }
 }

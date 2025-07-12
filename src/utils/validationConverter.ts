@@ -1,7 +1,4 @@
-import type {
-  ParsedAdsTxtRecord,
-  CrossCheckValidationResult,
-} from '@miyaichi/ads-txt-validator';
+import type { ParsedAdsTxtRecord, CrossCheckValidationResult } from '@miyaichi/ads-txt-validator';
 import type { ValidityResult } from '../hooks/useAdsSellers';
 
 /**
@@ -122,10 +119,7 @@ function convertValidationResults(
   }
 
   // Test Case 15: For DIRECT entries, is the seller_id unique?
-  if (
-    record.relationship === 'DIRECT' &&
-    validationResult.directSellerIdIsUnique === false
-  ) {
+  if (record.relationship === 'DIRECT' && validationResult.directSellerIdIsUnique === false) {
     reasons.push({
       key: 'error_12060_duplicate_seller_id',
       placeholders: [record.account_id],
@@ -160,10 +154,7 @@ function convertValidationResults(
   }
 
   // Test Case 20: For RESELLER entries, is the seller_id unique?
-  if (
-    record.relationship === 'RESELLER' &&
-    validationResult.resellerSellerIdIsUnique === false
-  ) {
+  if (record.relationship === 'RESELLER' && validationResult.resellerSellerIdIsUnique === false) {
     reasons.push({
       key: 'alert_13060_duplicate_seller_id',
       placeholders: [record.account_id],
@@ -174,9 +165,7 @@ function convertValidationResults(
   if (validationResult.sellerData?.domain && ownerDomain && managerDomains) {
     const sellerDomain = validationResult.sellerData.domain;
     const isOwnerDomain = sellerDomain === ownerDomain;
-    const isManagerDomain = managerDomains.some(
-      (domain) => domain.split(',')[0] === sellerDomain
-    );
+    const isManagerDomain = managerDomains.some((domain) => domain.split(',')[0] === sellerDomain);
 
     if (isOwnerDomain && isManagerDomain) {
       reasons.push({
@@ -205,12 +194,19 @@ function convertValidationKeyToErrorCode(
     emptyAccountId: 'error_11010_missing_required_fields',
     emptyFile: 'error_11040_empty_file',
     invalidCharacters: 'error_11050_invalid_characters',
-    noSellersJson: relationship === 'DIRECT' ? 'alert_12010_missing_sellers_json' : 'alert_13010_missing_sellers_json',
+    noSellersJson:
+      relationship === 'DIRECT'
+        ? 'alert_12010_missing_sellers_json'
+        : 'alert_13010_missing_sellers_json',
     directAccountIdNotInSellersJson: 'error_12020_publisher_id_not_listed',
     resellerAccountIdNotInSellersJson: 'error_13020_publisher_id_not_listed',
-    domainMismatch: relationship === 'DIRECT' ? 'alert_12030_domain_mismatch' : 'alert_13030_domain_mismatch',
+    domainMismatch:
+      relationship === 'DIRECT' ? 'alert_12030_domain_mismatch' : 'alert_13030_domain_mismatch',
     directNotPublisher: 'alert_12050_relationship_mismatch',
-    sellerIdNotUnique: relationship === 'DIRECT' ? 'error_12060_duplicate_seller_id' : 'alert_13060_duplicate_seller_id',
+    sellerIdNotUnique:
+      relationship === 'DIRECT'
+        ? 'error_12060_duplicate_seller_id'
+        : 'alert_13060_duplicate_seller_id',
     resellerNotIntermediary: 'error_13050_relationship_mismatch',
     implimentedEntry: 'duplicate_entries', // For duplicate warnings
   };
@@ -230,15 +226,15 @@ function getPlaceholdersForError(
   if (errorKey.includes('missing_sellers_json')) {
     return [record.domain];
   }
-  
+
   if (errorKey.includes('publisher_id_not_listed') || errorKey.includes('duplicate_seller_id')) {
     return [record.account_id];
   }
-  
+
   if (errorKey.includes('domain_mismatch')) {
     return [additionalParams?.seller_domain || record.domain];
   }
-  
+
   if (errorKey.includes('invalid_domain')) {
     return [record.domain];
   }

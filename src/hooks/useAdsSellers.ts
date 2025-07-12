@@ -27,7 +27,6 @@ interface UseAdsSellersReturn {
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
 }
 
-
 const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
 
 /**
@@ -126,36 +125,39 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
    * Simple fallback validation function when ValidationManager is not available
    * Uses basic validation without ads-txt-validator package
    */
-  const simpleFallbackValidation = useCallback((domain: string, entry: AdsTxt): ValidityResult => {
-    const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
+  const simpleFallbackValidation = useCallback(
+    (domain: string, entry: AdsTxt): ValidityResult => {
+      const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
 
-    // Basic check: Does the advertising system have a sellers.json file?
-    if (!currentAnalysis) {
-      const code = entry.relationship === 'DIRECT' ? '12010' : '13010';
-      return {
-        isVerified: false,
-        reasons: [{ key: `alert_${code}_missing_sellers_json`, placeholders: [domain] }],
-      };
-    }
+      // Basic check: Does the advertising system have a sellers.json file?
+      if (!currentAnalysis) {
+        const code = entry.relationship === 'DIRECT' ? '12010' : '13010';
+        return {
+          isVerified: false,
+          reasons: [{ key: `alert_${code}_missing_sellers_json`, placeholders: [domain] }],
+        };
+      }
 
-    // Basic check: Does the sellers.json file have the publisher account ID?
-    const seller = currentAnalysis?.sellersJson?.data.find(
-      (s) => String(s.seller_id) === String(entry.publisherId)
-    );
+      // Basic check: Does the sellers.json file have the publisher account ID?
+      const seller = currentAnalysis?.sellersJson?.data.find(
+        (s) => String(s.seller_id) === String(entry.publisherId)
+      );
 
-    if (!seller) {
-      const code = entry.relationship === 'DIRECT' ? '12020' : '13020';
-      return {
-        isVerified: false,
-        reasons: [
-          { key: `error_${code}_publisher_id_not_listed`, placeholders: [entry.publisherId] },
-        ],
-      };
-    }
+      if (!seller) {
+        const code = entry.relationship === 'DIRECT' ? '12020' : '13020';
+        return {
+          isVerified: false,
+          reasons: [
+            { key: `error_${code}_publisher_id_not_listed`, placeholders: [entry.publisherId] },
+          ],
+        };
+      }
 
-    // If we have the seller, consider it verified for basic validation
-    return { isVerified: true, reasons: [] };
-  }, [sellerAnalysis]);
+      // If we have the seller, consider it verified for basic validation
+      return { isVerified: true, reasons: [] };
+    },
+    [sellerAnalysis]
+  );
 
   return {
     analyzing,
