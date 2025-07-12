@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
-import { ValidationManager } from '../utils/ValidationManager';
 
 const logger = new Logger('useAdsSellers');
 
@@ -26,11 +25,8 @@ interface UseAdsSellersReturn {
   sellerAnalysis: SellerAnalysis[];
   analyze: (url: string, appAdsTxt: boolean) => void;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
-  isVerifiedEntryAsync: (domain: string, entry: AdsTxt) => Promise<ValidityResult>;
 }
 
-// Use ValidationManager for optimized caching and validation
-const validationManager = ValidationManager.getInstance();
 
 const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
 
@@ -161,37 +157,11 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     return { isVerified: true, reasons: [] };
   }, [sellerAnalysis]);
 
-  /**
-   * Validate whether the specified ads.txt/app-ads.txt entry is valid
-   * Enhanced async version using ads-txt-validator
-   * @param domain
-   * @param entry
-   * @returns ValidityResult
-   */
-  const isVerifiedEntryAsync = useCallback(async (domain: string, entry: AdsTxt): Promise<ValidityResult> => {
-    if (!adsTxtData) {
-      return simpleFallbackValidation(domain, entry);
-    }
-
-    try {
-      return await validationManager.validateEntry(
-        domain,
-        entry,
-        adsTxtData,
-        simpleFallbackValidation // Fallback function
-      );
-    } catch (error) {
-      logger.error('Error in isVerifiedEntryAsync:', error);
-      return simpleFallbackValidation(domain, entry);
-    }
-  }, [adsTxtData?.adsTxtUrl, adsTxtData?.adsTxtContent, simpleFallbackValidation]); // Optimized dependencies
-
   return {
     analyzing,
     adsTxtData,
     sellerAnalysis,
     analyze,
     isVerifiedEntry: simpleFallbackValidation,
-    isVerifiedEntryAsync,
   };
 };

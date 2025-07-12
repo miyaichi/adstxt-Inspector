@@ -11,7 +11,6 @@ interface SummaryPanelProps {
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
-  isVerifiedEntryAsync: (domain: string, entry: AdsTxt) => Promise<ValidityResult>;
 }
 
 export const SummaryPanel: React.FC<SummaryPanelProps> = ({
@@ -20,7 +19,6 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   adsTxtData,
   sellerAnalysis,
   isVerifiedEntry,
-  isVerifiedEntryAsync,
 }) => {
   const analysis = useMemo(() => {
     if (!adsTxtData || sellerAnalysis.length === 0) return null;
