@@ -5,6 +5,7 @@ import { Logger } from '../utils/logger';
 import { parseAdsTxtContent, crossCheckAdsTxtRecords, type ParsedAdsTxtRecord, type ParsedAdsTxtEntry, isAdsTxtRecord } from '@miyaichi/ads-txt-validator';
 import { AdsTxtInspectorSellersProvider } from '../utils/AdsTxtInspectorSellersProvider';
 import { convertToValidityResult } from '../utils/validationConverter';
+import { ValidationManager } from '../utils/ValidationManager';
 
 const logger = new Logger('useAdsSellers');
 
@@ -31,10 +32,8 @@ interface UseAdsSellersReturn {
   isVerifiedEntryAsync: (domain: string, entry: AdsTxt) => Promise<ValidityResult>;
 }
 
-// Cache for validated entries to avoid re-validation
-const validatedEntriesCache = new Map<string, ParsedAdsTxtEntry[]>();
-// Cache for sellers providers to avoid recreating
-const sellersProviderCache = new Map<string, AdsTxtInspectorSellersProvider>();
+// Use ValidationManager for optimized caching and validation
+const validationManager = ValidationManager.getInstance();
 
 const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
 
@@ -129,88 +128,6 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       setAnalyzing(false);
     }
   };
-
-  /**
-   * Validate whether the specified ads.txt/app-ads.txt entry is valid
-   * Enhanced async version using ads-txt-validator
-   * @param domain
-   * @param entry
-   * @returns ValidityResult
-   */
-  const isVerifiedEntryAsync = useCallback(async (domain: string, entry: AdsTxt): Promise<ValidityResult> => {
-    try {
-      const ownerDomain = adsTxtData?.variables?.ownerDomain;
-      const managerDomains = adsTxtData?.variables?.managerDomains;
-      
-      // Create cache key for this validation session
-      const cacheKey = `${adsTxtData?.adsTxtUrl || 'unknown'}`;
-      
-      // Check if we have cached validated entries for this ads.txt
-      let validatedEntries = validatedEntriesCache.get(cacheKey);
-      
-      if (!validatedEntries && adsTxtData) {
-        console.log('Cache miss - performing full validation for:', cacheKey);
-        // Parse and validate ads.txt content using ads-txt-validator
-        const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
-        
-        // Get or create sellers provider (cached)
-        const providerKey = `${FETCH_OPTIONS.timeout}-${FETCH_OPTIONS.retries}`;
-        let sellersProvider = sellersProviderCache.get(providerKey);
-        if (!sellersProvider) {
-          sellersProvider = new AdsTxtInspectorSellersProvider(FETCH_OPTIONS);
-          sellersProviderCache.set(providerKey, sellersProvider);
-        }
-        
-        // Cross-check with sellers.json
-        const crossCheckResult = await crossCheckAdsTxtRecords(
-          ownerDomain || new URL(adsTxtData.adsTxtUrl).hostname,
-          parsedEntries,
-          null, // No cached content for duplicate check yet
-          sellersProvider
-        );
-        
-        // Filter only record entries for validation
-        validatedEntries = crossCheckResult.filter(isAdsTxtRecord);
-        
-        // Cache the results
-        validatedEntriesCache.set(cacheKey, validatedEntries);
-        console.log('Cached validation results for:', cacheKey, 'entries:', validatedEntries.length);
-      } else if (validatedEntries) {
-        console.log('Cache hit - using cached validation for:', cacheKey, 'entries:', validatedEntries.length);
-      }
-      
-      if (!validatedEntries) {
-        // Fallback to legacy validation if ads-txt-validator fails
-        return isVerifiedEntryLegacy(domain, entry);
-      }
-      
-      // Find the matching validated entry
-      const matchingEntry = validatedEntries.find(
-        (validatedEntry) => {
-          if (validatedEntry.is_variable) return false;
-          const record = validatedEntry as ParsedAdsTxtRecord;
-          return (
-            record.domain === domain &&
-            record.account_id === entry.publisherId &&
-            record.relationship === entry.relationship
-          );
-        }
-      ) as ParsedAdsTxtRecord | undefined;
-      
-      if (!matchingEntry) {
-        // Entry not found in validated results, use legacy validation
-        return isVerifiedEntryLegacy(domain, entry);
-      }
-      
-      // Convert ads-txt-validator result to ValidityResult format
-      return convertToValidityResult(matchingEntry, ownerDomain, managerDomains);
-      
-    } catch (error) {
-      logger.error('Error in isVerifiedEntryAsync:', error);
-      // Fallback to legacy validation
-      return isVerifiedEntryLegacy(domain, entry);
-    }
-  }, [adsTxtData?.adsTxtUrl, adsTxtData?.adsTxtContent]); // Only depend on stable data
 
   /**
    * Legacy validation function (synchronous)
@@ -315,6 +232,31 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       reasons,
     };
   }, [adsTxtData?.variables, sellerAnalysis]); // Stable dependencies
+
+  /**
+   * Validate whether the specified ads.txt/app-ads.txt entry is valid
+   * Enhanced async version using ads-txt-validator
+   * @param domain
+   * @param entry
+   * @returns ValidityResult
+   */
+  const isVerifiedEntryAsync = useCallback(async (domain: string, entry: AdsTxt): Promise<ValidityResult> => {
+    if (!adsTxtData) {
+      return isVerifiedEntryLegacy(domain, entry);
+    }
+
+    try {
+      return await validationManager.validateEntry(
+        domain,
+        entry,
+        adsTxtData,
+        isVerifiedEntryLegacy // Fallback function
+      );
+    } catch (error) {
+      logger.error('Error in isVerifiedEntryAsync:', error);
+      return isVerifiedEntryLegacy(domain, entry);
+    }
+  }, [adsTxtData?.adsTxtUrl, adsTxtData?.adsTxtContent, isVerifiedEntryLegacy]); // Optimized dependencies
 
   return {
     analyzing,

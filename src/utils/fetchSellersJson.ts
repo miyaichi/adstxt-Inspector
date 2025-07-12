@@ -50,7 +50,6 @@ export class SellersJsonFetcher {
     domain: string,
     options: FetchSellersJsonOptions = {}
   ): Promise<FetchSellersJsonResult> {
-    console.log('SellersJsonFetcher.fetch called for domain:', domain);
     const { timeout = 5000, retries = 2, retryDelay = 1000, bypassCache = false } = options;
 
     // Check cache first unless bypassing is requested
@@ -254,7 +253,6 @@ export class SellersJsonFetcher {
       error?: string;
     }>
   > {
-    console.log('SellersJsonFetcher.fetchSellers called with requests:', requests.length);
     const apiClient = await this.getApiClient();
     const results: Array<{
       domain: string;

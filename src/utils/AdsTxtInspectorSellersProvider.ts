@@ -28,7 +28,6 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
    * Get specific sellers by seller IDs for a domain
    */
   async batchGetSellers(domain: string, sellerIds: string[]): Promise<BatchSellersResult> {
-    console.log('batchGetSellers called for domain:', domain, 'sellerIds:', sellerIds.length);
     // Check if sellers.json exists first
     const hasSellerJson = await this.hasSellerJson(domain);
     
@@ -53,7 +52,6 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
     const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
     
     try {
-      console.log('Fetching sellers for domain:', domain, 'requests:', requests.length);
       const sellersResults = await SellersJsonFetcher.fetchSellers(requests, this.fetchOptions);
       
       const results: SellerResult[] = sellersResults.map((result) => ({
@@ -134,26 +132,20 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
   async hasSellerJson(domain: string): Promise<boolean> {
     // Check cache first
     if (this.sellersJsonExistenceCache.has(domain)) {
-      console.log('hasSellerJson cache hit for:', domain, 'result:', this.sellersJsonExistenceCache.get(domain));
       return this.sellersJsonExistenceCache.get(domain)!;
     }
-    
-    console.log('hasSellerJson cache miss for:', domain, 'fetching...');
 
     try {
       // Use the SellersJsonFetcher.fetch method to check existence
-      console.log('Checking sellers.json existence for:', domain);
       const fetchResult = await SellersJsonFetcher.fetch(domain, this.fetchOptions);
       
       const exists = !fetchResult.error && fetchResult.data !== null;
       
       // Cache the result
       this.sellersJsonExistenceCache.set(domain, exists);
-      console.log('Cached hasSellerJson result for:', domain, 'exists:', exists);
       
       return exists;
-    } catch (error) {
-      console.log('hasSellerJson error for:', domain, error);
+    } catch {
       // Cache negative result
       this.sellersJsonExistenceCache.set(domain, false);
       return false;
