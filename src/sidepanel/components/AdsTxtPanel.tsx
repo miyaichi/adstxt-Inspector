@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { commentErrorAdsTxtLines } from '../../utils/fetchAdsTxt';
+import { ValidationManager, type ValidationProgress } from '../../utils/ValidationManager';
 import { DownloadCsvAdsTxt, DownloadPlainAdsTxt } from './DownloadAdsTxt';
 import { SearchAndFilter } from './SearchAndFilter';
 import { Tooltip } from './Tooltip';
@@ -30,8 +31,11 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     relationship: '',
     validity: '',
   });
-  // Use sync validation only for now to avoid complexity
-  const [useAsyncValidation] = useState(false);
+  
+  // State for async validation
+  const [validationResults, setValidationResults] = useState<Map<string, ValidityResult>>(new Map());
+  const [validationProgress, setValidationProgress] = useState<ValidationProgress | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
   // Filter options definition
   const filters = {
@@ -51,12 +55,83 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     },
   };
 
-  // Simplified: Use sync validation for stability
-  // TODO: Re-enable async validation once stability issues are resolved
+  // Effect to handle async validation
+  useEffect(() => {
+    if (!adsTxtData?.data) {
+      setValidationResults(new Map());
+      setValidationProgress(null);
+      setIsValidating(false);
+      return;
+    }
 
-  // Simplified validation result getter
+    const performValidation = async () => {
+      setIsValidating(true);
+      setValidationProgress({ total: adsTxtData.data.length, completed: 0, inProgress: 0, failed: 0 });
+      
+      try {
+        const validationManager = ValidationManager.getInstance();
+        
+        // Create validation requests
+        const requests = adsTxtData.data.map((entry, index) => ({
+          domain: entry.domain,
+          entry,
+          requestId: `${entry.domain}-${entry.publisherId}-${index}`
+        }));
+        
+        // Perform batch validation with progress updates
+        const validationResults = await validationManager.validateEntries(
+          requests,
+          adsTxtData,
+          isVerifiedEntry, // Fallback function
+          (progress) => {
+            setValidationProgress(progress);
+          }
+        );
+        
+        // Convert results to map for fast lookup
+        const resultsMap = new Map<string, ValidityResult>();
+        validationResults.forEach((result) => {
+          const key = `${result.domain}-${result.entry.publisherId}-${result.entry.relationship}`;
+          resultsMap.set(key, result.result);
+        });
+        
+        setValidationResults(resultsMap);
+        
+      } catch (error) {
+        console.error('AdsTxtPanel: Validation failed, falling back to sync:', error);
+        
+        // Fallback to sync validation
+        const resultsMap = new Map<string, ValidityResult>();
+        adsTxtData.data.forEach((entry) => {
+          const key = `${entry.domain}-${entry.publisherId}-${entry.relationship}`;
+          const result = isVerifiedEntry(entry.domain, entry);
+          resultsMap.set(key, result);
+        });
+        setValidationResults(resultsMap);
+      } finally {
+        setIsValidating(false);
+        setValidationProgress(null);
+      }
+    };
+
+    performValidation();
+  }, [adsTxtData?.adsTxtUrl, adsTxtData?.data?.length]);
+
+  // Smart validation result getter
   const getValidationResult = (domain: string, entry: AdsTxt): ValidityResult => {
-    // For now, always use sync validation for stability
+    const key = `${domain}-${entry.publisherId}-${entry.relationship}`;
+    const result = validationResults.get(key);
+    
+    if (result) {
+      return result;
+    }
+    
+    // If validation is in progress, show loading state
+    if (isValidating) {
+      return { isVerified: false, reasons: [{ key: 'validating', placeholders: [] }] };
+    }
+    
+    // Fallback to sync validation if no async result available
     return isVerifiedEntry(domain, entry);
   };
 
@@ -135,7 +210,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
       totalEntries,
       filteredCount,
     };
-  }, [adsTxtData, searchTerm, selectedDomain, selectedFilters, isVerifiedEntry]);
+  }, [adsTxtData, searchTerm, selectedDomain, selectedFilters, validationResults, isValidating]);
 
   const handleFilterChange = (filterKey: string, value: string) => {
     setSelectedFilters((prev) => ({
@@ -188,6 +263,39 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
 
   return (
     <div className="panel-container">
+      {/* Validation Progress */}
+      {isValidating && validationProgress && (
+        <div className="panel-section">
+          <div className="panel-header">
+            <h3 className="panel-header-title">Validation Progress</h3>
+          </div>
+          <div className="panel-content">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Validating entries with ads-txt-validator...</span>
+                <span>{validationProgress.completed} / {validationProgress.total} ({Math.round((validationProgress.completed / validationProgress.total) * 100)}%)</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-500 flex items-center justify-center text-xs text-white font-medium"
+                  style={{ 
+                    width: `${Math.max(5, (validationProgress.completed / validationProgress.total) * 100)}%`,
+                    minWidth: validationProgress.completed > 0 ? '20px' : '0'
+                  }}
+                >
+                  {validationProgress.completed > 0 && Math.round((validationProgress.completed / validationProgress.total) * 100) + '%'}
+                </div>
+              </div>
+              {validationProgress.failed > 0 && (
+                <div className="text-sm text-red-600">
+                  {validationProgress.failed} entries failed validation
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Errors Section */}
       {errors.length > 0 && (
         <div className="panel-section">
@@ -332,15 +440,18 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             <div className="space-y-2 ml-4">
               {entries.map((entry, index) => {
                 const validity = getValidationResult(domain, entry);
+                const isEntryValidating = isValidating && validity.reasons.some(r => r.key === 'validating');
                 return (
                   <div
                     key={`${domain}-${index}`}
                     className={`entry-card ${
-                      validity.isVerified
-                        ? 'border-green-200 bg-green-50'
-                        : validity.reasons.some((reason) => reason.key.startsWith('error_'))
-                          ? 'border-red-200 bg-red-50'
-                          : 'border-yellow-200 bg-yellow-50'
+                      isEntryValidating
+                        ? 'border-blue-200 bg-blue-50'
+                        : validity.isVerified
+                          ? 'border-green-200 bg-green-50'
+                          : validity.reasons.some((reason) => reason.key.startsWith('error_'))
+                            ? 'border-red-200 bg-red-50'
+                            : 'border-yellow-200 bg-yellow-50'
                     }`}
                   >
                     <div className="entry-card-content">
@@ -370,7 +481,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                             </span>
                           </Tooltip>
 
-                          {validity.isVerified ? (
+                          {isEntryValidating ? (
+                            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                          ) : validity.isVerified ? (
                             <Check className="w-5 h-5 text-green-500" />
                           ) : (
                             <CircleAlert className="w-5 h-5 text-red-500" />
@@ -378,12 +491,17 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                         </div>
                       </div>
                       {!validity.isVerified && validity.reasons.length > 0 && (
-                        <div className="flex flex-col text-red-600 space-y-1">
+                        <div className={`flex flex-col space-y-1 ${
+                          isEntryValidating ? 'text-blue-600' : 'text-red-600'
+                        }`}>
                           {validity.reasons.map((reason, idx) => (
                             <span key={idx}>
-                              {chrome.i18n.getMessage(reason.key, reason.placeholders)
-                                ? chrome.i18n.getMessage(reason.key, reason.placeholders)
-                                : reason.key}
+                              {reason.key === 'validating' 
+                                ? 'Validating...'
+                                : chrome.i18n.getMessage(reason.key, reason.placeholders)
+                                  ? chrome.i18n.getMessage(reason.key, reason.placeholders)
+                                  : reason.key
+                              }
                             </span>
                           ))}
                         </div>

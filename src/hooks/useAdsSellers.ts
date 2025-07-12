@@ -144,7 +144,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       const code = entry.relationship === 'DIRECT' ? '12010' : '13010';
       return {
         isVerified: false,
-        reasons: [{ key: `alert_${code}_missing_sellers.json`, placeholders: [domain] }],
+        reasons: [{ key: `alert_${code}_missing_sellers_json`, placeholders: [domain] }],
       };
     }
 

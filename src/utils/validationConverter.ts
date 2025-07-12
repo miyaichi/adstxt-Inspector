@@ -72,7 +72,7 @@ function convertValidationResults(
   if (!validationResult.hasSellerJson) {
     const code = record.relationship === 'DIRECT' ? '12010' : '13010';
     reasons.push({
-      key: `alert_${code}_missing_sellers.json`,
+      key: `alert_${code}_missing_sellers_json`,
       placeholders: [record.domain],
     });
     return reasons; // Return early if no sellers.json
@@ -206,7 +206,7 @@ function convertValidationKeyToErrorCode(
     emptyAccountId: 'error_11010_missing_required_fields',
     emptyFile: 'error_11040_empty_file',
     invalidCharacters: 'error_11050_invalid_characters',
-    noSellersJson: relationship === 'DIRECT' ? 'alert_12010_missing_sellers.json' : 'alert_13010_missing_sellers.json',
+    noSellersJson: relationship === 'DIRECT' ? 'alert_12010_missing_sellers_json' : 'alert_13010_missing_sellers_json',
     directAccountIdNotInSellersJson: 'error_12020_publisher_id_not_listed',
     resellerAccountIdNotInSellersJson: 'error_13020_publisher_id_not_listed',
     domainMismatch: relationship === 'DIRECT' ? 'alert_12030_domain_mismatch' : 'alert_13030_domain_mismatch',
@@ -228,7 +228,7 @@ function getPlaceholdersForError(
   additionalParams?: Record<string, any>
 ): string[] {
   // Extract placeholders based on error key
-  if (errorKey.includes('missing_sellers.json')) {
+  if (errorKey.includes('missing_sellers_json')) {
     return [record.domain];
   }
   
