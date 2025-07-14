@@ -9,7 +9,7 @@ import {
 import { AdsTxtInspectorSellersProvider } from './AdsTxtInspectorSellersProvider';
 import { convertToValidityResult } from './validationConverter';
 import { Logger } from './logger';
-import { sanitizeKey, validateDomain, validatePublisherId, sanitizeLogInput } from './security';
+import { sanitizeKey, validateDomain, validatePublisherId, sanitizeLogInput, SecureMap, sanitizeMapKey } from './security';
 
 const logger = new Logger('ValidationManager');
 
@@ -44,17 +44,17 @@ export interface ValidationProgress {
 export class ValidationManager {
   private static instance: ValidationManager | null = null;
 
-  // Cache for parsed and validated entries per ads.txt URL
-  private readonly validatedEntriesCache = new Map<string, ParsedAdsTxtEntry[]>();
+  // Secure cache for parsed and validated entries per ads.txt URL
+  private readonly validatedEntriesCache = new SecureMap<ParsedAdsTxtEntry[]>('ValidatedEntriesCache');
 
-  // Cache for validation results per request
-  private readonly resultsCache = new Map<string, ValidityResult>();
+  // Secure cache for validation results per request
+  private readonly resultsCache = new SecureMap<ValidityResult>('ResultsCache');
 
-  // Track ongoing validations to prevent duplicates
-  private readonly ongoingValidations = new Map<string, Promise<ParsedAdsTxtEntry[]>>();
+  // Secure tracking of ongoing validations to prevent duplicates
+  private readonly ongoingValidations = new SecureMap<Promise<ParsedAdsTxtEntry[]>>('OngoingValidations');
 
-  // Sellers provider cache
-  private readonly sellersProviderCache = new Map<string, AdsTxtInspectorSellersProvider>();
+  // Secure sellers provider cache
+  private readonly sellersProviderCache = new SecureMap<AdsTxtInspectorSellersProvider>('SellersProviderCache');
 
   private readonly fetchOptions = { timeout: 5000, retries: 1 };
 
@@ -81,16 +81,16 @@ export class ValidationManager {
   }
 
   /**
-   * Generate cache key for ads.txt validation
+   * Generate secure cache key for ads.txt validation
    */
   private getAdsTxtCacheKey(adsTxtData: FetchAdsTxtResult): string {
-    const sanitizedUrl = sanitizeKey(adsTxtData.adsTxtUrl);
-    const sanitizedContentLength = sanitizeKey(String(adsTxtData.adsTxtContent.length));
-    return sanitizeKey(`${sanitizedUrl}-${sanitizedContentLength}`);
+    const sanitizedUrl = sanitizeMapKey(adsTxtData.adsTxtUrl);
+    const sanitizedContentLength = sanitizeMapKey(String(adsTxtData.adsTxtContent.length));
+    return sanitizeMapKey(`${sanitizedUrl}-${sanitizedContentLength}`);
   }
 
   /**
-   * Generate cache key for individual entry validation
+   * Generate secure cache key for individual entry validation
    */
   private getEntryKey(domain: string, entry: AdsTxt): string {
     // Validate and sanitize inputs to prevent injection attacks
@@ -98,18 +98,18 @@ export class ValidationManager {
       throw new Error('Invalid domain format');
     }
     
-    const sanitizedDomain = sanitizeKey(domain);
-    const sanitizedPublisherId = sanitizeKey(validatePublisherId(entry.publisherId));
-    const sanitizedRelationship = sanitizeKey(entry.relationship);
+    const sanitizedDomain = sanitizeMapKey(domain);
+    const sanitizedPublisherId = sanitizeMapKey(validatePublisherId(entry.publisherId));
+    const sanitizedRelationship = sanitizeMapKey(entry.relationship);
     
-    return sanitizeKey(`${sanitizedDomain}-${sanitizedPublisherId}-${sanitizedRelationship}`);
+    return sanitizeMapKey(`${sanitizedDomain}-${sanitizedPublisherId}-${sanitizedRelationship}`);
   }
 
   /**
-   * Get or create sellers provider
+   * Get or create sellers provider with secure caching
    */
   private getSellersProvider(): AdsTxtInspectorSellersProvider {
-    const providerKey = `${this.fetchOptions.timeout}-${this.fetchOptions.retries}`;
+    const providerKey = sanitizeMapKey(`${this.fetchOptions.timeout}-${this.fetchOptions.retries}`);
     let provider = this.sellersProviderCache.get(providerKey);
 
     if (!provider) {
@@ -127,15 +127,15 @@ export class ValidationManager {
   private async performFullValidation(adsTxtData: FetchAdsTxtResult): Promise<ParsedAdsTxtEntry[]> {
     const cacheKey = this.getAdsTxtCacheKey(adsTxtData);
 
-    // Check if validation is already in progress
-    const ongoing = this.ongoingValidations.get(sanitizeKey(cacheKey));
+    // Check if validation is already in progress - SecureMap handles key sanitization
+    const ongoing = this.ongoingValidations.get(cacheKey);
     if (ongoing) {
       logger.debug('Validation already in progress for:', sanitizeLogInput(cacheKey));
       return ongoing;
     }
 
-    // Check cache first
-    const cached = this.validatedEntriesCache.get(sanitizeKey(cacheKey));
+    // Check cache first - SecureMap handles key sanitization
+    const cached = this.validatedEntriesCache.get(cacheKey);
     if (cached) {
       logger.debug('Using cached validation for:', sanitizeLogInput(cacheKey));
       return cached;
@@ -145,26 +145,20 @@ export class ValidationManager {
     logger.debug('Starting full validation for:', sanitizeLogInput(cacheKey));
     const validationPromise = this.doFullValidation(adsTxtData, cacheKey);
 
-    // Track ongoing validation
-    this.ongoingValidations.set(sanitizeKey(cacheKey), validationPromise);
+    // Track ongoing validation - SecureMap handles key sanitization automatically
+    this.ongoingValidations.set(cacheKey, validationPromise);
 
     try {
       const result = await validationPromise;
 
-      // Cache the result
-      this.validatedEntriesCache.set(sanitizeKey(cacheKey), result);
+      // Cache the result - SecureMap handles key sanitization automatically
+      this.validatedEntriesCache.set(cacheKey, result);
       logger.debug('Cached validation results for:', sanitizeLogInput(cacheKey), 'entries:', sanitizeLogInput(String(result.length)));
 
       return result;
     } finally {
-      // Remove from ongoing validations - additional security validation for Map operations
-      if (typeof cacheKey === 'string' && cacheKey.length > 0) {
-        const sanitizedCacheKeyForDeletion = sanitizeKey(cacheKey);
-        // Additional validation: ensure the sanitized key is safe for Map operations
-        if (sanitizedCacheKeyForDeletion && typeof sanitizedCacheKeyForDeletion === 'string') {
-          this.ongoingValidations.delete(sanitizedCacheKeyForDeletion);
-        }
-      }
+      // Remove from ongoing validations - SecureMap provides injection-safe deletion
+      this.ongoingValidations.delete(cacheKey);
     }
   }
 
@@ -228,8 +222,8 @@ export class ValidationManager {
   ): Promise<ValidityResult> {
     const entryKey = this.getEntryKey(domain, entry);
 
-    // Check entry cache first
-    const cached = this.resultsCache.get(sanitizeKey(entryKey));
+    // Check entry cache first - SecureMap handles key sanitization automatically
+    const cached = this.resultsCache.get(entryKey);
     if (cached) {
       return cached;
     }
@@ -241,25 +235,42 @@ export class ValidationManager {
       // Filter only record entries
       const recordEntries = validatedEntries.filter(isAdsTxtRecord) as ParsedAdsTxtRecord[];
 
-      // Find matching entry - sanitize inputs to prevent NoSQL injection
-      const sanitizedDomain = sanitizeKey(domain);
-      const sanitizedPublisherId = sanitizeKey(validatePublisherId(entry.publisherId));
-      const sanitizedRelationship = sanitizeKey(entry.relationship);
+      // Find matching entry using ultra-secure comparison to prevent NoSQL injection
+      const sanitizedDomain = sanitizeMapKey(domain);
+      const sanitizedPublisherId = sanitizeMapKey(validatePublisherId(entry.publisherId));
+      const sanitizedRelationship = sanitizeMapKey(entry.relationship);
       
-      // Create safe comparison function to prevent injection
-      const createSafeComparison = (expectedDomain: string, expectedPublisherId: string, expectedRelationship: string) => {
+      // Create ultra-secure comparison function with comprehensive validation
+      const createSecureComparison = (expectedDomain: string, expectedPublisherId: string, expectedRelationship: string) => {
         return (validatedEntry: any): boolean => {
-          // Defensive validation - ensure entry exists and has required properties
+          // First level: Object validation - ensure entry exists and has required properties
           if (!validatedEntry || typeof validatedEntry !== 'object') {
             return false;
           }
           
-          // Extract and sanitize entry values with null safety
-          const entryDomain = sanitizeKey(String(validatedEntry.domain || ''));
-          const entryAccountId = sanitizeKey(String(validatedEntry.account_id || ''));
-          const entryRelationship = sanitizeKey(String(validatedEntry.relationship || ''));
+          // Second level: Property existence validation
+          if (!validatedEntry.hasOwnProperty('domain') || 
+              !validatedEntry.hasOwnProperty('account_id') || 
+              !validatedEntry.hasOwnProperty('relationship')) {
+            return false;
+          }
           
-          // Perform exact string comparison with sanitized values
+          // Third level: Extract and sanitize entry values with ultra-strict validation
+          let entryDomain: string;
+          let entryAccountId: string;
+          let entryRelationship: string;
+          
+          try {
+            entryDomain = sanitizeMapKey(String(validatedEntry.domain || ''));
+            entryAccountId = sanitizeMapKey(String(validatedEntry.account_id || ''));
+            entryRelationship = sanitizeMapKey(String(validatedEntry.relationship || ''));
+          } catch (error) {
+            // If sanitization fails, this entry is potentially dangerous
+            logger.warn('Entry sanitization failed, rejecting entry:', error);
+            return false;
+          }
+          
+          // Fourth level: Perform exact string comparison with sanitized values
           return (
             entryDomain === expectedDomain &&
             entryAccountId === expectedPublisherId &&
@@ -268,9 +279,9 @@ export class ValidationManager {
         };
       };
       
-      // Use safe comparison function
-      const safeMatcher = createSafeComparison(sanitizedDomain, sanitizedPublisherId, sanitizedRelationship);
-      const matchingEntry = recordEntries.find(safeMatcher);
+      // Use ultra-secure comparison function
+      const secureMatcher = createSecureComparison(sanitizedDomain, sanitizedPublisherId, sanitizedRelationship);
+      const matchingEntry = recordEntries.find(secureMatcher);
 
       let result: ValidityResult;
 
@@ -298,8 +309,8 @@ export class ValidationManager {
         }
       }
 
-      // Cache the result
-      this.resultsCache.set(sanitizeKey(entryKey), result);
+      // Cache the result - SecureMap handles key sanitization automatically
+      this.resultsCache.set(entryKey, result);
 
       return result;
     } catch (error) {
@@ -324,7 +335,7 @@ export class ValidationManager {
       if (fallbackFunction) {
         try {
           const fallbackResult = fallbackFunction(domain, entry);
-          this.resultsCache.set(sanitizeKey(entryKey), fallbackResult);
+          this.resultsCache.set(entryKey, fallbackResult);
           return fallbackResult;
         } catch (fallbackError) {
           logger.error('Fallback function also failed:', sanitizeLogInput(String(fallbackError)));
@@ -346,7 +357,7 @@ export class ValidationManager {
         ],
       };
 
-      this.resultsCache.set(sanitizeKey(entryKey), errorResult);
+      this.resultsCache.set(entryKey, errorResult);
       return errorResult;
     }
   }
@@ -449,7 +460,7 @@ export class ValidationManager {
   }
 
   /**
-   * Get validation statistics
+   * Get validation statistics with secure Map information
    */
   getStats() {
     return {
@@ -457,6 +468,12 @@ export class ValidationManager {
       cachedEntryResults: this.resultsCache.size,
       ongoingValidations: this.ongoingValidations.size,
       sellersProviders: this.sellersProviderCache.size,
+      securityInfo: {
+        validatedEntriesCacheName: this.validatedEntriesCache.getName(),
+        resultsCacheName: this.resultsCache.getName(),
+        ongoingValidationsName: this.ongoingValidations.getName(),
+        sellersProviderCacheName: this.sellersProviderCache.getName(),
+      },
     };
   }
 }

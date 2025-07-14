@@ -3,7 +3,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
 import type { FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { ValidationManager, type ValidationProgress } from '../../utils/ValidationManager';
-import { sanitizeKey, validateDomain, validatePublisherId } from '../../utils/security';
+import { sanitizeMapKey, validateDomain, validatePublisherId } from '../../utils/security';
 import { DownloadCsvSellersJson } from './DownloadSellersJson';
 import { SearchAndFilter } from './SearchAndFilter';
 import { Tooltip } from './Tooltip';
@@ -71,23 +71,39 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
   };
 
 
-  // Smart validation result getter using global validation results
+  // Ultra-secure validation result getter using global validation results
   const getSellerValidationResult = (domain: string, sellerId: string): ValidityResult | null => {
-    // Sanitize inputs to prevent NoSQL injection
-    const sanitizedDomain = sanitizeKey(domain);
-    const sanitizedSellerId = sanitizeKey(validatePublisherId(sellerId));
-    
-    // Find matching ads.txt entry for this seller
-    const matchingAdsTxtEntry = adsTxtData?.data.find(
-      (entry) => entry.domain === sanitizedDomain && String(entry.publisherId) === sanitizedSellerId
-    );
+    try {
+      // Ultra-strict input sanitization to prevent NoSQL injection
+      const sanitizedDomain = sanitizeMapKey(domain);
+      const sanitizedSellerId = sanitizeMapKey(validatePublisherId(sellerId));
+      
+      // Find matching ads.txt entry for this seller with secure comparison
+      const matchingAdsTxtEntry = adsTxtData?.data.find(
+        (entry) => {
+          try {
+            const entryDomain = sanitizeMapKey(entry.domain);
+            const entryPublisherId = sanitizeMapKey(String(entry.publisherId));
+            return entryDomain === sanitizedDomain && entryPublisherId === sanitizedSellerId;
+          } catch (error) {
+            // If sanitization fails, this entry is potentially dangerous
+            console.warn('Entry sanitization failed in getSellerValidationResult:', error);
+            return false;
+          }
+        }
+      );
 
-    if (!matchingAdsTxtEntry) {
+      if (!matchingAdsTxtEntry) {
+        return null;
+      }
+
+      const key = sanitizeMapKey(`${sanitizedDomain}-${matchingAdsTxtEntry.publisherId}-${matchingAdsTxtEntry.relationship}`);
+      const result = globalValidationResults.get(key);
+    } catch (error) {
+      // If any sanitization fails, return null for safety
+      console.warn('Security error in getSellerValidationResult:', error);
       return null;
     }
-
-    const key = `${sanitizedDomain}-${matchingAdsTxtEntry.publisherId}-${matchingAdsTxtEntry.relationship}`;
-    const result = globalValidationResults.get(key);
 
     if (result) {
       return result;
