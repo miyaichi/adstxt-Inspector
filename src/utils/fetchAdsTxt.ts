@@ -1,5 +1,6 @@
 import * as psl from 'psl';
 import { fetchFromUrls } from './fetchFromUrls';
+import { validateDomain, sanitizeUrl } from './security';
 
 // Type definitions
 export interface AdsTxt {
@@ -48,6 +49,11 @@ export const fetchAdsTxt = async (
   domain: string,
   appAdsTxt: boolean = false
 ): Promise<FetchAdsTxtResult> => {
+  // Validate domain input to prevent injection attacks
+  if (!validateDomain(domain)) {
+    throw new Error('Invalid domain format');
+  }
+  
   const rootDomain = getRootDomain(domain);
   const isSubdomainDomain = isSubdomain(domain, rootDomain);
 
@@ -137,12 +143,17 @@ const createErrorResult = (error: Error): FetchAdsTxtResult => {
  * @returns Array of URLs
  */
 const generateAdsTxtUrls = (domain: string, appAdsTxt: boolean = false): string[] => {
+  // Validate domain before generating URLs
+  if (!validateDomain(domain)) {
+    throw new Error('Invalid domain format');
+  }
+  
   const file = appAdsTxt ? 'app-ads.txt' : 'ads.txt';
   const protocols = ['https', 'http'];
   const subdomains = ['', 'www.'];
 
   return protocols.flatMap((protocol) =>
-    subdomains.map((subdomain) => `${protocol}://${subdomain}${domain}/${file}`)
+    subdomains.map((subdomain) => sanitizeUrl(`${protocol}://${subdomain}${domain}/${file}`))
   );
 };
 

@@ -9,6 +9,7 @@ import {
 import { AdsTxtInspectorSellersProvider } from './AdsTxtInspectorSellersProvider';
 import { convertToValidityResult } from './validationConverter';
 import { Logger } from './logger';
+import { sanitizeKey, validateDomain, validatePublisherId } from './security';
 
 const logger = new Logger('ValidationManager');
 
@@ -83,14 +84,25 @@ export class ValidationManager {
    * Generate cache key for ads.txt validation
    */
   private getAdsTxtCacheKey(adsTxtData: FetchAdsTxtResult): string {
-    return `${adsTxtData.adsTxtUrl}-${adsTxtData.adsTxtContent.length}`;
+    const sanitizedUrl = sanitizeKey(adsTxtData.adsTxtUrl);
+    const contentLength = adsTxtData.adsTxtContent.length;
+    return `${sanitizedUrl}-${contentLength}`;
   }
 
   /**
    * Generate cache key for individual entry validation
    */
   private getEntryKey(domain: string, entry: AdsTxt): string {
-    return `${domain}-${entry.publisherId}-${entry.relationship}`;
+    // Validate and sanitize inputs to prevent injection attacks
+    if (!validateDomain(domain)) {
+      throw new Error('Invalid domain format');
+    }
+    
+    const sanitizedDomain = sanitizeKey(domain);
+    const sanitizedPublisherId = sanitizeKey(validatePublisherId(entry.publisherId));
+    const sanitizedRelationship = sanitizeKey(entry.relationship);
+    
+    return `${sanitizedDomain}-${sanitizedPublisherId}-${sanitizedRelationship}`;
   }
 
   /**

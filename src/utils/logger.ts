@@ -1,3 +1,5 @@
+import { sanitizeLogInput } from './security';
+
 interface LogLevel {
   error: number;
   warn: number;
@@ -29,25 +31,41 @@ export class Logger {
 
   public error(message: string, ...args: any[]) {
     if (this.shouldLog('error')) {
-      console.error(`[${this.context}] ${message}`, ...args);
+      const sanitizedMessage = sanitizeLogInput(message);
+      const sanitizedArgs = args.map(arg => 
+        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
+      );
+      console.error(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
     }
   }
 
   public warn(message: string, ...args: any[]) {
     if (this.shouldLog('warn')) {
-      console.warn(`[${this.context}] ${message}`, ...args);
+      const sanitizedMessage = sanitizeLogInput(message);
+      const sanitizedArgs = args.map(arg => 
+        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
+      );
+      console.warn(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
     }
   }
 
   public info(message: string, ...args: any[]) {
     if (this.shouldLog('info')) {
-      console.info(`[${this.context}] ${message}`, ...args);
+      const sanitizedMessage = sanitizeLogInput(message);
+      const sanitizedArgs = args.map(arg => 
+        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
+      );
+      console.info(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
     }
   }
 
   public debug(message: string, ...args: any[]) {
     if (this.shouldLog('debug')) {
-      console.debug(`[${this.context}] ${message}`, ...args);
+      const sanitizedMessage = sanitizeLogInput(message);
+      const sanitizedArgs = args.map(arg => 
+        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
+      );
+      console.debug(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
     }
   }
 }
