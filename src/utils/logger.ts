@@ -29,43 +29,29 @@ export class Logger {
     return Logger.logLevels[level] <= Logger.logLevels[Logger.loglevel];
   }
 
-  public error(message: string, ...args: any[]) {
-    if (this.shouldLog('error')) {
+  private sanitizeAndLog(level: keyof LogLevel, logFunction: Function, message: string, ...args: any[]) {
+    if (this.shouldLog(level)) {
       const sanitizedMessage = sanitizeLogInput(message);
       const sanitizedArgs = args.map(arg => 
         typeof arg === 'string' ? sanitizeLogInput(arg) : arg
       );
-      console.error(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
+      logFunction(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
     }
+  }
+
+  public error(message: string, ...args: any[]) {
+    this.sanitizeAndLog('error', console.error.bind(console), message, ...args);
   }
 
   public warn(message: string, ...args: any[]) {
-    if (this.shouldLog('warn')) {
-      const sanitizedMessage = sanitizeLogInput(message);
-      const sanitizedArgs = args.map(arg => 
-        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
-      );
-      console.warn(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
-    }
+    this.sanitizeAndLog('warn', console.warn.bind(console), message, ...args);
   }
 
   public info(message: string, ...args: any[]) {
-    if (this.shouldLog('info')) {
-      const sanitizedMessage = sanitizeLogInput(message);
-      const sanitizedArgs = args.map(arg => 
-        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
-      );
-      console.info(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
-    }
+    this.sanitizeAndLog('info', console.info.bind(console), message, ...args);
   }
 
   public debug(message: string, ...args: any[]) {
-    if (this.shouldLog('debug')) {
-      const sanitizedMessage = sanitizeLogInput(message);
-      const sanitizedArgs = args.map(arg => 
-        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
-      );
-      console.debug(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
-    }
+    this.sanitizeAndLog('debug', console.debug.bind(console), message, ...args);
   }
 }

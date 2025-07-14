@@ -158,7 +158,8 @@ export class ValidationManager {
       return result;
     } finally {
       // Remove from ongoing validations - sanitize key for security
-      this.ongoingValidations.delete(sanitizeKey(cacheKey));
+      const sanitizedCacheKeyForDeletion = sanitizeKey(cacheKey);
+      this.ongoingValidations.delete(sanitizedCacheKeyForDeletion);
     }
   }
 
@@ -226,11 +227,16 @@ export class ValidationManager {
       const sanitizedPublisherId = sanitizeKey(validatePublisherId(entry.publisherId));
       const sanitizedRelationship = sanitizeKey(entry.relationship);
       
+      // Additional validation for database values to prevent injection
       const matchingEntry = recordEntries.find((validatedEntry) => {
+        const entryDomain = sanitizeKey(String(validatedEntry.domain || ''));
+        const entryAccountId = sanitizeKey(String(validatedEntry.account_id || ''));
+        const entryRelationship = sanitizeKey(String(validatedEntry.relationship || ''));
+        
         return (
-          sanitizeKey(validatedEntry.domain) === sanitizedDomain &&
-          sanitizeKey(String(validatedEntry.account_id)) === sanitizedPublisherId &&
-          sanitizeKey(validatedEntry.relationship) === sanitizedRelationship
+          entryDomain === sanitizedDomain &&
+          entryAccountId === sanitizedPublisherId &&
+          entryRelationship === sanitizedRelationship
         );
       });
 

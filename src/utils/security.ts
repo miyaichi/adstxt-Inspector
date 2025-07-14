@@ -53,6 +53,14 @@ export function sanitizeUrl(url: string): string {
   
   try {
     const urlObj = new URL(url);
+    
+    // Validate protocol - only allow safe protocols
+    const allowedProtocols = ['http:', 'https:'];
+    if (!allowedProtocols.includes(urlObj.protocol)) {
+      // If protocol is unsafe, return sanitized original string
+      return sanitizeLogInput(url).substring(0, 256);
+    }
+    
     // Additional sanitization of the URL components
     const sanitizedUrl = urlObj.toString();
     // Remove potentially dangerous characters and limit length
