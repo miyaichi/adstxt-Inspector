@@ -14,9 +14,19 @@ export interface SellerAnalysis {
   adsTxtEntries: AdsTxt[];
 }
 
+export interface ValidationMessage {
+  key: string;
+  severity: 'error' | 'warning' | 'info';
+  message: string;
+  description?: string;
+  helpUrl?: string;
+  placeholders: string[];
+}
+
 export interface ValidityResult {
   isVerified: boolean;
   reasons: { key: string; placeholders: string[] }[];
+  validationMessages?: ValidationMessage[];
 }
 
 interface UseAdsSellersReturn {
@@ -30,10 +40,10 @@ interface UseAdsSellersReturn {
 const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
 
 /**
- * Retrive the sellers.json for the specified domain and narrow down the ssearch using the corresponding ads.txt entries.
- * @param domain
- * @param adsTxtEntries
- * @returns SellerAnalysis
+ * Retrieve the sellers.json for the specified domain and filter using the corresponding ads.txt entries
+ * @param domain - The advertising system domain
+ * @param adsTxtEntries - ads.txt entries for this domain
+ * @returns SellerAnalysis with sellers.json data
  */
 const fetchSellerAnalysisForDomain = async (
   domain: string,
@@ -122,8 +132,8 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   };
 
   /**
-   * Simple fallback validation function when ValidationManager is not available
-   * Uses basic validation without ads-txt-validator package
+   * Fallback validation function when ads-txt-validator fails
+   * Provides basic seller validation using sellers.json data
    */
   const simpleFallbackValidation = useCallback(
     (domain: string, entry: AdsTxt): ValidityResult => {
@@ -131,10 +141,18 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
       // Basic check: Does the advertising system have a sellers.json file?
       if (!currentAnalysis) {
-        const code = entry.relationship === 'DIRECT' ? '12010' : '13010';
         return {
           isVerified: false,
-          reasons: [{ key: `alert_${code}_missing_sellers_json`, placeholders: [domain] }],
+          reasons: [],
+          validationMessages: [
+            {
+              key: 'noSellersJson',
+              severity: 'warning' as const,
+              message: `sellers.json file not found for ${domain}`,
+              description: 'The specified advertising system does not have a sellers.json file',
+              placeholders: [domain],
+            },
+          ],
         };
       }
 
@@ -144,11 +162,26 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       );
 
       if (!seller) {
-        const code = entry.relationship === 'DIRECT' ? '12020' : '13020';
+        const messageKey =
+          entry.relationship === 'DIRECT'
+            ? 'directAccountIdNotInSellersJson'
+            : 'resellerAccountIdNotInSellersJson';
+        const message =
+          entry.relationship === 'DIRECT'
+            ? `DIRECT entry account ID '${entry.publisherId}' not found in sellers.json`
+            : `RESELLER entry account ID '${entry.publisherId}' not found in sellers.json`;
+
         return {
           isVerified: false,
-          reasons: [
-            { key: `error_${code}_publisher_id_not_listed`, placeholders: [entry.publisherId] },
+          reasons: [],
+          validationMessages: [
+            {
+              key: messageKey,
+              severity: 'error' as const,
+              message,
+              description: `${entry.relationship} relationship entries must have their account ID registered in the corresponding sellers.json file`,
+              placeholders: ['', entry.publisherId],
+            },
           ],
         };
       }

@@ -21,9 +21,10 @@ const SPECIAL_DOMAINS: Record<string, string> = {
  */
 export class SellersJsonFetcher {
   private static apiClient: SellersJsonApi | null = null;
+  private static lastConfigHash: string | null = null;
 
   /**
-   * Gets or initializes the API client
+   * Gets or initializes the API client, reusing the instance if config hasn't changed
    */
   private static async getApiClient(): Promise<SellersJsonApi | null> {
     try {
@@ -33,8 +34,19 @@ export class SellersJsonFetcher {
         return null;
       }
 
-      // Always create a new client with the current config to ensure settings are up to date
-      return new SellersJsonApi(config);
+      // Create a simple hash of the config to detect changes
+      const configHash = JSON.stringify(config);
+      
+      // Reuse client if config hasn't changed
+      if (this.apiClient && this.lastConfigHash === configHash) {
+        return this.apiClient;
+      }
+
+      // Create new client when config changes
+      this.apiClient = new SellersJsonApi(config);
+      this.lastConfigHash = configHash;
+      
+      return this.apiClient;
     } catch (error) {
       console.error('Failed to get API configuration:', error);
       return null;
@@ -204,36 +216,6 @@ export class SellersJsonFetcher {
     return sellers.filter((seller) => sellerIds.includes(seller.seller_id));
   }
 
-  /**
-   * Fetches a specific seller from a domain, using API first, then fallback to full sellers.json
-   * @param domain - The domain to fetch from
-   * @param sellerId - The seller ID to fetch
-   * @param options - Fetch options
-   * @returns The seller data or null if not found
-   * @deprecated Use fetchSellers() for better performance with batch API
-   */
-  static async fetchSeller(
-    domain: string,
-    sellerId: string,
-    options: FetchSellersJsonOptions = {}
-  ): Promise<{ seller: Seller | null; source: 'api' | 'fallback'; error?: string }> {
-    // Use fetchSellers for consistency and better performance
-    const results = await this.fetchSellers([{ domain, sellerId }], options);
-    const result = results[0];
-
-    if (result.seller) {
-      return {
-        seller: result.seller,
-        source: result.source,
-      };
-    } else {
-      return {
-        seller: null,
-        source: result.source,
-        error: result.error,
-      };
-    }
-  }
 
   /**
    * Fetches multiple sellers from multiple domains, using API first with fallback

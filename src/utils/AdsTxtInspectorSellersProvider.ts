@@ -14,7 +14,6 @@ import { SellersJsonFetcher } from './fetchSellersJson';
  */
 export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
   private readonly fetchOptions: { timeout: number; retries: number };
-  private readonly sellersJsonExistenceCache = new Map<string, boolean>();
   private readonly metadataCache = new Map<string, SellersJsonMetadata>();
 
   constructor(options: { timeout?: number; retries?: number } = {}) {
@@ -28,27 +27,6 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
    * Get specific sellers by seller IDs for a domain
    */
   async batchGetSellers(domain: string, sellerIds: string[]): Promise<BatchSellersResult> {
-    // Check if sellers.json exists first
-    const hasSellerJson = await this.hasSellerJson(domain);
-
-    if (!hasSellerJson) {
-      // Return early if no sellers.json
-      return {
-        domain,
-        requested_count: sellerIds.length,
-        found_count: 0,
-        results: sellerIds.map((sellerId) => ({
-          sellerId,
-          seller: null,
-          found: false,
-          source: 'cache' as const,
-          error: 'No sellers.json found',
-        })),
-        metadata: {},
-        cache: { is_cached: true, status: 'success' as const },
-      };
-    }
-
     const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
 
     try {
@@ -126,31 +104,6 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
     }
   }
 
-  /**
-   * Check if a domain has a sellers.json file
-   */
-  async hasSellerJson(domain: string): Promise<boolean> {
-    // Check cache first
-    if (this.sellersJsonExistenceCache.has(domain)) {
-      return this.sellersJsonExistenceCache.get(domain)!;
-    }
-
-    try {
-      // Use the SellersJsonFetcher.fetch method to check existence
-      const fetchResult = await SellersJsonFetcher.fetch(domain, this.fetchOptions);
-
-      const exists = !fetchResult.error && fetchResult.data !== null;
-
-      // Cache the result
-      this.sellersJsonExistenceCache.set(domain, exists);
-
-      return exists;
-    } catch {
-      // Cache negative result
-      this.sellersJsonExistenceCache.set(domain, false);
-      return false;
-    }
-  }
 
   /**
    * Get cache information for a domain
@@ -165,16 +118,31 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
   }
 
   /**
+   * Check if a domain has a sellers.json file
+   */
+  async hasSellerJson(domain: string): Promise<boolean> {
+    try {
+      // Use the SellersJsonFetcher.fetch method to check existence
+      const fetchResult = await SellersJsonFetcher.fetch(domain, this.fetchOptions);
+      return !fetchResult.error && fetchResult.data !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Convert SellersJsonFetcher seller format to ads-txt-validator format
    */
   private convertToValidatorSeller(seller: any): Seller {
     return {
-      seller_id: seller.seller_id || seller.sellerId,
+      seller_id: seller.seller_id,
       name: seller.name,
       domain: seller.domain,
-      seller_type: seller.seller_type || seller.sellerType,
-      is_confidential: seller.is_confidential || seller.isConfidential,
-      ...seller, // Include any additional fields
+      seller_type: seller.seller_type === 'RESELLER' ? undefined : seller.seller_type,
+      is_confidential: seller.is_confidential,
+      is_passthrough: seller.is_passthrough,
+      comment: seller.comment,
+      ext: seller.ext,
     };
   }
 }

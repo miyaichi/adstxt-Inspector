@@ -216,9 +216,7 @@ export class ValidationManager {
 
       if (matchingEntry) {
         // Convert ads-txt-validator result
-        const ownerDomain = adsTxtData.variables?.ownerDomain;
-        const managerDomains = adsTxtData.variables?.managerDomains;
-        result = convertToValidityResult(matchingEntry, ownerDomain, managerDomains);
+        result = convertToValidityResult(matchingEntry);
       } else {
         // Entry not found, use fallback or return error
         if (fallbackFunction) {
@@ -226,7 +224,16 @@ export class ValidationManager {
         } else {
           result = {
             isVerified: false,
-            reasons: [{ key: 'error_entry_not_found', placeholders: [] }],
+            reasons: [],
+            validationMessages: [
+              {
+                key: 'validationError',
+                severity: 'error' as const,
+                message: 'Entry not found in validation data',
+                description: 'The specified entry could not be found for validation.',
+                placeholders: [],
+              },
+            ],
           };
         }
       }
@@ -248,7 +255,16 @@ export class ValidationManager {
       // Return error result
       const errorResult: ValidityResult = {
         isVerified: false,
-        reasons: [{ key: 'error_validation_failed', placeholders: [] }],
+        reasons: [],
+        validationMessages: [
+          {
+            key: 'validationError',
+            severity: 'error' as const,
+            message: 'Validation failed',
+            description: 'An error occurred during validation. Please try again.',
+            placeholders: [],
+          },
+        ],
       };
 
       this.resultsCache.set(entryKey, errorResult);

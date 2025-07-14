@@ -11,6 +11,9 @@ interface SummaryPanelProps {
   adsTxtData: FetchAdsTxtResult | null;
   sellerAnalysis: SellerAnalysis[];
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
+  globalValidationResults: Map<string, ValidityResult>;
+  globalValidationProgress: ValidationProgress | null;
+  isGlobalValidating: boolean;
 }
 
 export const SummaryPanel: React.FC<SummaryPanelProps> = ({
@@ -19,6 +22,9 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   adsTxtData,
   sellerAnalysis,
   isVerifiedEntry,
+  globalValidationResults,
+  globalValidationProgress,
+  isGlobalValidating,
 }) => {
   const analysis = useMemo(() => {
     if (!adsTxtData || sellerAnalysis.length === 0) return null;
@@ -111,85 +117,29 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     0
   );
 
-  // State for verification data
-  const [verificationData, setVerificationData] = useState<
-    Array<{
-      isVerified: boolean;
-      hasNoErrors: boolean;
-    }>
-  >([]);
-
-  // State for validation progress
-  const [validationProgress, setValidationProgress] = useState<ValidationProgress | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
-
-  // Effect to handle smart async verification
-  useEffect(() => {
-    if (!adsTxtData?.data) {
-      setVerificationData([]);
-      setValidationProgress(null);
-      setIsValidating(false);
-      return;
-    }
-
-    const performValidation = async () => {
-      setIsValidating(true);
-      setValidationProgress({
-        total: adsTxtData.data.length,
-        completed: 0,
-        inProgress: 0,
-        failed: 0,
-      });
-
-      try {
-        const validationManager = ValidationManager.getInstance();
-
-        // Create validation requests
-        const requests = adsTxtData.data.map((entry, index) => ({
-          domain: entry.domain,
-          entry,
-          requestId: `${entry.domain}-${entry.publisherId}-${index}`,
-        }));
-
-        // Perform batch validation with progress updates
-        const validationResults = await validationManager.validateEntries(
-          requests,
-          adsTxtData,
-          isVerifiedEntry, // Fallback function
-          (progress) => {
-            setValidationProgress(progress);
-          }
-        );
-
-        // Convert results to verification data format
-        const results = validationResults.map((validationResult) => ({
-          isVerified: validationResult.result.isVerified,
-          hasNoErrors: !validationResult.result.reasons.some((reason) =>
-            reason.key.startsWith('error_')
-          ),
-        }));
-
-        setVerificationData(results);
-      } catch (error) {
-        console.error('Validation failed, falling back to sync:', error);
-
-        // Fallback to sync validation
-        const results = adsTxtData.data.map((entry) => {
-          const result = isVerifiedEntry(entry.domain, entry);
-          return {
-            isVerified: result.isVerified,
-            hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
-          };
-        });
-        setVerificationData(results);
-      } finally {
-        setIsValidating(false);
-        setValidationProgress(null);
+  // Convert global validation results to verification data format
+  const verificationData = useMemo(() => {
+    if (!adsTxtData?.data) return [];
+    
+    return adsTxtData.data.map((entry) => {
+      const key = `${entry.domain}-${entry.publisherId}-${entry.relationship}`;
+      const result = globalValidationResults.get(key);
+      
+      if (result) {
+        return {
+          isVerified: result.isVerified,
+          hasNoErrors: !(result.validationMessages?.some((message) => message.severity === 'error') ?? false),
+        };
       }
-    };
-
-    performValidation();
-  }, [adsTxtData?.adsTxtUrl, adsTxtData?.data?.length]); // Optimized dependencies
+      
+      // Fallback to sync validation if global validation hasn't completed
+      const fallbackResult = isVerifiedEntry(entry.domain, entry);
+      return {
+        isVerified: fallbackResult.isVerified,
+        hasNoErrors: !(fallbackResult.validationMessages?.some((message) => message.severity === 'error') ?? false),
+      };
+    });
+  }, [adsTxtData?.data, globalValidationResults, isVerifiedEntry]);
 
   // Count verified sellers
   const verifiedSellerCount = verificationData.filter((data) => data.isVerified).length;
@@ -248,32 +198,32 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   return (
     <div className="space-y-6 p-4">
       {/* Validation Progress */}
-      {isValidating && validationProgress && (
+      {isGlobalValidating && globalValidationProgress && (
         <div className="rounded-lg border p-4">
           <h3 className="text-lg font-semibold mb-4">Validation Progress</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-gray-600">
               <span>Validating entries with ads-txt-validator...</span>
               <span>
-                {validationProgress.completed} / {validationProgress.total} (
-                {Math.round((validationProgress.completed / validationProgress.total) * 100)}%)
+                {globalValidationProgress.completed} / {globalValidationProgress.total} (
+                {Math.round((globalValidationProgress.completed / globalValidationProgress.total) * 100)}%)
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
                 className="bg-blue-600 h-3 rounded-full transition-all duration-500 flex items-center justify-center text-xs text-white font-medium"
                 style={{
-                  width: `${Math.max(5, (validationProgress.completed / validationProgress.total) * 100)}%`,
-                  minWidth: validationProgress.completed > 0 ? '20px' : '0',
+                  width: `${Math.max(5, (globalValidationProgress.completed / globalValidationProgress.total) * 100)}%`,
+                  minWidth: globalValidationProgress.completed > 0 ? '20px' : '0',
                 }}
               >
-                {validationProgress.completed > 0 &&
-                  Math.round((validationProgress.completed / validationProgress.total) * 100) + '%'}
+                {globalValidationProgress.completed > 0 &&
+                  Math.round((globalValidationProgress.completed / globalValidationProgress.total) * 100) + '%'}
               </div>
             </div>
-            {validationProgress.failed > 0 && (
+            {globalValidationProgress.failed > 0 && (
               <div className="text-sm text-red-600">
-                {validationProgress.failed} entries failed validation
+                {globalValidationProgress.failed} entries failed validation
               </div>
             )}
           </div>

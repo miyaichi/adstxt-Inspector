@@ -14,6 +14,9 @@ interface AdsTxtPanelProps {
   adsTxtData: FetchAdsTxtResult | null;
   isVerifiedEntry: (domain: string, entry: AdsTxt) => ValidityResult;
   duplicateCheck: boolean;
+  globalValidationResults: Map<string, ValidityResult>;
+  globalValidationProgress: ValidationProgress | null;
+  isGlobalValidating: boolean;
 }
 
 export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
@@ -22,6 +25,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   adsTxtData,
   isVerifiedEntry,
   duplicateCheck,
+  globalValidationResults,
+  globalValidationProgress,
+  isGlobalValidating,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
@@ -30,12 +36,6 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     validity: '',
   });
 
-  // State for async validation
-  const [validationResults, setValidationResults] = useState<Map<string, ValidityResult>>(
-    new Map()
-  );
-  const [validationProgress, setValidationProgress] = useState<ValidationProgress | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
 
   // Filter options definition
   const filters = {
@@ -55,87 +55,32 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
     },
   };
 
-  // Effect to handle async validation
-  useEffect(() => {
-    if (!adsTxtData?.data) {
-      setValidationResults(new Map());
-      setValidationProgress(null);
-      setIsValidating(false);
-      return;
-    }
-
-    const performValidation = async () => {
-      setIsValidating(true);
-      setValidationProgress({
-        total: adsTxtData.data.length,
-        completed: 0,
-        inProgress: 0,
-        failed: 0,
-      });
-
-      try {
-        const validationManager = ValidationManager.getInstance();
-
-        // Create validation requests
-        const requests = adsTxtData.data.map((entry, index) => ({
-          domain: entry.domain,
-          entry,
-          requestId: `${entry.domain}-${entry.publisherId}-${index}`,
-        }));
-
-        // Perform batch validation with progress updates
-        const validationResults = await validationManager.validateEntries(
-          requests,
-          adsTxtData,
-          isVerifiedEntry, // Fallback function
-          (progress) => {
-            setValidationProgress(progress);
-          }
-        );
-
-        // Convert results to map for fast lookup
-        const resultsMap = new Map<string, ValidityResult>();
-        validationResults.forEach((result) => {
-          const key = `${result.domain}-${result.entry.publisherId}-${result.entry.relationship}`;
-          resultsMap.set(key, result.result);
-        });
-
-        setValidationResults(resultsMap);
-      } catch (error) {
-        console.error('AdsTxtPanel: Validation failed, falling back to sync:', error);
-
-        // Fallback to sync validation
-        const resultsMap = new Map<string, ValidityResult>();
-        adsTxtData.data.forEach((entry) => {
-          const key = `${entry.domain}-${entry.publisherId}-${entry.relationship}`;
-          const result = isVerifiedEntry(entry.domain, entry);
-          resultsMap.set(key, result);
-        });
-        setValidationResults(resultsMap);
-      } finally {
-        setIsValidating(false);
-        setValidationProgress(null);
-      }
-    };
-
-    performValidation();
-  }, [adsTxtData?.adsTxtUrl, adsTxtData?.data?.length]);
-
-  // Smart validation result getter
+  // Smart validation result getter using global validation results
   const getValidationResult = (domain: string, entry: AdsTxt): ValidityResult => {
     const key = `${domain}-${entry.publisherId}-${entry.relationship}`;
-    const result = validationResults.get(key);
+    const result = globalValidationResults.get(key);
 
     if (result) {
       return result;
     }
 
     // If validation is in progress, show loading state
-    if (isValidating) {
-      return { isVerified: false, reasons: [{ key: 'validating', placeholders: [] }] };
+    if (isGlobalValidating) {
+      return {
+        isVerified: false,
+        reasons: [],
+        validationMessages: [
+          {
+            key: 'validating',
+            severity: 'info' as const,
+            message: 'Validating...',
+            placeholders: [],
+          },
+        ],
+      };
     }
 
-    // Fallback to sync validation if no async result available
+    // Fallback to sync validation if global validation hasn't completed
     return isVerifiedEntry(domain, entry);
   };
 
@@ -214,7 +159,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
       totalEntries,
       filteredCount,
     };
-  }, [adsTxtData, searchTerm, selectedDomain, selectedFilters, validationResults, isValidating]);
+  }, [adsTxtData, searchTerm, selectedDomain, selectedFilters, globalValidationResults, isGlobalValidating]);
 
   const handleFilterChange = (filterKey: string, value: string) => {
     setSelectedFilters((prev) => ({
@@ -268,7 +213,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   return (
     <div className="panel-container">
       {/* Validation Progress */}
-      {isValidating && validationProgress && (
+      {isGlobalValidating && globalValidationProgress && (
         <div className="panel-section">
           <div className="panel-header">
             <h3 className="panel-header-title">Validation Progress</h3>
@@ -278,26 +223,26 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Validating entries with ads-txt-validator...</span>
                 <span>
-                  {validationProgress.completed} / {validationProgress.total} (
-                  {Math.round((validationProgress.completed / validationProgress.total) * 100)}%)
+                  {globalValidationProgress.completed} / {globalValidationProgress.total} (
+                  {Math.round((globalValidationProgress.completed / globalValidationProgress.total) * 100)}%)
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
                   className="bg-blue-600 h-3 rounded-full transition-all duration-500 flex items-center justify-center text-xs text-white font-medium"
                   style={{
-                    width: `${Math.max(5, (validationProgress.completed / validationProgress.total) * 100)}%`,
-                    minWidth: validationProgress.completed > 0 ? '20px' : '0',
+                    width: `${Math.max(5, (globalValidationProgress.completed / globalValidationProgress.total) * 100)}%`,
+                    minWidth: globalValidationProgress.completed > 0 ? '20px' : '0',
                   }}
                 >
-                  {validationProgress.completed > 0 &&
-                    Math.round((validationProgress.completed / validationProgress.total) * 100) +
+                  {globalValidationProgress.completed > 0 &&
+                    Math.round((globalValidationProgress.completed / globalValidationProgress.total) * 100) +
                       '%'}
                 </div>
               </div>
-              {validationProgress.failed > 0 && (
+              {globalValidationProgress.failed > 0 && (
                 <div className="text-sm text-red-600">
-                  {validationProgress.failed} entries failed validation
+                  {globalValidationProgress.failed} entries failed validation
                 </div>
               )}
             </div>
@@ -450,7 +395,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
               {entries.map((entry, index) => {
                 const validity = getValidationResult(domain, entry);
                 const isEntryValidating =
-                  isValidating && validity.reasons.some((r) => r.key === 'validating');
+                  isGlobalValidating && validity.validationMessages?.some((m) => m.key === 'validating');
                 return (
                   <div
                     key={`${domain}-${index}`}
@@ -459,7 +404,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                         ? 'border-blue-200 bg-blue-50'
                         : validity.isVerified
                           ? 'border-green-200 bg-green-50'
-                          : validity.reasons.some((reason) => reason.key.startsWith('error_'))
+                          : validity.validationMessages?.some(
+                                (message) => message.severity === 'error'
+                              )
                             ? 'border-red-200 bg-red-50'
                             : 'border-yellow-200 bg-yellow-50'
                     }`}
@@ -500,21 +447,52 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                           )}
                         </div>
                       </div>
-                      {!validity.isVerified && validity.reasons.length > 0 && (
+                      {(!validity.isVerified || isEntryValidating) && (
                         <div
-                          className={`flex flex-col space-y-1 ${
+                          className={`flex flex-col space-y-2 ${
                             isEntryValidating ? 'text-blue-600' : 'text-red-600'
                           }`}
                         >
-                          {validity.reasons.map((reason, idx) => (
-                            <span key={idx}>
-                              {reason.key === 'validating'
-                                ? 'Validating...'
-                                : chrome.i18n.getMessage(reason.key, reason.placeholders)
-                                  ? chrome.i18n.getMessage(reason.key, reason.placeholders)
-                                  : reason.key}
-                            </span>
-                          ))}
+                          {isEntryValidating ? (
+                            <span>Validating...</span>
+                          ) : (
+                            /* Enhanced validation messages with descriptions and help links */
+                            validity.validationMessages &&
+                            validity.validationMessages.length > 0 &&
+                            validity.validationMessages.map((message, idx) => (
+                              <div key={`message-${idx}`} className="space-y-1">
+                                <div className="flex items-start space-x-2">
+                                  <span
+                                    className={`text-sm font-medium ${
+                                      message.severity === 'error'
+                                        ? 'text-red-600'
+                                        : message.severity === 'warning'
+                                          ? 'text-yellow-600'
+                                          : 'text-blue-600'
+                                    }`}
+                                  >
+                                    {message.message}
+                                  </span>
+                                  {message.helpUrl && (
+                                    <a
+                                      href={message.helpUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:text-blue-700 flex-shrink-0"
+                                      title="詳細なヘルプを表示"
+                                    >
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  )}
+                                </div>
+                                {message.description && (
+                                  <p className="text-xs text-gray-600 ml-0">
+                                    {message.description}
+                                  </p>
+                                )}
+                              </div>
+                            ))
+                          )}
                         </div>
                       )}
                     </div>

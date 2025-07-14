@@ -3,6 +3,8 @@ import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { useAdsSellers } from '../hooks/useAdsSellers';
 import { TabInfo } from '../types/messages';
 import { Logger } from '../utils/logger';
+import { ValidationManager, type ValidationProgress } from '../utils/ValidationManager';
+import type { ValidityResult } from '../hooks/useAdsSellers';
 import { AdsTxtPanel } from './components/AdsTxtPanel';
 import { SellersPanel } from './components/SellersPanel';
 import { SummaryPanel } from './components/SummaryPanel';
@@ -26,6 +28,13 @@ export default function App() {
   const [storeUrl, setStoreUrl] = useState<string | null>(null);
   const currentVersion = chrome.runtime.getManifest().version;
   const initialized = React.useRef(false);
+
+  // Centralized validation state
+  const [globalValidationResults, setGlobalValidationResults] = useState<Map<string, ValidityResult>>(
+    new Map()
+  );
+  const [globalValidationProgress, setGlobalValidationProgress] = useState<ValidationProgress | null>(null);
+  const [isGlobalValidating, setIsGlobalValidating] = useState(false);
 
   useEffect(() => {
     const checkForUpdates = async () => {
@@ -88,6 +97,83 @@ export default function App() {
       setTabInfo(newTab);
     });
   }, []);
+
+  // Centralized validation effect
+  useEffect(() => {
+    if (!adsTxtData?.data) {
+      setGlobalValidationResults(new Map());
+      setGlobalValidationProgress(null);
+      setIsGlobalValidating(false);
+      return;
+    }
+
+    const performGlobalValidation = async () => {
+      setIsGlobalValidating(true);
+      setGlobalValidationProgress({
+        total: adsTxtData.data.length,
+        completed: 0,
+        inProgress: 0,
+        failed: 0,
+      });
+
+      try {
+        const validationManager = ValidationManager.getInstance();
+
+        // Create validation requests
+        const requests = adsTxtData.data.map((entry, index) => ({
+          domain: entry.domain,
+          entry,
+          requestId: `${entry.domain}-${entry.publisherId}-${index}`,
+        }));
+
+        // Perform batch validation with progress updates
+        const validationResults = await validationManager.validateEntries(
+          requests,
+          adsTxtData,
+          isVerifiedEntry, // Fallback function
+          (progress) => {
+            setGlobalValidationProgress(progress);
+          }
+        );
+
+        // Convert results to map for fast lookup
+        const resultsMap = new Map<string, ValidityResult>();
+        validationResults.forEach((result) => {
+          const key = `${result.domain}-${result.entry.publisherId}-${result.entry.relationship}`;
+          resultsMap.set(key, result.result);
+        });
+
+        setGlobalValidationResults(resultsMap);
+      } catch (error) {
+        console.error('Global validation failed, falling back to sync:', error);
+
+        // Set empty results on validation failure
+        const resultsMap = new Map<string, ValidityResult>();
+        adsTxtData.data.forEach((entry) => {
+          const key = `${entry.domain}-${entry.publisherId}-${entry.relationship}`;
+          resultsMap.set(key, {
+            isVerified: false,
+            reasons: [],
+            validationMessages: [
+              {
+                key: 'validationError',
+                severity: 'error' as const,
+                message: 'Validation could not be completed',
+                description: 'An error occurred during validation. Please try again.',
+                placeholders: [],
+              },
+            ],
+          });
+        });
+        setGlobalValidationResults(resultsMap);
+      } finally {
+        setIsGlobalValidating(false);
+        setGlobalValidationProgress(null);
+      }
+    };
+
+    performGlobalValidation();
+  }, [adsTxtData?.adsTxtUrl, adsTxtData?.data?.length]);
 
   const handleAnalyze = async () => {
     if (!tabInfo || !tabInfo.isScriptInjectionAllowed || analyzing) return;
@@ -174,6 +260,9 @@ export default function App() {
                 adsTxtData={adsTxtData}
                 sellerAnalysis={sellerAnalysis}
                 isVerifiedEntry={isVerifiedEntry}
+                globalValidationResults={globalValidationResults}
+                globalValidationProgress={globalValidationProgress}
+                isGlobalValidating={isGlobalValidating}
               />
             </TabPanel>
 
@@ -184,6 +273,9 @@ export default function App() {
                 checkAppAdsTxt={checksAppAdsTxt}
                 isVerifiedEntry={isVerifiedEntry}
                 duplicateCheck={duplicateCheck}
+                globalValidationResults={globalValidationResults}
+                globalValidationProgress={globalValidationProgress}
+                isGlobalValidating={isGlobalValidating}
               />
             </TabPanel>
 
@@ -193,6 +285,9 @@ export default function App() {
                 sellerAnalysis={sellerAnalysis}
                 adsTxtData={adsTxtData}
                 isVerifiedEntry={isVerifiedEntry}
+                globalValidationResults={globalValidationResults}
+                globalValidationProgress={globalValidationProgress}
+                isGlobalValidating={isGlobalValidating}
               />
             </TabPanel>
           </Tabs>

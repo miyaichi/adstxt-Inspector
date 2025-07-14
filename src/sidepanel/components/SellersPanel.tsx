@@ -12,6 +12,9 @@ interface SellersPanelProps {
   sellerAnalysis: SellerAnalysis[];
   adsTxtData: FetchAdsTxtResult | null;
   isVerifiedEntry: (domain: string, entry: any) => ValidityResult;
+  globalValidationResults: Map<string, ValidityResult>;
+  globalValidationProgress: ValidationProgress | null;
+  isGlobalValidating: boolean;
 }
 
 export const SellersPanel: React.FC<SellersPanelProps> = ({
@@ -19,6 +22,9 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
   sellerAnalysis,
   adsTxtData,
   isVerifiedEntry,
+  globalValidationResults,
+  globalValidationProgress,
+  isGlobalValidating,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
@@ -29,12 +35,6 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
     validity: '',
   });
 
-  // State for async validation
-  const [validationResults, setValidationResults] = useState<Map<string, ValidityResult>>(
-    new Map()
-  );
-  const [validationProgress, setValidationProgress] = useState<ValidationProgress | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
 
   // Filter options definition
   const filters = {
@@ -69,108 +69,43 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
     },
   };
 
-  // Effect to handle async validation for sellers
-  useEffect(() => {
-    if (!adsTxtData?.data || sellerAnalysis.length === 0) {
-      setValidationResults(new Map());
-      setValidationProgress(null);
-      setIsValidating(false);
-      return;
+
+  // Smart validation result getter using global validation results
+  const getSellerValidationResult = (domain: string, sellerId: string): ValidityResult | null => {
+    // Find matching ads.txt entry for this seller
+    const matchingAdsTxtEntry = adsTxtData?.data.find(
+      (entry) => entry.domain === domain && String(entry.publisherId) === String(sellerId)
+    );
+
+    if (!matchingAdsTxtEntry) {
+      return null;
     }
 
-    const performValidation = async () => {
-      setIsValidating(true);
-
-      // Create validation requests for sellers that have matching ads.txt entries
-      const requests: Array<{ domain: string; entry: any; requestId: string }> = [];
-
-      sellerAnalysis.forEach((analysis) => {
-        if (analysis.sellersJson?.data) {
-          analysis.sellersJson.data.forEach((seller, index) => {
-            // Find matching ads.txt entries for this seller
-            const matchingAdsTxtEntries = adsTxtData.data.filter(
-              (adsTxtEntry) =>
-                adsTxtEntry.domain === analysis.domain &&
-                String(adsTxtEntry.publisherId) === String(seller.seller_id)
-            );
-
-            // If we found matching ads.txt entries, create validation requests
-            matchingAdsTxtEntries.forEach((adsTxtEntry, adsTxtIndex) => {
-              requests.push({
-                domain: analysis.domain,
-                entry: adsTxtEntry,
-                requestId: `${analysis.domain}-${seller.seller_id}-${index}-${adsTxtIndex}`,
-              });
-            });
-          });
-        }
-      });
-
-      if (requests.length === 0) {
-        setIsValidating(false);
-        setValidationProgress(null);
-        return;
-      }
-
-      setValidationProgress({ total: requests.length, completed: 0, inProgress: 0, failed: 0 });
-
-      try {
-        const validationManager = ValidationManager.getInstance();
-
-        // Perform batch validation with progress updates
-        const validationResults = await validationManager.validateEntries(
-          requests,
-          adsTxtData,
-          isVerifiedEntry, // Fallback function
-          (progress) => {
-            setValidationProgress(progress);
-          }
-        );
-
-        // Convert results to map for fast lookup
-        const resultsMap = new Map<string, ValidityResult>();
-        validationResults.forEach((result) => {
-          const key = `${result.domain}-${result.entry.publisherId}`;
-          resultsMap.set(key, result.result);
-        });
-
-        setValidationResults(resultsMap);
-      } catch (error) {
-        console.error('SellersPanel: Validation failed, falling back to sync:', error);
-
-        // Fallback to sync validation
-        const resultsMap = new Map<string, ValidityResult>();
-        requests.forEach(({ domain, entry }) => {
-          const key = `${domain}-${entry.publisherId}`;
-          const result = isVerifiedEntry(domain, entry);
-          resultsMap.set(key, result);
-        });
-        setValidationResults(resultsMap);
-      } finally {
-        setIsValidating(false);
-        setValidationProgress(null);
-      }
-    };
-
-    performValidation();
-  }, [adsTxtData?.adsTxtUrl, adsTxtData?.data?.length, sellerAnalysis]);
-
-  // Smart validation result getter for sellers
-  const getSellerValidationResult = (domain: string, sellerId: string): ValidityResult | null => {
-    const key = `${domain}-${sellerId}`;
-    const result = validationResults.get(key);
+    const key = `${domain}-${matchingAdsTxtEntry.publisherId}-${matchingAdsTxtEntry.relationship}`;
+    const result = globalValidationResults.get(key);
 
     if (result) {
       return result;
     }
 
     // If validation is in progress, show loading state
-    if (isValidating) {
-      return { isVerified: false, reasons: [{ key: 'validating', placeholders: [] }] };
+    if (isGlobalValidating) {
+      return {
+        isVerified: false,
+        reasons: [],
+        validationMessages: [
+          {
+            key: 'validating',
+            severity: 'info' as const,
+            message: 'Validating...',
+            placeholders: [],
+          },
+        ],
+      };
     }
 
-    // No validation result available (seller doesn't have matching ads.txt entry)
-    return null;
+    // Fallback to sync validation
+    return isVerifiedEntry(domain, matchingAdsTxtEntry);
   };
 
   // Process and filter sellers data
@@ -260,8 +195,8 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
     searchTerm,
     selectedDomain,
     selectedFilters,
-    validationResults,
-    isValidating,
+    globalValidationResults,
+    isGlobalValidating,
   ]);
 
   const handleFilterChange = (filterKey: string, value: string) => {
@@ -307,7 +242,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
   return (
     <div className="panel-container">
       {/* Validation Progress */}
-      {isValidating && validationProgress && (
+      {isGlobalValidating && globalValidationProgress && (
         <div className="panel-section">
           <div className="panel-header">
             <h3 className="panel-header-title">Cross-Check Validation Progress</h3>
@@ -317,26 +252,26 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Validating sellers with ads.txt entries...</span>
                 <span>
-                  {validationProgress.completed} / {validationProgress.total} (
-                  {Math.round((validationProgress.completed / validationProgress.total) * 100)}%)
+                  {globalValidationProgress.completed} / {globalValidationProgress.total} (
+                  {Math.round((globalValidationProgress.completed / globalValidationProgress.total) * 100)}%)
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
                   className="bg-blue-600 h-3 rounded-full transition-all duration-500 flex items-center justify-center text-xs text-white font-medium"
                   style={{
-                    width: `${Math.max(5, (validationProgress.completed / validationProgress.total) * 100)}%`,
-                    minWidth: validationProgress.completed > 0 ? '20px' : '0',
+                    width: `${Math.max(5, (globalValidationProgress.completed / globalValidationProgress.total) * 100)}%`,
+                    minWidth: globalValidationProgress.completed > 0 ? '20px' : '0',
                   }}
                 >
-                  {validationProgress.completed > 0 &&
-                    Math.round((validationProgress.completed / validationProgress.total) * 100) +
+                  {globalValidationProgress.completed > 0 &&
+                    Math.round((globalValidationProgress.completed / globalValidationProgress.total) * 100) +
                       '%'}
                 </div>
               </div>
-              {validationProgress.failed > 0 && (
+              {globalValidationProgress.failed > 0 && (
                 <div className="text-sm text-red-600">
-                  {validationProgress.failed} validations failed
+                  {globalValidationProgress.failed} validations failed
                 </div>
               )}
             </div>
@@ -412,8 +347,8 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                           String(seller.seller_id)
                         );
                         const isSellerValidating =
-                          isValidating &&
-                          validationResult?.reasons.some((r) => r.key === 'validating');
+                          isGlobalValidating &&
+                          validationResult?.validationMessages?.some((m) => m.key === 'validating');
 
                         return (
                           <div
@@ -502,13 +437,39 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                               {/* Cross-check validation results */}
                               {validationResult &&
                                 !validationResult.isVerified &&
-                                validationResult.reasons.length > 0 && (
+                                ((validationResult.reasons?.length ?? 0) > 0 || (validationResult.validationMessages?.length ?? 0) > 0) && (
                                   <div
                                     className={`flex flex-col space-y-1 mt-2 ${
                                       isSellerValidating ? 'text-blue-600' : 'text-red-600'
                                     }`}
                                   >
-                                    {validationResult.reasons.map((reason, idx) => (
+                                    {/* Display validation messages first (newer format) */}
+                                    {validationResult.validationMessages?.map((message, idx) => (
+                                      <div key={`message-${idx}`} className="space-y-1">
+                                        <div className="flex items-start space-x-2">
+                                          <span
+                                            className={`text-sm font-medium ${
+                                              message.severity === 'error'
+                                                ? 'text-red-600'
+                                                : message.severity === 'warning'
+                                                  ? 'text-yellow-600'
+                                                  : 'text-blue-600'
+                                            }`}
+                                          >
+                                            {message.key === 'validating'
+                                              ? 'Validating cross-check...'
+                                              : message.message || chrome.i18n.getMessage(message.key, message.placeholders) || message.key}
+                                          </span>
+                                        </div>
+                                        {message.description && (
+                                          <p className="text-xs text-gray-600 ml-0">
+                                            {message.description}
+                                          </p>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {/* Fallback to legacy reasons format */}
+                                    {!(validationResult.validationMessages?.length ?? 0) && validationResult.reasons?.map((reason, idx) => (
                                       <span key={idx} className="text-sm">
                                         {reason.key === 'validating'
                                           ? 'Validating cross-check...'
