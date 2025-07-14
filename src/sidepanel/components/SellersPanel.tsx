@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
 import type { FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { ValidationManager, type ValidationProgress } from '../../utils/ValidationManager';
+import { sanitizeKey, validateDomain, validatePublisherId } from '../../utils/security';
 import { DownloadCsvSellersJson } from './DownloadSellersJson';
 import { SearchAndFilter } from './SearchAndFilter';
 import { Tooltip } from './Tooltip';
@@ -72,16 +73,20 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
 
   // Smart validation result getter using global validation results
   const getSellerValidationResult = (domain: string, sellerId: string): ValidityResult | null => {
+    // Sanitize inputs to prevent NoSQL injection
+    const sanitizedDomain = sanitizeKey(domain);
+    const sanitizedSellerId = sanitizeKey(validatePublisherId(sellerId));
+    
     // Find matching ads.txt entry for this seller
     const matchingAdsTxtEntry = adsTxtData?.data.find(
-      (entry) => entry.domain === domain && String(entry.publisherId) === String(sellerId)
+      (entry) => entry.domain === sanitizedDomain && String(entry.publisherId) === sanitizedSellerId
     );
 
     if (!matchingAdsTxtEntry) {
       return null;
     }
 
-    const key = `${domain}-${matchingAdsTxtEntry.publisherId}-${matchingAdsTxtEntry.relationship}`;
+    const key = `${sanitizedDomain}-${matchingAdsTxtEntry.publisherId}-${matchingAdsTxtEntry.relationship}`;
     const result = globalValidationResults.get(key);
 
     if (result) {

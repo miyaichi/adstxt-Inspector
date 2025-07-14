@@ -9,7 +9,7 @@ import {
 import { AdsTxtInspectorSellersProvider } from './AdsTxtInspectorSellersProvider';
 import { convertToValidityResult } from './validationConverter';
 import { Logger } from './logger';
-import { sanitizeKey, validateDomain, validatePublisherId } from './security';
+import { sanitizeKey, validateDomain, validatePublisherId, sanitizeLogInput } from './security';
 
 const logger = new Logger('ValidationManager');
 
@@ -130,19 +130,19 @@ export class ValidationManager {
     // Check if validation is already in progress
     const ongoing = this.ongoingValidations.get(cacheKey);
     if (ongoing) {
-      logger.debug('Validation already in progress for:', cacheKey);
+      logger.debug('Validation already in progress for:', sanitizeLogInput(cacheKey));
       return ongoing;
     }
 
     // Check cache first
     const cached = this.validatedEntriesCache.get(cacheKey);
     if (cached) {
-      logger.debug('Using cached validation for:', cacheKey);
+      logger.debug('Using cached validation for:', sanitizeLogInput(cacheKey));
       return cached;
     }
 
     // Start new validation
-    logger.debug('Starting full validation for:', cacheKey);
+    logger.debug('Starting full validation for:', sanitizeLogInput(cacheKey));
     const validationPromise = this.doFullValidation(adsTxtData, cacheKey);
 
     // Track ongoing validation
@@ -153,7 +153,7 @@ export class ValidationManager {
 
       // Cache the result
       this.validatedEntriesCache.set(cacheKey, result);
-      logger.debug('Cached validation results for:', cacheKey, 'entries:', result.length);
+      logger.debug('Cached validation results for:', sanitizeLogInput(cacheKey), 'entries:', result.length);
 
       return result;
     } finally {
@@ -173,7 +173,7 @@ export class ValidationManager {
 
     // Parse ads.txt content
     const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
-    logger.debug('Parsed', parsedEntries.length, 'entries for', cacheKey);
+    logger.debug('Parsed', parsedEntries.length, 'entries for', sanitizeLogInput(cacheKey));
 
     // Get sellers provider
     const sellersProvider = this.getSellersProvider();
@@ -186,7 +186,7 @@ export class ValidationManager {
       sellersProvider
     );
 
-    logger.debug('Cross-check completed for', cacheKey, 'results:', crossCheckResult.length);
+    logger.debug('Cross-check completed for', sanitizeLogInput(cacheKey), 'results:', crossCheckResult.length);
 
     return crossCheckResult;
   }
@@ -215,12 +215,16 @@ export class ValidationManager {
       // Filter only record entries
       const recordEntries = validatedEntries.filter(isAdsTxtRecord) as ParsedAdsTxtRecord[];
 
-      // Find matching entry
+      // Find matching entry - sanitize inputs to prevent NoSQL injection
+      const sanitizedDomain = sanitizeKey(domain);
+      const sanitizedPublisherId = sanitizeKey(validatePublisherId(entry.publisherId));
+      const sanitizedRelationship = sanitizeKey(entry.relationship);
+      
       const matchingEntry = recordEntries.find((validatedEntry) => {
         return (
-          validatedEntry.domain === domain &&
-          validatedEntry.account_id === entry.publisherId &&
-          validatedEntry.relationship === entry.relationship
+          validatedEntry.domain === sanitizedDomain &&
+          validatedEntry.account_id === sanitizedPublisherId &&
+          validatedEntry.relationship === sanitizedRelationship
         );
       });
 
@@ -255,7 +259,7 @@ export class ValidationManager {
 
       return result;
     } catch (error) {
-      logger.error('Validation failed for entry:', entryKey, error);
+      logger.error('Validation failed for entry:', sanitizeLogInput(entryKey), error);
 
       // Use fallback if available
       if (fallbackFunction) {
@@ -296,7 +300,7 @@ export class ValidationManager {
     const results: ValidationResult[] = [];
     const batchSize = 10; // Process in smaller batches
 
-    logger.debug('Starting batch validation for', requests.length, 'entries');
+    logger.debug('Starting batch validation for', sanitizeLogInput(String(requests.length)), 'entries');
 
     let completed = 0;
     let failed = 0;
@@ -340,7 +344,7 @@ export class ValidationManager {
           results.push(batchResult.value);
           completed++;
         } else {
-          logger.error('Batch validation failed:', batchResult.reason);
+          logger.error('Batch validation failed:', sanitizeLogInput(String(batchResult.reason)));
           failed++;
         }
       }
