@@ -157,9 +157,14 @@ export class ValidationManager {
 
       return result;
     } finally {
-      // Remove from ongoing validations - sanitize key for security
-      const sanitizedCacheKeyForDeletion = sanitizeKey(cacheKey);
-      this.ongoingValidations.delete(sanitizedCacheKeyForDeletion);
+      // Remove from ongoing validations - additional security validation for Map operations
+      if (typeof cacheKey === 'string' && cacheKey.length > 0) {
+        const sanitizedCacheKeyForDeletion = sanitizeKey(cacheKey);
+        // Additional validation: ensure the sanitized key is safe for Map operations
+        if (sanitizedCacheKeyForDeletion && typeof sanitizedCacheKeyForDeletion === 'string') {
+          this.ongoingValidations.delete(sanitizedCacheKeyForDeletion);
+        }
+      }
     }
   }
 
@@ -192,7 +197,21 @@ export class ValidationManager {
 
       return crossCheckResult;
     } catch (error) {
-      logger.error('Full validation failed for', sanitizeLogInput(cacheKey), ':', sanitizeLogInput(String(error)));
+      // Enhanced error logging with more context
+      const errorDetails = {
+        cacheKey: sanitizeLogInput(cacheKey),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage: sanitizeLogInput(String(error)),
+        stackTrace: error instanceof Error && error.stack ? sanitizeLogInput(error.stack.substring(0, 500)) : 'No stack trace available'
+      };
+      
+      logger.error('Full validation failed for', errorDetails.cacheKey, 'Error type:', errorDetails.errorType, 'Message:', errorDetails.errorMessage);
+      
+      // Log stack trace separately for debugging
+      if (process.env.NODE_ENV === 'development') {
+        logger.debug('Stack trace:', errorDetails.stackTrace);
+      }
+      
       // Return empty array on parse/validation failure
       return [];
     }
@@ -227,18 +246,31 @@ export class ValidationManager {
       const sanitizedPublisherId = sanitizeKey(validatePublisherId(entry.publisherId));
       const sanitizedRelationship = sanitizeKey(entry.relationship);
       
-      // Additional validation for database values to prevent injection
-      const matchingEntry = recordEntries.find((validatedEntry) => {
-        const entryDomain = sanitizeKey(String(validatedEntry.domain || ''));
-        const entryAccountId = sanitizeKey(String(validatedEntry.account_id || ''));
-        const entryRelationship = sanitizeKey(String(validatedEntry.relationship || ''));
-        
-        return (
-          entryDomain === sanitizedDomain &&
-          entryAccountId === sanitizedPublisherId &&
-          entryRelationship === sanitizedRelationship
-        );
-      });
+      // Create safe comparison function to prevent injection
+      const createSafeComparison = (expectedDomain: string, expectedPublisherId: string, expectedRelationship: string) => {
+        return (validatedEntry: any): boolean => {
+          // Defensive validation - ensure entry exists and has required properties
+          if (!validatedEntry || typeof validatedEntry !== 'object') {
+            return false;
+          }
+          
+          // Extract and sanitize entry values with null safety
+          const entryDomain = sanitizeKey(String(validatedEntry.domain || ''));
+          const entryAccountId = sanitizeKey(String(validatedEntry.account_id || ''));
+          const entryRelationship = sanitizeKey(String(validatedEntry.relationship || ''));
+          
+          // Perform exact string comparison with sanitized values
+          return (
+            entryDomain === expectedDomain &&
+            entryAccountId === expectedPublisherId &&
+            entryRelationship === expectedRelationship
+          );
+        };
+      };
+      
+      // Use safe comparison function
+      const safeMatcher = createSafeComparison(sanitizedDomain, sanitizedPublisherId, sanitizedRelationship);
+      const matchingEntry = recordEntries.find(safeMatcher);
 
       let result: ValidityResult;
 
@@ -271,16 +303,35 @@ export class ValidationManager {
 
       return result;
     } catch (error) {
-      logger.error('Validation failed for entry:', sanitizeLogInput(entryKey), error);
+      // Enhanced error logging for single entry validation
+      const errorDetails = {
+        entryKey: sanitizeLogInput(entryKey),
+        domain: sanitizeLogInput(domain),
+        publisherId: sanitizeLogInput(entry.publisherId),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage: sanitizeLogInput(String(error)),
+        stackTrace: error instanceof Error && error.stack ? sanitizeLogInput(error.stack.substring(0, 500)) : 'No stack trace available'
+      };
+      
+      logger.error('Validation failed for entry:', errorDetails.entryKey, 'Domain:', errorDetails.domain, 'Publisher ID:', errorDetails.publisherId, 'Error:', errorDetails.errorMessage);
+      
+      // Log detailed error in development
+      if (process.env.NODE_ENV === 'development') {
+        logger.debug('Validation error details:', errorDetails);
+      }
 
       // Use fallback if available
       if (fallbackFunction) {
-        const fallbackResult = fallbackFunction(domain, entry);
-        this.resultsCache.set(sanitizeKey(entryKey), fallbackResult);
-        return fallbackResult;
+        try {
+          const fallbackResult = fallbackFunction(domain, entry);
+          this.resultsCache.set(sanitizeKey(entryKey), fallbackResult);
+          return fallbackResult;
+        } catch (fallbackError) {
+          logger.error('Fallback function also failed:', sanitizeLogInput(String(fallbackError)));
+        }
       }
 
-      // Return error result
+      // Return error result with more specific error information
       const errorResult: ValidityResult = {
         isVerified: false,
         reasons: [],
@@ -288,7 +339,7 @@ export class ValidationManager {
           {
             key: 'validationError',
             severity: 'error' as const,
-            message: 'Validation failed',
+            message: `Validation failed: ${errorDetails.errorType}`,
             description: 'An error occurred during validation. Please try again.',
             placeholders: [],
           },
@@ -371,8 +422,11 @@ export class ValidationManager {
         });
       }
 
-      // Add small delay to make progress visible
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Configurable delay for progress visibility - can be disabled for performance
+      const progressDelay = process.env.NODE_ENV === 'development' ? 100 : 0;
+      if (progressDelay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, progressDelay));
+      }
     }
 
     // Final progress update

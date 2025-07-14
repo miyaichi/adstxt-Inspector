@@ -5,10 +5,17 @@
 /**
  * Sanitize log input to prevent log injection attacks
  * Removes newline characters and control characters that could be used for log injection
+ * @param input - The input string to sanitize
+ * @returns Sanitized string safe for logging
+ * @throws TypeError if input is not a string, null, or undefined
  */
 export function sanitizeLogInput(input: string): string {
-  if (input === null || input === undefined || typeof input !== 'string') {
+  if (input === null || input === undefined) {
     return '';
+  }
+  
+  if (typeof input !== 'string') {
+    throw new TypeError(`Expected string for log input, received ${typeof input}`);
   }
   
   return input
@@ -72,13 +79,40 @@ export function sanitizeUrl(url: string): string {
 }
 
 /**
- * Validate and sanitize publisher ID
+ * Sanitize publisher ID by removing dangerous characters
+ * @param publisherId - The publisher ID to sanitize
+ * @returns Sanitized publisher ID
+ * @throws TypeError if input is not a string
  */
-export function validatePublisherId(publisherId: string): string {
-  if (publisherId === null || publisherId === undefined || typeof publisherId !== 'string') {
-    return '';
+export function sanitizePublisherId(publisherId: string): string {
+  if (publisherId === null || publisherId === undefined) {
+    throw new TypeError('Publisher ID cannot be null or undefined');
+  }
+  
+  if (typeof publisherId !== 'string') {
+    throw new TypeError('Publisher ID must be a string');
   }
   
   // Remove potentially dangerous characters while preserving valid publisher ID formats
-  return publisherId.replace(/[<>\"'&]/g, '').trim();
+  const sanitized = publisherId.replace(/[<>\"'&]/g, '').trim();
+  
+  // Validate that we still have a meaningful publisher ID
+  if (sanitized.length === 0) {
+    throw new Error('Publisher ID cannot be empty after sanitization');
+  }
+  
+  return sanitized;
+}
+
+/**
+ * Legacy function name for backward compatibility
+ * @deprecated Use sanitizePublisherId instead
+ */
+export function validatePublisherId(publisherId: string): string {
+  try {
+    return sanitizePublisherId(publisherId);
+  } catch (error) {
+    // For backward compatibility, return empty string instead of throwing
+    return '';
+  }
 }

@@ -51,7 +51,36 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
         cache: await this.getCacheInfo(domain),
       };
     } catch (error) {
-      // Return empty result on error
+      // Enhanced error handling with specific error type detection
+      let errorMessage = 'Unknown error';
+      let shouldRetry = false;
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Check for specific error types that might warrant retry
+        if (error.name === 'NetworkError' || 
+            error.message.includes('timeout') || 
+            error.message.includes('ECONNRESET') ||
+            error.message.includes('ENOTFOUND')) {
+          shouldRetry = true;
+          errorMessage = `Network error: ${error.message}`;
+        } else if (error.message.includes('JSON')) {
+          errorMessage = `JSON parsing error: ${error.message}`;
+        } else if (error.message.includes('HTTP')) {
+          errorMessage = `HTTP error: ${error.message}`;
+        }
+      }
+      
+      // Log the error with context
+      console.error(`[AdsTxtInspectorSellersProvider] batchGetSellers failed for domain ${domain}:`, {
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage,
+        sellerCount: sellerIds.length,
+        shouldRetry
+      });
+      
+      // Return empty result on error with enhanced error information
       return {
         domain,
         requested_count: sellerIds.length,
@@ -61,9 +90,9 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
           seller: null,
           found: false,
           source: 'cache' as const,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: errorMessage,
         })),
-        metadata: {},
+        metadata: { error: errorMessage, shouldRetry },
         cache: { is_cached: false, status: 'error' as const },
       };
     }

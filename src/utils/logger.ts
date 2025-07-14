@@ -32,9 +32,17 @@ export class Logger {
   private sanitizeAndLog(level: keyof LogLevel, logFunction: Function, message: string, ...args: any[]) {
     if (this.shouldLog(level)) {
       const sanitizedMessage = sanitizeLogInput(message);
-      const sanitizedArgs = args.map(arg => 
-        typeof arg === 'string' ? sanitizeLogInput(arg) : arg
-      );
+      const sanitizedArgs = args.map(arg => {
+        if (typeof arg === 'string') {
+          try {
+            return sanitizeLogInput(arg);
+          } catch (error) {
+            // If sanitization fails, convert to string and try again
+            return sanitizeLogInput(String(arg));
+          }
+        }
+        return arg;
+      });
       logFunction(`[${this.context}] ${sanitizedMessage}`, ...sanitizedArgs);
     }
   }
