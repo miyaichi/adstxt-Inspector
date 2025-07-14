@@ -45,36 +45,75 @@ export function sanitizeMapKey(key: string): string {
     throw new SecurityError(`Map key must be a string, received ${typeof key}`);
   }
   
-  // Second level: Length validation 
+  // Second level: Length validation (reduced from 1000 to 256 for DoS prevention)
   if (key.length === 0) {
     throw new SecurityError('Map key cannot be empty');
   }
   
-  if (key.length > 1000) {
-    throw new SecurityError('Map key exceeds maximum length of 1000 characters');
+  if (key.length > 256) {
+    throw new SecurityError('Map key exceeds maximum allowed length');
   }
   
-  // Third level: Character validation - only allow very safe characters
-  const safeKeyPattern = /^[a-zA-Z0-9\-_\.]+$/;
-  if (!safeKeyPattern.test(key)) {
-    throw new SecurityError(`Map key contains unsafe characters: ${key}`);
+  // Third level: Character-by-character validation (whitelist approach)
+  const allowedChars = new Set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.');
+  for (let i = 0; i < key.length; i++) {
+    if (!allowedChars.has(key[i])) {
+      throw new SecurityError('Map key contains invalid characters');
+    }
   }
   
-  // Fourth level: Prevent known injection patterns
+  // Fourth level: Prevent known injection patterns with exhaustive checking
   const dangerousPatterns = [
     '__proto__', 'constructor', 'prototype',
     'toString', 'valueOf', 'hasOwnProperty',
-    '../', './', '\\', '<', '>', '"', "'", '&', '|', ';', '`'
+    '../', './', '\\', '<', '>', '"', "'", '&', '|', ';', '`',
+    // Additional patterns that could bypass previous checks
+    '___proto___', '...constructor...', '_.prototype._',
+    'eval', 'function', 'return', 'this', 'window', 'global',
+    // Common NoSQL injection patterns
+    '$where', '$ne', '$gt', '$lt', '$regex', '$exists'
   ];
   
   const lowerKey = key.toLowerCase();
   for (const pattern of dangerousPatterns) {
-    if (lowerKey.includes(pattern)) {
-      throw new SecurityError(`Map key contains dangerous pattern: ${pattern}`);
+    if (lowerKey.includes(pattern.toLowerCase())) {
+      throw new SecurityError('Map key contains prohibited patterns');
+    }
+  }
+  
+  // Fifth level: Prevent consecutive dangerous character combinations
+  const dangerousSequences = ['__', '..', '--', '_.', '._'];
+  for (const sequence of dangerousSequences) {
+    if (key.includes(sequence)) {
+      throw new SecurityError('Map key contains potentially dangerous character sequences');
     }
   }
   
   return key;
+}
+
+/**
+ * Generate cryptographically secure random key for fallback scenarios
+ */
+function generateSecureRandomKey(): string {
+  // Use crypto.getRandomValues for cryptographically secure randomness
+  const array = new Uint8Array(16);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(array);
+  } else {
+    // Fallback for environments without crypto.getRandomValues
+    for (let i = 0; i < array.length; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  
+  // Convert to base64 and make it URL-safe
+  const base64 = btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+  
+  return `secure_${base64}`;
 }
 
 /**
@@ -85,9 +124,15 @@ export function sanitizeKey(key: string): string {
   try {
     return sanitizeMapKey(key);
   } catch (error) {
-    // For backward compatibility, return safe fallback instead of throwing
-    console.warn('sanitizeKey: Falling back to safe default due to security issue:', error);
-    return `safe_key_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // For backward compatibility, return cryptographically secure fallback instead of throwing
+    const secureKey = generateSecureRandomKey();
+    
+    // Use structured logging instead of console.warn
+    if (typeof console !== 'undefined' && console.error) {
+      console.error('[SECURITY] sanitizeKey: Generated secure fallback key due to validation failure');
+    }
+    
+    return secureKey;
   }
 }
 
@@ -102,23 +147,73 @@ export class SecurityError extends Error {
 }
 
 /**
- * Secure Map implementation that prevents NoSQL injection attacks
- * All keys are strictly validated before any operations
+ * Deep object sanitization to prevent prototype pollution
+ */
+function deepSanitizeObject(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  // Prevent prototype pollution by rejecting dangerous keys
+  const dangerousKeys = ['__proto__', 'constructor', 'prototype', 'valueOf', 'toString'];
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepSanitizeObject(item));
+  }
+
+  const sanitized: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    // Skip dangerous keys completely
+    if (dangerousKeys.includes(key)) {
+      continue;
+    }
+    
+    // Sanitize key and recursively sanitize value
+    try {
+      const sanitizedKey = sanitizeMapKey(key);
+      sanitized[sanitizedKey] = deepSanitizeObject(value);
+    } catch (error) {
+      // Skip keys that fail sanitization
+      continue;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Secure Map implementation that prevents NoSQL injection attacks and prototype pollution
+ * All keys and values are strictly validated before any operations
  */
 export class SecureMap<T> {
   private readonly internalMap = new Map<string, T>();
   private readonly name: string;
+  private readonly mutex = new Map<string, Promise<any>>(); // Simple mutex for atomic operations
 
   constructor(name: string = 'SecureMap') {
-    this.name = name;
+    // Validate and sanitize constructor name
+    if (typeof name !== 'string' || name.length === 0) {
+      throw new SecurityError('SecureMap name must be a non-empty string');
+    }
+    
+    if (name.length > 100) {
+      throw new SecurityError('SecureMap name must be less than 100 characters');
+    }
+    
+    // Sanitize the name to prevent any potential issues
+    this.name = name.replace(/[^a-zA-Z0-9\-_]/g, '').substring(0, 100);
   }
 
   /**
-   * Set a value with secure key validation
+   * Set a value with secure key validation and prototype pollution prevention
    */
   set(key: string, value: T): this {
     const secureKey = sanitizeMapKey(key);
-    this.internalMap.set(secureKey, value);
+    
+    // Deep sanitize the value to prevent prototype pollution
+    const sanitizedValue = deepSanitizeObject(value) as T;
+    
+    this.internalMap.set(secureKey, sanitizedValue);
     return this;
   }
 
@@ -136,6 +231,55 @@ export class SecureMap<T> {
   has(key: string): boolean {
     const secureKey = sanitizeMapKey(key);
     return this.internalMap.has(secureKey);
+  }
+
+  /**
+   * Atomic get-or-set operation to prevent race conditions
+   */
+  async getOrSet(key: string, factory: () => Promise<T> | T): Promise<T> {
+    const secureKey = sanitizeMapKey(key);
+    
+    // Check if value already exists
+    const existing = this.internalMap.get(secureKey);
+    if (existing !== undefined) {
+      return existing;
+    }
+    
+    // Use mutex to prevent concurrent factory calls for the same key
+    const mutexKey = `mutex_${secureKey}`;
+    const existingMutex = this.mutex.get(mutexKey);
+    
+    if (existingMutex) {
+      // Wait for existing operation to complete
+      return await existingMutex;
+    }
+    
+    // Create new mutex for this operation
+    const operation = (async () => {
+      try {
+        // Double-check after acquiring mutex
+        const doubleCheck = this.internalMap.get(secureKey);
+        if (doubleCheck !== undefined) {
+          return doubleCheck;
+        }
+        
+        // Call factory and sanitize result
+        const value = await factory();
+        const sanitizedValue = deepSanitizeObject(value) as T;
+        
+        // Set the value atomically
+        this.internalMap.set(secureKey, sanitizedValue);
+        return sanitizedValue;
+      } finally {
+        // Clean up mutex
+        this.mutex.delete(mutexKey);
+      }
+    })();
+    
+    // Store the operation in mutex map
+    this.mutex.set(mutexKey, operation);
+    
+    return await operation;
   }
 
   /**

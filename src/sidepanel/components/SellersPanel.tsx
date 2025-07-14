@@ -87,7 +87,15 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
             return entryDomain === sanitizedDomain && entryPublisherId === sanitizedSellerId;
           } catch (error) {
             // If sanitization fails, this entry is potentially dangerous
-            console.warn('Entry sanitization failed in getSellerValidationResult:', error);
+            // Use structured logging for security events
+            if (typeof console !== 'undefined' && console.error) {
+              console.error('[SECURITY] Entry sanitization failed in getSellerValidationResult', {
+                timestamp: new Date().toISOString(),
+                component: 'SellersPanel.getSellerValidationResult',
+                securityEvent: 'sanitization_failure',
+                // Don't log the actual values to prevent information disclosure
+              });
+            }
             return false;
           }
         }
@@ -101,7 +109,15 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
       const result = globalValidationResults.get(key);
     } catch (error) {
       // If any sanitization fails, return null for safety
-      console.warn('Security error in getSellerValidationResult:', error);
+      // Use structured logging for security events
+      if (typeof console !== 'undefined' && console.error) {
+        console.error('[SECURITY] Security error in getSellerValidationResult', {
+          timestamp: new Date().toISOString(),
+          component: 'SellersPanel.getSellerValidationResult',
+          securityEvent: 'validation_failure',
+          // Don't log the actual values to prevent information disclosure
+        });
+      }
       return null;
     }
 

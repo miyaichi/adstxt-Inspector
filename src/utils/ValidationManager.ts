@@ -121,45 +121,22 @@ export class ValidationManager {
   }
 
   /**
-   * Perform full validation for an ads.txt file
-   * This is done once per ads.txt and cached
+   * Perform full validation for an ads.txt file with atomic operations
+   * This is done once per ads.txt and cached safely
    */
   private async performFullValidation(adsTxtData: FetchAdsTxtResult): Promise<ParsedAdsTxtEntry[]> {
     const cacheKey = this.getAdsTxtCacheKey(adsTxtData);
 
-    // Check if validation is already in progress - SecureMap handles key sanitization
-    const ongoing = this.ongoingValidations.get(cacheKey);
-    if (ongoing) {
-      logger.debug('Validation already in progress for:', sanitizeLogInput(cacheKey));
-      return ongoing;
-    }
-
-    // Check cache first - SecureMap handles key sanitization
-    const cached = this.validatedEntriesCache.get(cacheKey);
-    if (cached) {
-      logger.debug('Using cached validation for:', sanitizeLogInput(cacheKey));
-      return cached;
-    }
-
-    // Start new validation
-    logger.debug('Starting full validation for:', sanitizeLogInput(cacheKey));
-    const validationPromise = this.doFullValidation(adsTxtData, cacheKey);
-
-    // Track ongoing validation - SecureMap handles key sanitization automatically
-    this.ongoingValidations.set(cacheKey, validationPromise);
-
-    try {
-      const result = await validationPromise;
-
-      // Cache the result - SecureMap handles key sanitization automatically
-      this.validatedEntriesCache.set(cacheKey, result);
+    // Use atomic get-or-set to prevent race conditions
+    return await this.validatedEntriesCache.getOrSet(cacheKey, async () => {
+      logger.debug('Starting full validation for:', sanitizeLogInput(cacheKey));
+      
+      const result = await this.doFullValidation(adsTxtData, cacheKey);
+      
       logger.debug('Cached validation results for:', sanitizeLogInput(cacheKey), 'entries:', sanitizeLogInput(String(result.length)));
-
+      
       return result;
-    } finally {
-      // Remove from ongoing validations - SecureMap provides injection-safe deletion
-      this.ongoingValidations.delete(cacheKey);
-    }
+    });
   }
 
   /**
@@ -266,7 +243,7 @@ export class ValidationManager {
             entryRelationship = sanitizeMapKey(String(validatedEntry.relationship || ''));
           } catch (error) {
             // If sanitization fails, this entry is potentially dangerous
-            logger.warn('Entry sanitization failed, rejecting entry:', error);
+            logger.warn('Entry sanitization failed, rejecting entry for security reasons');
             return false;
           }
           
