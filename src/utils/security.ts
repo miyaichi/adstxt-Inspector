@@ -7,8 +7,8 @@
  * Removes newline characters and control characters that could be used for log injection
  */
 export function sanitizeLogInput(input: string): string {
-  if (typeof input !== 'string') {
-    return String(input);
+  if (input === null || input === undefined || typeof input !== 'string') {
+    return '';
   }
   
   return input
@@ -22,8 +22,8 @@ export function sanitizeLogInput(input: string): string {
  * Ensures the key contains only safe characters
  */
 export function sanitizeKey(key: string): string {
-  if (typeof key !== 'string') {
-    return String(key);
+  if (key === null || key === undefined || typeof key !== 'string') {
+    return '';
   }
   
   // Allow only alphanumeric, hyphens, underscores, and dots
@@ -34,7 +34,7 @@ export function sanitizeKey(key: string): string {
  * Validate domain name format
  */
 export function validateDomain(domain: string): boolean {
-  if (typeof domain !== 'string' || domain.length === 0) {
+  if (domain === null || domain === undefined || typeof domain !== 'string' || domain.length === 0) {
     return false;
   }
   
@@ -47,7 +47,7 @@ export function validateDomain(domain: string): boolean {
  * Sanitize URL for safe logging and processing
  */
 export function sanitizeUrl(url: string): string {
-  if (typeof url !== 'string') {
+  if (url === null || url === undefined || typeof url !== 'string') {
     return '';
   }
   
@@ -63,7 +63,7 @@ export function sanitizeUrl(url: string): string {
  * Validate and sanitize publisher ID
  */
 export function validatePublisherId(publisherId: string): string {
-  if (typeof publisherId !== 'string') {
+  if (publisherId === null || publisherId === undefined || typeof publisherId !== 'string') {
     return '';
   }
   

@@ -128,14 +128,14 @@ export class ValidationManager {
     const cacheKey = this.getAdsTxtCacheKey(adsTxtData);
 
     // Check if validation is already in progress
-    const ongoing = this.ongoingValidations.get(cacheKey);
+    const ongoing = this.ongoingValidations.get(sanitizeKey(cacheKey));
     if (ongoing) {
       logger.debug('Validation already in progress for:', sanitizeLogInput(cacheKey));
       return ongoing;
     }
 
     // Check cache first
-    const cached = this.validatedEntriesCache.get(cacheKey);
+    const cached = this.validatedEntriesCache.get(sanitizeKey(cacheKey));
     if (cached) {
       logger.debug('Using cached validation for:', sanitizeLogInput(cacheKey));
       return cached;
@@ -146,19 +146,19 @@ export class ValidationManager {
     const validationPromise = this.doFullValidation(adsTxtData, cacheKey);
 
     // Track ongoing validation
-    this.ongoingValidations.set(cacheKey, validationPromise);
+    this.ongoingValidations.set(sanitizeKey(cacheKey), validationPromise);
 
     try {
       const result = await validationPromise;
 
       // Cache the result
-      this.validatedEntriesCache.set(cacheKey, result);
+      this.validatedEntriesCache.set(sanitizeKey(cacheKey), result);
       logger.debug('Cached validation results for:', sanitizeLogInput(cacheKey), 'entries:', result.length);
 
       return result;
     } finally {
-      // Remove from ongoing validations
-      this.ongoingValidations.delete(cacheKey);
+      // Remove from ongoing validations - sanitize key for security
+      this.ongoingValidations.delete(sanitizeKey(cacheKey));
     }
   }
 
@@ -171,24 +171,30 @@ export class ValidationManager {
   ): Promise<ParsedAdsTxtEntry[]> {
     const ownerDomain = adsTxtData.variables?.ownerDomain;
 
-    // Parse ads.txt content
-    const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
-    logger.debug('Parsed', parsedEntries.length, 'entries for', sanitizeLogInput(cacheKey));
+    try {
+      // Parse ads.txt content
+      const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
+      logger.debug('Parsed', parsedEntries.length, 'entries for', sanitizeLogInput(cacheKey));
 
-    // Get sellers provider
-    const sellersProvider = this.getSellersProvider();
+      // Get sellers provider
+      const sellersProvider = this.getSellersProvider();
 
-    // Cross-check with sellers.json
-    const crossCheckResult = await crossCheckAdsTxtRecords(
-      ownerDomain || new URL(adsTxtData.adsTxtUrl).hostname,
-      parsedEntries,
-      null, // No cached content for duplicate check yet
-      sellersProvider
-    );
+      // Cross-check with sellers.json
+      const crossCheckResult = await crossCheckAdsTxtRecords(
+        ownerDomain || new URL(adsTxtData.adsTxtUrl).hostname,
+        parsedEntries,
+        null, // No cached content for duplicate check yet
+        sellersProvider
+      );
 
-    logger.debug('Cross-check completed for', sanitizeLogInput(cacheKey), 'results:', crossCheckResult.length);
+      logger.debug('Cross-check completed for', sanitizeLogInput(cacheKey), 'results:', crossCheckResult.length);
 
-    return crossCheckResult;
+      return crossCheckResult;
+    } catch (error) {
+      logger.error('Full validation failed for', sanitizeLogInput(cacheKey), ':', sanitizeLogInput(String(error)));
+      // Return empty array on parse/validation failure
+      return [];
+    }
   }
 
   /**
@@ -203,7 +209,7 @@ export class ValidationManager {
     const entryKey = this.getEntryKey(domain, entry);
 
     // Check entry cache first
-    const cached = this.resultsCache.get(entryKey);
+    const cached = this.resultsCache.get(sanitizeKey(entryKey));
     if (cached) {
       return cached;
     }
@@ -255,7 +261,7 @@ export class ValidationManager {
       }
 
       // Cache the result
-      this.resultsCache.set(entryKey, result);
+      this.resultsCache.set(sanitizeKey(entryKey), result);
 
       return result;
     } catch (error) {
@@ -264,7 +270,7 @@ export class ValidationManager {
       // Use fallback if available
       if (fallbackFunction) {
         const fallbackResult = fallbackFunction(domain, entry);
-        this.resultsCache.set(entryKey, fallbackResult);
+        this.resultsCache.set(sanitizeKey(entryKey), fallbackResult);
         return fallbackResult;
       }
 
@@ -283,7 +289,7 @@ export class ValidationManager {
         ],
       };
 
-      this.resultsCache.set(entryKey, errorResult);
+      this.resultsCache.set(sanitizeKey(entryKey), errorResult);
       return errorResult;
     }
   }
