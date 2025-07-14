@@ -85,8 +85,8 @@ export class ValidationManager {
    */
   private getAdsTxtCacheKey(adsTxtData: FetchAdsTxtResult): string {
     const sanitizedUrl = sanitizeKey(adsTxtData.adsTxtUrl);
-    const contentLength = adsTxtData.adsTxtContent.length;
-    return `${sanitizedUrl}-${contentLength}`;
+    const sanitizedContentLength = sanitizeKey(String(adsTxtData.adsTxtContent.length));
+    return sanitizeKey(`${sanitizedUrl}-${sanitizedContentLength}`);
   }
 
   /**
@@ -102,7 +102,7 @@ export class ValidationManager {
     const sanitizedPublisherId = sanitizeKey(validatePublisherId(entry.publisherId));
     const sanitizedRelationship = sanitizeKey(entry.relationship);
     
-    return `${sanitizedDomain}-${sanitizedPublisherId}-${sanitizedRelationship}`;
+    return sanitizeKey(`${sanitizedDomain}-${sanitizedPublisherId}-${sanitizedRelationship}`);
   }
 
   /**
@@ -153,7 +153,7 @@ export class ValidationManager {
 
       // Cache the result
       this.validatedEntriesCache.set(sanitizeKey(cacheKey), result);
-      logger.debug('Cached validation results for:', sanitizeLogInput(cacheKey), 'entries:', result.length);
+      logger.debug('Cached validation results for:', sanitizeLogInput(cacheKey), 'entries:', sanitizeLogInput(String(result.length)));
 
       return result;
     } finally {
@@ -174,7 +174,7 @@ export class ValidationManager {
     try {
       // Parse ads.txt content
       const parsedEntries = parseAdsTxtContent(adsTxtData.adsTxtContent, ownerDomain);
-      logger.debug('Parsed', parsedEntries.length, 'entries for', sanitizeLogInput(cacheKey));
+      logger.debug('Parsed', sanitizeLogInput(String(parsedEntries.length)), 'entries for', sanitizeLogInput(cacheKey));
 
       // Get sellers provider
       const sellersProvider = this.getSellersProvider();
@@ -187,7 +187,7 @@ export class ValidationManager {
         sellersProvider
       );
 
-      logger.debug('Cross-check completed for', sanitizeLogInput(cacheKey), 'results:', crossCheckResult.length);
+      logger.debug('Cross-check completed for', sanitizeLogInput(cacheKey), 'results:', sanitizeLogInput(String(crossCheckResult.length)));
 
       return crossCheckResult;
     } catch (error) {
@@ -228,9 +228,9 @@ export class ValidationManager {
       
       const matchingEntry = recordEntries.find((validatedEntry) => {
         return (
-          validatedEntry.domain === sanitizedDomain &&
-          validatedEntry.account_id === sanitizedPublisherId &&
-          validatedEntry.relationship === sanitizedRelationship
+          sanitizeKey(validatedEntry.domain) === sanitizedDomain &&
+          sanitizeKey(String(validatedEntry.account_id)) === sanitizedPublisherId &&
+          sanitizeKey(validatedEntry.relationship) === sanitizedRelationship
         );
       });
 

@@ -53,9 +53,13 @@ export function sanitizeUrl(url: string): string {
   
   try {
     const urlObj = new URL(url);
-    return urlObj.toString();
+    // Additional sanitization of the URL components
+    const sanitizedUrl = urlObj.toString();
+    // Remove potentially dangerous characters and limit length
+    return sanitizeLogInput(sanitizedUrl).substring(0, 2048);
   } catch {
-    return sanitizeLogInput(url);
+    // If URL parsing fails, apply aggressive sanitization
+    return sanitizeLogInput(url).substring(0, 256);
   }
 }
 
