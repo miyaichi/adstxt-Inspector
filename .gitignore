@@ -30,3 +30,5 @@ test/results
 venv/
 .venv/
 
+# GitHub Packages Authentication
+.npmrc
