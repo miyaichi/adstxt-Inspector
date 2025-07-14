@@ -107,6 +107,29 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
 
       const key = sanitizeMapKey(`${sanitizedDomain}-${matchingAdsTxtEntry.publisherId}-${matchingAdsTxtEntry.relationship}`);
       const result = globalValidationResults.get(key);
+
+      if (result) {
+        return result;
+      }
+
+      // If validation is in progress, show loading state
+      if (isGlobalValidating) {
+        return {
+          isVerified: false,
+          reasons: [],
+          validationMessages: [
+            {
+              key: 'validating',
+              severity: 'info' as const,
+              message: 'Validating...',
+              placeholders: [],
+            },
+          ],
+        };
+      }
+
+      // Fallback to sync validation
+      return isVerifiedEntry(domain, matchingAdsTxtEntry);
     } catch (error) {
       // If any sanitization fails, return null for safety
       // Use structured logging for security events
@@ -120,29 +143,6 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
       }
       return null;
     }
-
-    if (result) {
-      return result;
-    }
-
-    // If validation is in progress, show loading state
-    if (isGlobalValidating) {
-      return {
-        isVerified: false,
-        reasons: [],
-        validationMessages: [
-          {
-            key: 'validating',
-            severity: 'info' as const,
-            message: 'Validating...',
-            placeholders: [],
-          },
-        ],
-      };
-    }
-
-    // Fallback to sync validation
-    return isVerifiedEntry(domain, matchingAdsTxtEntry);
   };
 
   // Process and filter sellers data

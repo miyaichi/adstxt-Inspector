@@ -92,7 +92,7 @@ export class AdsTxtInspectorSellersProvider implements SellersJsonProvider {
           source: 'cache' as const,
           error: errorMessage,
         })),
-        metadata: { error: errorMessage, shouldRetry },
+        metadata: {},
         cache: { is_cached: false, status: 'error' as const },
       };
     }
