@@ -107,23 +107,8 @@
   "multiple_manager_domain_declarations": {
     "message": "国 $1 に複数の MANAGERDOMAIN 宣言があります"
   },
-  "inventory_from_both_domains": {
-    "message": "OWNERDOMAIN と MANAGERDOMAIN の両方のセラーから在庫が利用可能です"
-  },
   "no_data_available": {
     "message": "データがありません"
-  },
-  "summary_overview": {
-    "message": "概要"
-  },
-  "transaction_summary": {
-    "message": "取引サマリー"
-  },
-  "transaction_patterns": {
-    "message": "取引パターン"
-  },
-  "seller_type_analytics": {
-    "message": "Seller タイプの分析"
   },
   "filter_options": {
     "message": "フィルターオプション"
@@ -140,70 +125,10 @@
   "error_10040_too_many_redirects": {
     "message": "ルートドメイン内で5回を超えるリダイレクトが発生しています。(e:10040)"
   },
-  "error_10050_external_redirect_limit": {
-    "message": "ルートドメイン外への1回のリダイレクト制限を超えています。(e:10050)"
-  },
-  "error_11010_missing_required_fields": {
-    "message": "各行には3つのフィールドが必要です。(e:11010)"
-  },
-  "error_11020_invalid_relationship": {
-    "message": "3番目のフィールドはDIRECTまたはRESELLERでなければなりません。(e:11020)"
-  },
-  "error_11030_invalid_domain": {
-    "message": "広告システムドメインが有効ではありません。(e:11030)"
-  },
   "error_11040_empty_file": {
     "message": "少なくとも1つの有効なエントリが必要です。(e:11040)"
-  },
-  "error_11050_invalid_characters": {
-    "message": "フィールドにエスケープされていないタブ、カンマ、または空白が含まれています。(e:11050)"
-  },
-  "alert_12010_missing_sellers_json": {
-    "message": "広告システムに sellers.json ファイルがありません。(a:12010)"
-  },
-  "error_12020_publisher_id_not_listed": {
-    "message": "Publisher ID が sellers.json にありません。ID の登録を依頼するか、Ads.txt からこの ID を削除してください。(e:12020)"
-  },
-  "alert_12030_domain_mismatch": {
-    "message": "セラーのドメイン $1 が OWNERDOMAIN と一致しません。(a:12030)"
-  },
-  "alert_12040_relationship_type_both": {
-    "message": "Publisher ID は BOTH として登録されています。(a:12040)"
-  },
-  "alert_12050_relationship_mismatch": {
-    "message": "Publisher ID が PUBLISHER ではなく INTERMEDIARYとして登録されています。(a:12050)"
-  },
-  "error_12060_duplicate_seller_id": {
-    "message": "Publisher ID が sellers.json に複数回登録されています。(e:12060)"
-  },
-  "alert_13010_missing_sellers_json": {
-    "message": "この広告システムの sellers.json がありません。広告システムの管理者に sellers.json の設置を依頼してください。(a:13010)"
-  },
-  "error_13020_publisher_id_not_listed": {
-    "message": "Publisher ID が sellers.json にありません。ID の登録を依頼するか、Ads.txt からこの ID を削除してください。(e:13020)"
-  },
-  "alert_13030_domain_mismatch": {
-    "message": "リセラーのドメイン $1 が正しいか確認してください。(a:13030)"
-  },
-  "alert_13040_relationship_type_both": {
-    "message": "Publisher ID は BOTH として登録されています。(a:13040)"
-  },
-  "error_13050_relationship_mismatch": {
-    "message": "Publisher ID が INTERMEDIARY ではなく PUBLISHER として登録されています。(e:13050)"
-  },
-  "alert_13060_duplicate_seller_id": {
-    "message": "Publisher ID が sellers.json に複数回登録されています。(a:13060)"
-  },
-  "error_14020_invalid_subdomain": {
-    "message": "サブドメインが有効なドメインではありません。(e:14020)"
-  },
-  "error_14030_invalid_subdomain": {
-    "message": "ルートドメインのサブドメインではありません。(e:14030)"
   },
   "error_fetching_file": {
     "message": "$1 の取得中にエラーが発生しました"
   },
-  "error_unknown_error": {
-    "message": "不明なエラーが発生しました"
-  }
 }
