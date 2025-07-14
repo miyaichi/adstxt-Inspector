@@ -20,9 +20,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
+          registry-url: 'https://npm.pkg.github.com'
 
       - name: Install dependencies
         run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
 
       - name: Build Chrome Extension
         run: npm run build
