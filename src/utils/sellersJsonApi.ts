@@ -109,7 +109,6 @@ export class SellersJsonApi {
 
       const data = await response.json();
 
-      console.log('SellersJsonApi fetchSeller success:', { domain, sellerId });
       return {
         success: true,
         data,
@@ -246,10 +245,6 @@ export class SellersJsonApi {
 
       const data = await response.json();
 
-      console.log('SellersJsonApi fetchSellersBatch success:', {
-        domain,
-        sellerIds: sellerIds.length,
-      });
       return {
         success: true,
         data,
