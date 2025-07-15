@@ -1,3 +1,12 @@
+import {
+  BatchSellersResult,
+  CacheInfo,
+  createValidationMessage,
+  crossCheckAdsTxtRecords,
+  isAdsTxtRecord,
+  SellersJsonMetadata,
+  SellersJsonProvider
+} from '@miyaichi/ads-txt-validator';
 import { useState } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
@@ -107,6 +116,104 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     try {
       const domain = new URL(url).hostname;
       const adsTxtResult = await fetchAdsTxt(domain, appAdsTxt);
+      
+      // Perform cross-checking with ads-txt-validator if we have parsed entries
+      if (adsTxtResult.parsedEntries) {
+        // Create SellersJsonProvider using SellersJsonApi
+        const sellersJsonProvider: SellersJsonProvider = {
+          async batchGetSellers(domain: string, sellerIds: string[]): Promise<BatchSellersResult> {
+            try {
+              // Use the batch API from SellersJsonApi
+              const response = await fetch('/api/sellers/batch', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  domain,
+                  sellerIds,
+                }),
+              });
+              
+              if (!response.ok) {
+                throw new Error(`API request failed: ${response.status}`);
+              }
+              
+              const data = await response.json();
+              
+              if (data.success && data.data) {
+                return {
+                  domain: data.data.domain,
+                  requested_count: data.data.requested_count,
+                  found_count: data.data.found_count,
+                  results: data.data.results.map((result: any) => ({
+                    sellerId: result.sellerId,
+                    seller: result.seller,
+                    found: result.found,
+                    source: result.source || 'fresh',
+                    error: result.error,
+                  })),
+                  metadata: data.data.metadata || {},
+                  cache: data.data.cache || { is_cached: false, status: 'success' },
+                };
+              } else {
+                throw new Error(data.error || 'Unknown API error');
+              }
+            } catch (error) {
+              // Fallback to existing fetcher if API fails
+              logger.warn('API failed, falling back to direct fetch:', error);
+              const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
+              const results = await SellersJsonFetcher.fetchSellers(requests, FETCH_OPTIONS);
+              
+              const batchResults = results.map((result) => ({
+                sellerId: result.sellerId,
+                seller: result.seller,
+                found: result.seller !== null,
+                source: 'fresh' as const,
+                error: result.error,
+              }));
+              
+              return {
+                domain,
+                requested_count: sellerIds.length,
+                found_count: batchResults.filter((r) => r.found).length,
+                results: batchResults,
+                metadata: {},
+                cache: { is_cached: false, status: 'success' },
+              };
+            }
+          },
+          
+          async hasSellerJson(domain: string): Promise<boolean> {
+            try {
+              const result = await SellersJsonFetcher.fetch(domain, FETCH_OPTIONS);
+              return result.data !== null;
+            } catch {
+              return false;
+            }
+          },
+          
+          async getMetadata(domain: string): Promise<SellersJsonMetadata> {
+            return {};
+          },
+          
+          async getCacheInfo(domain: string): Promise<CacheInfo> {
+            return { is_cached: false, status: 'success' };
+          },
+        };
+        
+        // Perform cross-checking
+        const validatedEntries = await crossCheckAdsTxtRecords(
+          domain,
+          adsTxtResult.parsedEntries,
+          null, // No cached content for now
+          sellersJsonProvider
+        );
+        
+        // Update the result with validated entries
+        adsTxtResult.parsedEntries = validatedEntries;
+      }
+      
       setAdsTxtData(adsTxtResult);
       logger.debug(appAdsTxt ? 'App-ads.txt' : 'Ads.txt', adsTxtResult);
 
@@ -122,102 +229,73 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   };
 
   /**
-   * Validate whether the specified ads.txt/app-ads.txt entry is valid
+   * Validate whether the specified ads.txt/app-ads.txt entry is valid using ads-txt-validator
    * @param domain
    * @param entry
    * @returns ValidityResult
    */
   const isVerifiedEntry = (domain: string, entry: AdsTxt): ValidityResult => {
+    // Find the corresponding parsed entry from ads-txt-validator
+    const parsedEntries = adsTxtData?.parsedEntries || [];
+    const matchingEntry = parsedEntries.find((parsed) => {
+      if (!isAdsTxtRecord(parsed)) return false;
+      return (
+        parsed.domain === entry.domain &&
+        parsed.account_id === entry.publisherId &&
+        parsed.relationship === entry.relationship
+      );
+    });
+
+    if (!matchingEntry || !isAdsTxtRecord(matchingEntry)) {
+      return {
+        isVerified: false,
+        reasons: [{ key: 'error_entry_not_found', placeholders: [entry.publisherId] }],
+      };
+    }
+
     const reasons: { key: string; placeholders: string[] }[] = [];
-    const currentAnalysis = sellerAnalysis.find((a) => a.domain === domain);
-    const ownerDomain = adsTxtData?.variables?.ownerDomain || '';
-    const managerDomains = adsTxtData?.variables?.managerDomains || [];
 
-    // Test Case 11 & 16: Does the advertising system have a sellers.json file?
-    if (!currentAnalysis) {
-      const code = entry.relationship === 'DIRECT' ? '12010' : '13010';
-      return {
-        isVerified: false,
-        reasons: [{ key: `alert_${code}_missing_sellers.json`, placeholders: [domain] }],
-      };
-    }
-
-    // Test Case 12 & 17: Does the sellers.json file have the publisher account ID?
-    const seller = currentAnalysis?.sellersJson?.data.find(
-      (s) => String(s.seller_id) === String(entry.publisherId)
-    );
-
-    if (!seller) {
-      const code = entry.relationship === 'DIRECT' ? '12020' : '13020';
-      return {
-        isVerified: false,
-        reasons: [
-          { key: `error_${code}_publisher_id_not_listed`, placeholders: [entry.publisherId] },
-        ],
-      };
-    }
-
-    // Now we have a valid seller, continue with other checks
-    if (entry.relationship === 'DIRECT') {
-      // Test Case 13: Check domain relationship for DIRECT entries
-      if (
-        seller.domain &&
-        seller.domain !== ownerDomain &&
-        (seller.seller_type === 'PUBLISHER' || seller.seller_type === 'BOTH')
-      ) {
+    // Check if there are validation warnings or errors
+    if (matchingEntry.has_warning && matchingEntry.all_warnings) {
+      // Process all validation warnings from ads-txt-validator
+      matchingEntry.all_warnings.forEach((warning) => {
+        // Extract placeholders array from params object
+        let placeholders: string[] = [];
+        if (warning.params) {
+          const paramKeys = ['domain', 'account_id', 'publisher_domain', 'seller_domain', 'seller_type'];
+          placeholders = paramKeys
+            .filter(key => warning.params![key] !== undefined)
+            .map(key => String(warning.params![key]));
+          
+          // If no specific keys found, use all values
+          if (placeholders.length === 0) {
+            placeholders = Object.values(warning.params).map(String);
+          }
+        }
+        
         reasons.push({
-          key: 'alert_12030_domain_mismatch',
-          placeholders: [seller.domain],
+          key: warning.key,
+          placeholders: placeholders,
         });
-      }
-
-      // Test Case 14: Check seller type for DIRECT entries
-      if (seller.seller_type === 'BOTH') {
-        reasons.push({ key: 'alert_12040_relationship_type_both', placeholders: [] });
-      } else if (seller.seller_type === 'INTERMEDIARY') {
-        reasons.push({ key: 'alert_12050_relationship_mismatch', placeholders: [] });
-      }
-    } else if (entry.relationship === 'RESELLER') {
-      // Test Case 18: Check domain for RESELLER entries
-      if (
-        seller.domain &&
-        seller.domain !== ownerDomain &&
-        !managerDomains.includes(seller.domain)
-      ) {
-        reasons.push({
-          key: 'alert_13030_domain_mismatch',
-          placeholders: [seller.domain],
-        });
-      }
-
-      // Test Case 19: Check seller type for RESELLER entries
-      if (seller.seller_type === 'BOTH') {
-        reasons.push({ key: 'alert_13040_relationship_type_both', placeholders: [] });
-      } else if (seller.seller_type === 'PUBLISHER') {
-        reasons.push({ key: 'error_13050_relationship_mismatch', placeholders: [] });
-      }
-    }
-
-    // Test Case 15 & 20: Is the seller_id used only once?
-    const sellersWithSameId = currentAnalysis.sellersJson?.data.filter(
-      (s) => String(s.seller_id) === String(entry.publisherId)
-    );
-
-    if (sellersWithSameId && sellersWithSameId.length > 1) {
-      const code = entry.relationship === 'DIRECT' ? '12060' : '13060';
-      const severity = entry.relationship === 'DIRECT' ? 'error' : 'alert';
-      reasons.push({
-        key: `${severity}_${code}_duplicate_seller_id`,
-        placeholders: [entry.publisherId],
       });
-    }
-
-    // OWNERDOMAIN and MANAGERDOMAIN checks
-    const managerDomain = managerDomains.find((d) => d.split(',')[0] === seller.domain);
-    if (managerDomain && ownerDomain && seller.domain === ownerDomain) {
+    } else if (matchingEntry.validation_key && matchingEntry.has_warning) {
+      // Handle single warning case
+      let placeholders: string[] = [];
+      if (matchingEntry.warning_params) {
+        const paramKeys = ['domain', 'account_id', 'publisher_domain', 'seller_domain', 'seller_type'];
+        placeholders = paramKeys
+          .filter(key => matchingEntry.warning_params![key] !== undefined)
+          .map(key => String(matchingEntry.warning_params![key]));
+        
+        // If no specific keys found, use all values
+        if (placeholders.length === 0) {
+          placeholders = Object.values(matchingEntry.warning_params).map(String);
+        }
+      }
+      
       reasons.push({
-        key: 'alert_inventory_from_both_domains',
-        placeholders: [],
+        key: matchingEntry.validation_key,
+        placeholders: placeholders,
       });
     }
 

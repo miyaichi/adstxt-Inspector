@@ -1,7 +1,35 @@
+import {
+  configureMessages,
+  createValidationMessage,
+  isAdsTxtRecord,
+  isAdsTxtVariable,
+  parseAdsTxtContent as parseAdsTxtContentLib,
+  ParsedAdsTxtEntry,
+  ParsedAdsTxtRecord,
+  ParsedAdsTxtVariable,
+  Severity
+} from '@miyaichi/ads-txt-validator';
 import * as psl from 'psl';
 import { fetchFromUrls } from './fetchFromUrls';
 
-// Type definitions
+// Initialize message configuration for ads-txt-validator
+const initializeAdsTxtValidator = () => {
+  // Detect Chrome extension locale
+  const chromeLocale = chrome.i18n.getUILanguage();
+  // Map Chrome locale to ads-txt-validator supported locales
+  const supportedLocale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
+  
+  // Configure base URL for help links
+  configureMessages({
+    defaultLocale: supportedLocale,
+    baseUrl: 'https://adstxt-manager.jp',
+  });
+};
+
+// Initialize on module load
+initializeAdsTxtValidator();
+
+// Type definitions compatible with ads-txt-validator
 export interface AdsTxt {
   domain: string;
   publisherId: string;
@@ -13,6 +41,8 @@ export interface ErrorDetail {
   line: number;
   content: string;
   message: string;
+  severity?: Severity;
+  helpUrl?: string;
 }
 
 export interface SupportedVariables {
@@ -31,6 +61,7 @@ export interface FetchAdsTxtResult {
   variables: SupportedVariables;
   errors: ErrorDetail[];
   duplicates: ErrorDetail[];
+  parsedEntries?: ParsedAdsTxtEntry[]; // Add parsed entries from ads-txt-validator
 }
 
 const DEFAULT_FETCH_OPTIONS = {
@@ -74,9 +105,11 @@ export const fetchAdsTxt = async (
       }
     }
 
-    // Parse the ads.txt content
-    const { entries, variables, errors, duplicates } = parseAdsTxtContent(
-      adsTxtContent,
+    // Parse the ads.txt content using ads-txt-validator
+    // Version 1.2.3+ properly handles invalid characters and inline comments
+    const parsedEntries = parseAdsTxtContentLib(adsTxtContent, rootDomain);
+    const { entries, variables, errors, duplicates } = convertParsedEntriesToLegacyFormat(
+      parsedEntries,
       rootDomain
     );
 
@@ -93,6 +126,7 @@ export const fetchAdsTxt = async (
       variables,
       errors,
       duplicates,
+      parsedEntries, // Include parsed entries from validator
     };
   } catch (error) {
     return createErrorResult(error as Error);
@@ -197,53 +231,97 @@ interface ParseResult {
 }
 
 /**
- * Parse the contents of ads.txt
- * @param content ads.txt content
+ * Convert parsed entries from ads-txt-validator to legacy format
+ * @param parsedEntries Parsed entries from ads-txt-validator
  * @param rootDomain Root domain name
- * @returns ParseResult object
+ * @returns ParseResult object in legacy format
  */
-const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult => {
+const convertParsedEntriesToLegacyFormat = (
+  parsedEntries: ParsedAdsTxtEntry[],
+  rootDomain: string
+): ParseResult => {
   const entries: AdsTxt[] = [];
   const errors: ErrorDetail[] = [];
   const duplicates: ErrorDetail[] = [];
   const variables: SupportedVariables = { ownerDomain: rootDomain };
 
-  const lines = content.split(/\r?\n/);
-
-  // Regular expressions for variable declarations
-  const VARIABLE_REGEXES: Record<string, RegExp> = {
-    contact: /^CONTACT=/i,
-    inventoryPartnerdomain: /^INVENTORYPARTNERDOMAIN=/i,
-    managerDomain: /^MANAGERDOMAIN=/i,
-    ownerDomain: /^OWNERDOMAIN=/i,
-    subDomain: /^SUBDOMAIN=/i,
-  };
-
-  lines.forEach((line, index) => {
-    const lineNumber = index + 1;
-    let trimmedLine = line.trim();
-
-    // Skip empty lines and comment lines
-    if (!trimmedLine || trimmedLine.startsWith('#')) {
-      return;
+  // Process each parsed entry
+  parsedEntries.forEach((entry) => {
+    if (isAdsTxtVariable(entry)) {
+      // Process variable entries
+      processVariableEntry(entry, variables);
+    } else if (isAdsTxtRecord(entry)) {
+      // Process record entries
+      
+      // Add all warnings and errors (regardless of is_valid status)
+      if (entry.has_warning && entry.all_warnings) {
+        entry.all_warnings.forEach(warning => {
+          if (warning.severity === Severity.INFO || warning.key.includes('duplicate') || warning.key.includes('DUPLICATE')) {
+            duplicates.push({
+              line: entry.line_number,
+              content: entry.raw_line,
+              message: getLocalizedMessage(warning.key, warning.params),
+              severity: warning.severity,
+              helpUrl: getHelpUrl(warning.key),
+            });
+          } else {
+            errors.push({
+              line: entry.line_number,
+              content: entry.raw_line,
+              message: getLocalizedMessage(warning.key, warning.params),
+              severity: warning.severity,
+              helpUrl: getHelpUrl(warning.key),
+            });
+          }
+        });
+      } else if (entry.has_warning && entry.validation_key) {
+        // Handle single warning case
+        if (entry.severity === Severity.INFO || entry.validation_key.includes('duplicate') || entry.validation_key.includes('DUPLICATE')) {
+          duplicates.push({
+            line: entry.line_number,
+            content: entry.raw_line,
+            message: getLocalizedMessage(entry.validation_key, entry.warning_params),
+            severity: entry.severity,
+            helpUrl: getHelpUrl(entry.validation_key),
+          });
+        } else {
+          errors.push({
+            line: entry.line_number,
+            content: entry.raw_line,
+            message: getLocalizedMessage(entry.validation_key, entry.warning_params),
+            severity: entry.severity,
+            helpUrl: getHelpUrl(entry.validation_key),
+          });
+        }
+      }
+      
+      // Add validation errors for invalid entries
+      if (!entry.is_valid) {
+        errors.push({
+          line: entry.line_number,
+          content: entry.raw_line,
+          message: getLocalizedMessage(entry.validation_key || entry.error, entry.warning_params),
+          severity: entry.severity || Severity.ERROR,
+          helpUrl: getHelpUrl(entry.validation_key || entry.error),
+        });
+      }
+      
+      // Add valid entries (both valid and invalid entries can have warnings)
+      if (entry.is_valid) {
+        entries.push({
+          domain: entry.domain,
+          publisherId: entry.account_id,
+          relationship: entry.relationship,
+          certificationAuthorityId: entry.certification_authority_id,
+        });
+      }
     }
-
-    // Remove inline comments
-    const commentIndex = trimmedLine.indexOf('#');
-    if (commentIndex !== -1) {
-      trimmedLine = trimmedLine.substring(0, commentIndex).trim();
-    }
-
-    // Process variable declaration lines
-    if (processVariableLine(trimmedLine, line, lineNumber, variables, errors, VARIABLE_REGEXES)) {
-      return;
-    }
-
-    // Process ads.txt entry lines
-    processEntryLine(trimmedLine, line, lineNumber, entries, errors, duplicates);
   });
 
-  // Return the entries sorted by domain name and publisher ID
+  // Manual duplicate detection for valid records
+  const manualDuplicates = detectDuplicates(parsedEntries);
+  duplicates.push(...manualDuplicates);
+
   return {
     entries: sortEntries(entries),
     variables,
@@ -253,198 +331,134 @@ const parseAdsTxtContent = (content: string, rootDomain: string): ParseResult =>
 };
 
 /**
- * Process a variable declaration line
- * @returns true if the line was processed as a variable, false otherwise
+ * Detect duplicate records manually since ads-txt-validator doesn't mark duplicates
+ * @param parsedEntries Parsed entries from ads-txt-validator
+ * @returns Array of duplicate errors
  */
-const processVariableLine = (
-  trimmedLine: string,
-  originalLine: string,
-  lineNumber: number,
-  variables: SupportedVariables,
-  errors: ErrorDetail[],
-  regexes: Record<string, RegExp>
-): boolean => {
-  for (const [key, regex] of Object.entries(regexes)) {
-    if (regex.test(trimmedLine)) {
-      const value = trimmedLine.split('=')[1]?.trim();
-      if (value) {
-        if (key === 'subDomain') {
-          processSubDomainVariable(value, originalLine, lineNumber, variables, errors);
-        } else if (key === 'managerDomain') {
-          processManagerDomainVariable(value, originalLine, lineNumber, variables, errors);
-        } else {
-          (variables as any)[key] = value;
-        }
+const detectDuplicates = (parsedEntries: ParsedAdsTxtEntry[]): ErrorDetail[] => {
+  const duplicates: ErrorDetail[] = [];
+  const recordMap = new Map<string, ParsedAdsTxtRecord>();
+  
+  // Filter to only valid records (not variables)
+  const validRecords = parsedEntries.filter(
+    (entry): entry is ParsedAdsTxtRecord => 
+      isAdsTxtRecord(entry) && entry.is_valid
+  );
+
+  validRecords.forEach(record => {
+    // Create composite key: domain (case-insensitive) + account_id + relationship
+    const key = `${record.domain.toLowerCase()}|${record.account_id}|${record.account_type}`;
+    
+    if (recordMap.has(key)) {
+      // Found duplicate - create error for the duplicate line
+      const originalRecord = recordMap.get(key)!;
+      
+      // Get localized duplicate message
+      const chromeLocale = chrome.i18n.getUILanguage();
+      const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
+      
+      const duplicateMessage = locale === 'ja' 
+        ? `重複レコード: ${record.domain}, ${record.account_id}, ${record.account_type} (元の行: ${originalRecord.line_number})`
+        : `Duplicate record: ${record.domain}, ${record.account_id}, ${record.account_type} (original at line: ${originalRecord.line_number})`;
+      
+      duplicates.push({
+        line: record.line_number,
+        content: record.raw_line,
+        message: duplicateMessage,
+        severity: Severity.INFO,
+        helpUrl: undefined,
+      });
+    } else {
+      recordMap.set(key, record);
+    }
+  });
+
+  return duplicates;
+};
+
+/**
+ * Process a variable entry from ads-txt-validator
+ */
+const processVariableEntry = (
+  entry: ParsedAdsTxtVariable,
+  variables: SupportedVariables
+): void => {
+  switch (entry.variable_type) {
+    case 'CONTACT':
+      variables.contact = entry.value;
+      break;
+    case 'INVENTORYPARTNERDOMAIN':
+      variables.inventoryPartnerdomain = entry.value;
+      break;
+    case 'MANAGERDOMAIN':
+      variables.managerDomains = variables.managerDomains || [];
+      variables.managerDomains.push(entry.value);
+      break;
+    case 'OWNERDOMAIN':
+      variables.ownerDomain = entry.value;
+      break;
+    case 'SUBDOMAIN':
+      variables.subDomains = variables.subDomains || [];
+      variables.subDomains.push(entry.value);
+      break;
+  }
+};
+
+/**
+ * Get localized message from validation key and parameters
+ */
+const getLocalizedMessage = (
+  validationKey?: string,
+  params?: Record<string, any>
+): string => {
+  if (!validationKey) return 'Unknown error';
+  
+  // Extract placeholders array from params object
+  let placeholders: string[] = [];
+  if (params) {
+    // If params has specific keys, use them in order
+    if (typeof params === 'object' && params !== null) {
+      // Check for common parameter names and extract values
+      const paramKeys = ['domain', 'account_id', 'publisher_domain', 'seller_domain', 'seller_type'];
+      placeholders = paramKeys
+        .filter(key => params[key] !== undefined)
+        .map(key => String(params[key]));
+      
+      // If no specific keys found, use all values
+      if (placeholders.length === 0) {
+        placeholders = Object.values(params).map(String);
       }
-      return true;
     }
   }
-  return false;
-};
-
-/**
- * Process a SUBDOMAIN variable declaration
- */
-const processSubDomainVariable = (
-  value: string,
-  originalLine: string,
-  lineNumber: number,
-  variables: SupportedVariables,
-  errors: ErrorDetail[]
-): void => {
-  if (!isValidDomain(value)) {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('invalid_domain', [value]),
-    });
-    return;
-  }
-
-  variables.subDomains = variables.subDomains || [];
-  if (!variables.subDomains.includes(value)) {
-    variables.subDomains.push(value);
-  }
-};
-
-/**
- * Process a MANAGERDOMAIN variable declaration
- */
-const processManagerDomainVariable = (
-  value: string,
-  originalLine: string,
-  lineNumber: number,
-  variables: SupportedVariables,
-  errors: ErrorDetail[]
-): void => {
-  variables.managerDomains = variables.managerDomains || [];
-  const [managerDomain, countryCode] = value.split(',').map((s) => s.trim());
-
-  if (!isValidDomain(managerDomain)) {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('invalid_domain', [managerDomain]),
-    });
-    return;
-  }
-
-  const managerDomainCount = Object.entries(variables).filter(
-    ([k, v]) => k === 'managerDomains' && v.some((entry: string) => entry.includes(countryCode))
-  ).length;
-
-  if (managerDomainCount > 1) {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('multiple_manager_domain_declarations', [countryCode]),
-    });
-  } else {
-    variables.managerDomains.push(value);
-  }
-};
-
-/**
- * Process an ads.txt entry line
- */
-const processEntryLine = (
-  trimmedLine: string,
-  originalLine: string,
-  lineNumber: number,
-  entries: AdsTxt[],
-  errors: ErrorDetail[],
-  duplicates: ErrorDetail[]
-): void => {
-  const fields = trimmedLine.split(/,|\s+/).filter((field) => field !== '');
-
-  if (fields.length < 3) {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('insufficient_fields'),
-    });
-    return;
-  }
-
-  const [domainField, publisherId, relationshipField, certificationAuthorityId] = fields;
-  const relationship = relationshipField.toUpperCase();
-
-  // Validate the relationship type. Only 'DIRECT' and 'RESELLER' are allowed.
-  if (relationship !== 'DIRECT' && relationship !== 'RESELLER') {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('invalid_relationship_type', [relationshipField]),
-    });
-    return;
-  }
-
-  // Validate the domain name
-  if (!isValidDomain(domainField)) {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('invalid_domain', [domainField]),
-    });
-    return;
-  }
-
-  // Validate the publisher ID
-  if (!isValidPublisherId(publisherId)) {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('invalid_publisher_id', [publisherId]),
-    });
-    return;
-  }
-
-  // Validate the certification authority ID
-  if (certificationAuthorityId && !isValidCertificationAuthorityId(certificationAuthorityId)) {
-    errors.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('invalid_certification_authority_id', [
-        certificationAuthorityId,
-      ]),
-    });
-    return;
-  }
-
-  const entry: AdsTxt = {
-    domain: domainField.toLowerCase(),
-    publisherId,
-    relationship: relationship as 'DIRECT' | 'RESELLER',
-  };
-
-  if (certificationAuthorityId) {
-    entry.certificationAuthorityId = certificationAuthorityId;
-  }
-
-  const isDuplicate = checkForDuplicate(entry, entries);
-
-  if (isDuplicate) {
-    duplicates.push({
-      line: lineNumber,
-      content: originalLine,
-      message: chrome.i18n.getMessage('duplicate_entries'),
-    });
-  } else {
-    entries.push(entry);
-  }
-};
-
-/**
- * Check if an entry is a duplicate
- */
-const checkForDuplicate = (entry: AdsTxt, entries: AdsTxt[]): boolean => {
-  return entries.some(
-    (e) =>
-      e.domain === entry.domain &&
-      e.publisherId === entry.publisherId &&
-      e.relationship === entry.relationship
+  
+  // Detect current locale
+  const chromeLocale = chrome.i18n.getUILanguage();
+  const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
+  
+  const validationMessage = createValidationMessage(
+    validationKey,
+    placeholders.length > 0 ? placeholders : undefined,
+    locale
   );
+  
+  return validationMessage?.message || validationKey;
 };
+
+/**
+ * Get help URL from validation key
+ */
+const getHelpUrl = (validationKey?: string): string | undefined => {
+  if (!validationKey) return undefined;
+  
+  // Detect current locale
+  const chromeLocale = chrome.i18n.getUILanguage();
+  const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
+  
+  const validationMessage = createValidationMessage(validationKey, undefined, locale);
+  return validationMessage?.helpUrl;
+};
+
+// Legacy functions removed - now handled by ads-txt-validator package
 
 /**
  * Sort entries by domain, publisher ID, and relationship
@@ -459,19 +473,7 @@ const sortEntries = (entries: AdsTxt[]): AdsTxt[] => {
   );
 };
 
-/**
- * Validate a publisher ID
- */
-const isValidPublisherId = (publisherId: string): boolean => {
-  return !!publisherId.match(/^[a-zA-Z0-9.\-_=]+$/);
-};
-
-/**
- * Validate a certification authority ID
- */
-const isValidCertificationAuthorityId = (certificationAuthorityId: string): boolean => {
-  return !!certificationAuthorityId.match(/^[a-zA-Z0-9.\-_]+$/);
-};
+// Legacy validation functions removed - now handled by ads-txt-validator package
 
 // Utility functions
 

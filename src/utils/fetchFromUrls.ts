@@ -102,7 +102,7 @@ export async function fetchFromUrls(
       }
 
       const content = await response.text();
-      return { content, finalUrl: response.url };
+      return { content, finalUrl: currentUrl };
     } catch (error) {
       // Log the error but try the next URL
       console.error(`Failed to fetch data from URL ${url}: ${error}`);

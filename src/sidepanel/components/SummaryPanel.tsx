@@ -50,7 +50,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     // 4. Publisher-Seller Relationship Check
     const ownerDomainSellers = sellerAnalysis
       .flatMap((seller) => (seller.sellersJson && seller.sellersJson.data) || [])
-      .filter((entry) => entry.domain === ownerDomain || managerDomains.includes(entry.domain));
+      .filter((entry) => entry.domain && (entry.domain === ownerDomain || managerDomains.includes(entry.domain)));
     const hasOwnerAsPublisher = ownerDomainSellers.some(
       (seller) =>
         seller.seller_type?.toUpperCase() === 'PUBLISHER' ||
@@ -61,7 +61,9 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     const sellerTypes = sellerAnalysis.reduce(
       (acc, analysis) => {
         (analysis.sellersJson?.data || []).forEach((seller) => {
-          acc[seller.seller_type.toUpperCase()] = (acc[seller.seller_type.toUpperCase()] || 0) + 1;
+          if (seller.seller_type) {
+            acc[seller.seller_type.toUpperCase()] = (acc[seller.seller_type.toUpperCase()] || 0) + 1;
+          }
         });
         return acc;
       },

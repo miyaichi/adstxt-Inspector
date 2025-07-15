@@ -192,6 +192,7 @@ export default function App() {
                 analyzing={analyzing}
                 sellerAnalysis={sellerAnalysis}
                 adsTxtData={adsTxtData}
+                isVerifiedEntry={isVerifiedEntry}
               />
             </TabPanel>
           </Tabs>

@@ -1,3 +1,4 @@
+import { createValidationMessage } from '@miyaichi/ads-txt-validator';
 import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
@@ -201,14 +202,29 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
             {/* Error list */}
             {errors.map((error, index) => (
               <div key={index} className="alert alert-error">
-                <div>
-                  Line {error.line}: {error.message}
-                </div>
-                {error.content && (
-                  <div className="mt-2 font-mono bg-red-900 text-white p-2 rounded">
-                    {error.content}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div>
+                      Line {error.line}: {error.message}
+                    </div>
+                    {error.content && (
+                      <div className="mt-2 font-mono bg-red-900 text-white p-2 rounded">
+                        {error.content}
+                      </div>
+                    )}
                   </div>
-                )}
+                  {error.helpUrl && (
+                    <a
+                      href={error.helpUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 p-1 text-red-600 hover:text-red-800 transition-colors"
+                      title="View detailed help for this error"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -366,13 +382,32 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                       </div>
                       {!validity.isVerified && validity.reasons.length > 0 && (
                         <div className="flex flex-col text-red-600 space-y-1">
-                          {validity.reasons.map((reason, idx) => (
-                            <span key={idx}>
-                              {chrome.i18n.getMessage(reason.key, reason.placeholders)
-                                ? chrome.i18n.getMessage(reason.key, reason.placeholders)
-                                : reason.key}
-                            </span>
-                          ))}
+                          {validity.reasons.map((reason, idx) => {
+                            // Detect current locale for ads-txt-validator messages
+                            const chromeLocale = chrome.i18n.getUILanguage();
+                            const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
+                            const validationMessage = createValidationMessage(reason.key, reason.placeholders, locale);
+                            const message = validationMessage?.message || 
+                                           chrome.i18n.getMessage(reason.key, reason.placeholders) || 
+                                           reason.key;
+                            
+                            return (
+                              <div key={idx} className="flex items-center justify-between">
+                                <span className="flex-1">{message}</span>
+                                {validationMessage?.helpUrl && (
+                                  <a
+                                    href={validationMessage.helpUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-2 p-1 text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
+                                    title="View detailed help for this validation issue"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

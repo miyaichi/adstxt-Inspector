@@ -9,14 +9,14 @@ export interface CacheEntry<T> {
   timestamp: number;
 }
 
-// Seller type
+// Seller type - compatible with ads-txt-validator package
 export interface Seller {
   seller_id: string;
   is_confidential?: 0 | 1;
-  seller_type: 'PUBLISHER' | 'INTERMEDIARY' | 'RESELLER' | 'BOTH';
+  seller_type?: 'PUBLISHER' | 'INTERMEDIARY' | 'BOTH';
   is_passthrough?: 0 | 1;
-  name: string;
-  domain: string;
+  name?: string;
+  domain?: string;
   comment?: string;
   ext?: any;
 }

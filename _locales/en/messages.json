@@ -107,9 +107,6 @@
   "multiple_manager_domain_declarations": {
     "message": "Multiple MANAGERDOMAIN declarations for country $1"
   },
-  "inventory_from_both_domains": {
-    "message": "Inventory available from both OWNERDOMAIN and MANAGERDOMAIN sellers"
-  },
   "no_data_available": {
     "message": "No data available"
   },
@@ -157,42 +154,6 @@
   },
   "error_11050_invalid_characters": {
     "message": "Fields contain unescaped tabs, commas or spaces.(e:11050)"
-  },
-  "alert_12010_missing_sellers_json": {
-    "message": "Advertising system lacks sellers.json file.(a:12010)"
-  },
-  "error_12020_publisher_id_not_listed": {
-    "message": "Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt.(e:12020)"
-  },
-  "alert_12030_domain_mismatch": {
-    "message": "Seller domain $1 does not match OWNERDOMAIN.(a:12030)"
-  },
-  "alert_12040_relationship_type_both": {
-    "message": "Publisher ID is registered as BOTH.(a:12040)"
-  },
-  "alert_12050_relationship_mismatch": {
-    "message": "Publisher ID listed as INTERMEDIARY instead of PUBLISHER.(a:12050)"
-  },
-  "error_12060_duplicate_seller_id": {
-    "message": "Publisher ID appears multiple times in sellers.json.(e:12060)"
-  },
-  "alert_13010_missing_sellers_json": {
-    "message": "The sellers.json file is missing for this advertising system. Request the administrator of the advertising system to install sellers.json.(a:13010)"
-  },
-  "error_13020_publisher_id_not_listed": {
-    "message": "Publisher ID not listed in sellers.json. Request registration of ID or remove ID from Ads.txt.(e:13020)"
-  },
-  "alert_13030_domain_mismatch": {
-    "message": "Check the reseller domain $1 is correct.(a:13030)"
-  },
-  "alert_13040_relationship_type_both": {
-    "message": "Publisher ID is registered as BOTH.(a:13040)"
-  },
-  "error_13050_relationship_mismatch": {
-    "message": "Publisher ID registered as INTERMEDIARY instead of PUBLISHER.(e:13050)"
-  },
-  "alert_13060_duplicate_seller_id": {
-    "message": "Publisher ID appears multiple times in sellers.json.(a:13060)"
   },
   "error_14020_invalid_subdomain": {
     "message": "The subdomain is not a valid domain.(e:14020)"
