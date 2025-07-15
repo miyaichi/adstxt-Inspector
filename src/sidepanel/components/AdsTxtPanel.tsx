@@ -386,11 +386,16 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                             // Detect current locale for ads-txt-validator messages
                             const chromeLocale = chrome.i18n.getUILanguage();
                             const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
-                            const validationMessage = createValidationMessage(reason.key, reason.placeholders, locale);
-                            const message = validationMessage?.message || 
-                                           chrome.i18n.getMessage(reason.key, reason.placeholders) || 
-                                           reason.key;
-                            
+                            const validationMessage = createValidationMessage(
+                              reason.key,
+                              reason.placeholders,
+                              locale
+                            );
+                            const message =
+                              validationMessage?.message ||
+                              chrome.i18n.getMessage(reason.key, reason.placeholders) ||
+                              reason.key;
+
                             return (
                               <div key={idx} className="flex items-center justify-between">
                                 <span className="flex-1">{message}</span>

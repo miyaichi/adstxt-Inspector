@@ -5,7 +5,7 @@ import {
   crossCheckAdsTxtRecords,
   isAdsTxtRecord,
   SellersJsonMetadata,
-  SellersJsonProvider
+  SellersJsonProvider,
 } from '@miyaichi/ads-txt-validator';
 import { useState } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
@@ -116,7 +116,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
     try {
       const domain = new URL(url).hostname;
       const adsTxtResult = await fetchAdsTxt(domain, appAdsTxt);
-      
+
       // Perform cross-checking with ads-txt-validator if we have parsed entries
       if (adsTxtResult.parsedEntries) {
         // Create SellersJsonProvider using SellersJsonApi
@@ -134,13 +134,13 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
                   sellerIds,
                 }),
               });
-              
+
               if (!response.ok) {
                 throw new Error(`API request failed: ${response.status}`);
               }
-              
+
               const data = await response.json();
-              
+
               if (data.success && data.data) {
                 return {
                   domain: data.data.domain,
@@ -164,7 +164,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
               logger.warn('API failed, falling back to direct fetch:', error);
               const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
               const results = await SellersJsonFetcher.fetchSellers(requests, FETCH_OPTIONS);
-              
+
               const batchResults = results.map((result) => ({
                 sellerId: result.sellerId,
                 seller: result.seller,
@@ -172,7 +172,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
                 source: 'fresh' as const,
                 error: result.error,
               }));
-              
+
               return {
                 domain,
                 requested_count: sellerIds.length,
@@ -183,7 +183,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
               };
             }
           },
-          
+
           async hasSellerJson(domain: string): Promise<boolean> {
             try {
               const result = await SellersJsonFetcher.fetch(domain, FETCH_OPTIONS);
@@ -192,16 +192,16 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
               return false;
             }
           },
-          
+
           async getMetadata(domain: string): Promise<SellersJsonMetadata> {
             return {};
           },
-          
+
           async getCacheInfo(domain: string): Promise<CacheInfo> {
             return { is_cached: false, status: 'success' };
           },
         };
-        
+
         // Perform cross-checking
         const validatedEntries = await crossCheckAdsTxtRecords(
           domain,
@@ -209,11 +209,11 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
           null, // No cached content for now
           sellersJsonProvider
         );
-        
+
         // Update the result with validated entries
         adsTxtResult.parsedEntries = validatedEntries;
       }
-      
+
       setAdsTxtData(adsTxtResult);
       logger.debug(appAdsTxt ? 'App-ads.txt' : 'Ads.txt', adsTxtResult);
 
@@ -262,17 +262,23 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         // Extract placeholders array from params object
         let placeholders: string[] = [];
         if (warning.params) {
-          const paramKeys = ['domain', 'account_id', 'publisher_domain', 'seller_domain', 'seller_type'];
+          const paramKeys = [
+            'domain',
+            'account_id',
+            'publisher_domain',
+            'seller_domain',
+            'seller_type',
+          ];
           placeholders = paramKeys
-            .filter(key => warning.params![key] !== undefined)
-            .map(key => String(warning.params![key]));
-          
+            .filter((key) => warning.params![key] !== undefined)
+            .map((key) => String(warning.params![key]));
+
           // If no specific keys found, use all values
           if (placeholders.length === 0) {
             placeholders = Object.values(warning.params).map(String);
           }
         }
-        
+
         reasons.push({
           key: warning.key,
           placeholders: placeholders,
@@ -282,17 +288,23 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       // Handle single warning case
       let placeholders: string[] = [];
       if (matchingEntry.warning_params) {
-        const paramKeys = ['domain', 'account_id', 'publisher_domain', 'seller_domain', 'seller_type'];
+        const paramKeys = [
+          'domain',
+          'account_id',
+          'publisher_domain',
+          'seller_domain',
+          'seller_type',
+        ];
         placeholders = paramKeys
-          .filter(key => matchingEntry.warning_params![key] !== undefined)
-          .map(key => String(matchingEntry.warning_params![key]));
-        
+          .filter((key) => matchingEntry.warning_params![key] !== undefined)
+          .map((key) => String(matchingEntry.warning_params![key]));
+
         // If no specific keys found, use all values
         if (placeholders.length === 0) {
           placeholders = Object.values(matchingEntry.warning_params).map(String);
         }
       }
-      
+
       reasons.push({
         key: matchingEntry.validation_key,
         placeholders: placeholders,

@@ -228,18 +228,24 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                         // Detect current locale for ads-txt-validator messages
                         const chromeLocale = chrome.i18n.getUILanguage();
                         const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
-                        const validationMessage = createValidationMessage(analysis.sellersJson.error, [], locale);
-                        
-                        return validationMessage?.helpUrl && (
-                          <a
-                            href={validationMessage.helpUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ml-2 p-1 text-red-600 hover:text-red-800 transition-colors"
-                            title="View detailed help for this error"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
+                        const validationMessage = createValidationMessage(
+                          analysis.sellersJson.error,
+                          [],
+                          locale
+                        );
+
+                        return (
+                          validationMessage?.helpUrl && (
+                            <a
+                              href={validationMessage.helpUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-2 p-1 text-red-600 hover:text-red-800 transition-colors"
+                              title="View detailed help for this error"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          )
                         );
                       })()}
                     </div>
@@ -251,11 +257,13 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                       const correspondingEntry = analysis.adsTxtEntries.find(
                         (entry) => entry.publisherId === seller.seller_id
                       );
-                      const validity = correspondingEntry ? isVerifiedEntry(analysis.domain, correspondingEntry) : null;
-                      
+                      const validity = correspondingEntry
+                        ? isVerifiedEntry(analysis.domain, correspondingEntry)
+                        : null;
+
                       return (
-                        <div 
-                          key={`${seller.seller_id}-${index}`} 
+                        <div
+                          key={`${seller.seller_id}-${index}`}
                           className={`entry-card ${
                             validity?.isVerified
                               ? 'border-green-200 bg-green-50'
@@ -266,120 +274,136 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                                   : ''
                           }`}
                         >
-                        <div className="entry-card-content">
-                          <div className="entry-card-header">
-                            <div>
-                              <div className="font-medium text-gray-900">{seller.name}</div>
-                              <div className="text-gray-600">Seller ID: {seller.seller_id}</div>
-                              {seller.domain && (
-                                <div className="text-gray-500">Domain: {seller.domain}</div>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {seller.seller_type && (
-                                <Tooltip
-                                  content={
-                                    seller.seller_type === 'PUBLISHER'
-                                      ? chrome.i18n.getMessage('publisher')
-                                      : seller.seller_type === 'INTERMEDIARY'
-                                        ? chrome.i18n.getMessage('intermediary')
-                                        : chrome.i18n.getMessage('both')
-                                  }
-                                >
-                                  <span
-                                    className={`tag ${
-                                      ['PUBLISHER', 'BOTH'].includes(
-                                        seller.seller_type.toUpperCase()
-                                      )
-                                        ? 'tag-blue'
-                                        : 'tag-gray'
-                                    }`}
+                          <div className="entry-card-content">
+                            <div className="entry-card-header">
+                              <div>
+                                <div className="font-medium text-gray-900">{seller.name}</div>
+                                <div className="text-gray-600">Seller ID: {seller.seller_id}</div>
+                                {seller.domain && (
+                                  <div className="text-gray-500">Domain: {seller.domain}</div>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {seller.seller_type && (
+                                  <Tooltip
+                                    content={
+                                      seller.seller_type === 'PUBLISHER'
+                                        ? chrome.i18n.getMessage('publisher')
+                                        : seller.seller_type === 'INTERMEDIARY'
+                                          ? chrome.i18n.getMessage('intermediary')
+                                          : chrome.i18n.getMessage('both')
+                                    }
                                   >
-                                    {seller.seller_type.toUpperCase()}
-                                  </span>
-                                </Tooltip>
-                              )}
-                              {seller.is_confidential === 1 && (
-                                <Tooltip content={chrome.i18n.getMessage('confidential')}>
-                                  <span className="tag tag-yellow">Confidential</span>
-                                </Tooltip>
-                              )}
-                              {seller.is_passthrough === 1 && (
-                                <Tooltip content={chrome.i18n.getMessage('passthrough')}>
-                                  <span className="tag tag-purple">Passthrough</span>
-                                </Tooltip>
-                              )}
-                              {(() => {
-                                // Find corresponding ads.txt entry for validation
-                                const correspondingEntry = analysis.adsTxtEntries.find(
-                                  (entry) => entry.publisherId === seller.seller_id
+                                    <span
+                                      className={`tag ${
+                                        ['PUBLISHER', 'BOTH'].includes(
+                                          seller.seller_type.toUpperCase()
+                                        )
+                                          ? 'tag-blue'
+                                          : 'tag-gray'
+                                      }`}
+                                    >
+                                      {seller.seller_type.toUpperCase()}
+                                    </span>
+                                  </Tooltip>
+                                )}
+                                {seller.is_confidential === 1 && (
+                                  <Tooltip content={chrome.i18n.getMessage('confidential')}>
+                                    <span className="tag tag-yellow">Confidential</span>
+                                  </Tooltip>
+                                )}
+                                {seller.is_passthrough === 1 && (
+                                  <Tooltip content={chrome.i18n.getMessage('passthrough')}>
+                                    <span className="tag tag-purple">Passthrough</span>
+                                  </Tooltip>
+                                )}
+                                {(() => {
+                                  // Find corresponding ads.txt entry for validation
+                                  const correspondingEntry = analysis.adsTxtEntries.find(
+                                    (entry) => entry.publisherId === seller.seller_id
+                                  );
+                                  if (correspondingEntry) {
+                                    const validity = isVerifiedEntry(
+                                      analysis.domain,
+                                      correspondingEntry
+                                    );
+                                    return validity.isVerified ? (
+                                      <Check className="w-5 h-5 text-green-500" />
+                                    ) : (
+                                      <CircleAlert className="w-5 h-5 text-red-500" />
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            </div>
+                            {seller.comment && (
+                              <div className="text-gray-500">{seller.comment}</div>
+                            )}
+                            {(() => {
+                              // Find corresponding ads.txt entry for validation
+                              const correspondingEntry = analysis.adsTxtEntries.find(
+                                (entry) => entry.publisherId === seller.seller_id
+                              );
+                              if (correspondingEntry) {
+                                const validity = isVerifiedEntry(
+                                  analysis.domain,
+                                  correspondingEntry
                                 );
-                                if (correspondingEntry) {
-                                  const validity = isVerifiedEntry(analysis.domain, correspondingEntry);
-                                  return validity.isVerified ? (
-                                    <Check className="w-5 h-5 text-green-500" />
-                                  ) : (
-                                    <CircleAlert className="w-5 h-5 text-red-500" />
+                                if (!validity.isVerified && validity.reasons.length > 0) {
+                                  return (
+                                    <div className="flex flex-col text-red-600 space-y-1">
+                                      {validity.reasons.map((reason, idx) => {
+                                        // Detect current locale for ads-txt-validator messages
+                                        const chromeLocale = chrome.i18n.getUILanguage();
+                                        const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
+                                        const validationMessage = createValidationMessage(
+                                          reason.key,
+                                          reason.placeholders,
+                                          locale
+                                        );
+                                        const message =
+                                          validationMessage?.message ||
+                                          chrome.i18n.getMessage(reason.key, reason.placeholders) ||
+                                          reason.key;
+
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="flex items-center justify-between"
+                                          >
+                                            <span className="flex-1">{message}</span>
+                                            {validationMessage?.helpUrl && (
+                                              <a
+                                                href={validationMessage.helpUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="ml-2 p-1 text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
+                                                title="View detailed help for this validation issue"
+                                              >
+                                                <ExternalLink className="w-4 h-4" />
+                                              </a>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
                                   );
                                 }
-                                return null;
-                              })()}
-                            </div>
-                          </div>
-                          {seller.comment && <div className="text-gray-500">{seller.comment}</div>}
-                          {(() => {
-                            // Find corresponding ads.txt entry for validation
-                            const correspondingEntry = analysis.adsTxtEntries.find(
-                              (entry) => entry.publisherId === seller.seller_id
-                            );
-                            if (correspondingEntry) {
-                              const validity = isVerifiedEntry(analysis.domain, correspondingEntry);
-                              if (!validity.isVerified && validity.reasons.length > 0) {
-                                return (
-                                  <div className="flex flex-col text-red-600 space-y-1">
-                                    {validity.reasons.map((reason, idx) => {
-                                      // Detect current locale for ads-txt-validator messages
-                                      const chromeLocale = chrome.i18n.getUILanguage();
-                                      const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
-                                      const validationMessage = createValidationMessage(reason.key, reason.placeholders, locale);
-                                      const message = validationMessage?.message || 
-                                                     chrome.i18n.getMessage(reason.key, reason.placeholders) || 
-                                                     reason.key;
-                                      
-                                      return (
-                                        <div key={idx} className="flex items-center justify-between">
-                                          <span className="flex-1">{message}</span>
-                                          {validationMessage?.helpUrl && (
-                                            <a
-                                              href={validationMessage.helpUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="ml-2 p-1 text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
-                                              title="View detailed help for this validation issue"
-                                            >
-                                              <ExternalLink className="w-4 h-4" />
-                                            </a>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                );
                               }
-                            }
-                            return null;
-                          })()}
-                          {seller.domain != null &&
-                            seller.domain === adsTxtData?.variables?.ownerDomain &&
-                            (seller.seller_type?.toUpperCase() === 'PUBLISHER' ||
-                              seller.seller_type?.toUpperCase() === 'BOTH') && (
-                              <div className="flex items-center space-x-1 text-green-600">
-                                <Check className="w-4 h-4" />
-                                <span>{chrome.i18n.getMessage('matches_owner_domain')}</span>
-                              </div>
-                            )}
+                              return null;
+                            })()}
+                            {seller.domain != null &&
+                              seller.domain === adsTxtData?.variables?.ownerDomain &&
+                              (seller.seller_type?.toUpperCase() === 'PUBLISHER' ||
+                                seller.seller_type?.toUpperCase() === 'BOTH') && (
+                                <div className="flex items-center space-x-1 text-green-600">
+                                  <Check className="w-4 h-4" />
+                                  <span>{chrome.i18n.getMessage('matches_owner_domain')}</span>
+                                </div>
+                              )}
+                          </div>
                         </div>
-                      </div>
                       );
                     })}
                   </div>

@@ -7,7 +7,7 @@ import {
   ParsedAdsTxtEntry,
   ParsedAdsTxtRecord,
   ParsedAdsTxtVariable,
-  Severity
+  Severity,
 } from '@miyaichi/ads-txt-validator';
 import * as psl from 'psl';
 import { fetchFromUrls } from './fetchFromUrls';
@@ -18,7 +18,7 @@ const initializeAdsTxtValidator = () => {
   const chromeLocale = chrome.i18n.getUILanguage();
   // Map Chrome locale to ads-txt-validator supported locales
   const supportedLocale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
-  
+
   // Configure base URL for help links
   configureMessages({
     defaultLocale: supportedLocale,
@@ -252,11 +252,15 @@ const convertParsedEntriesToLegacyFormat = (
       processVariableEntry(entry, variables);
     } else if (isAdsTxtRecord(entry)) {
       // Process record entries
-      
+
       // Add all warnings and errors (regardless of is_valid status)
       if (entry.has_warning && entry.all_warnings) {
-        entry.all_warnings.forEach(warning => {
-          if (warning.severity === Severity.INFO || warning.key.includes('duplicate') || warning.key.includes('DUPLICATE')) {
+        entry.all_warnings.forEach((warning) => {
+          if (
+            warning.severity === Severity.INFO ||
+            warning.key.includes('duplicate') ||
+            warning.key.includes('DUPLICATE')
+          ) {
             duplicates.push({
               line: entry.line_number,
               content: entry.raw_line,
@@ -276,7 +280,11 @@ const convertParsedEntriesToLegacyFormat = (
         });
       } else if (entry.has_warning && entry.validation_key) {
         // Handle single warning case
-        if (entry.severity === Severity.INFO || entry.validation_key.includes('duplicate') || entry.validation_key.includes('DUPLICATE')) {
+        if (
+          entry.severity === Severity.INFO ||
+          entry.validation_key.includes('duplicate') ||
+          entry.validation_key.includes('DUPLICATE')
+        ) {
           duplicates.push({
             line: entry.line_number,
             content: entry.raw_line,
@@ -294,7 +302,7 @@ const convertParsedEntriesToLegacyFormat = (
           });
         }
       }
-      
+
       // Add validation errors for invalid entries
       if (!entry.is_valid) {
         errors.push({
@@ -305,7 +313,7 @@ const convertParsedEntriesToLegacyFormat = (
           helpUrl: getHelpUrl(entry.validation_key || entry.error),
         });
       }
-      
+
       // Add valid entries (both valid and invalid entries can have warnings)
       if (entry.is_valid) {
         entries.push({
@@ -338,29 +346,29 @@ const convertParsedEntriesToLegacyFormat = (
 const detectDuplicates = (parsedEntries: ParsedAdsTxtEntry[]): ErrorDetail[] => {
   const duplicates: ErrorDetail[] = [];
   const recordMap = new Map<string, ParsedAdsTxtRecord>();
-  
+
   // Filter to only valid records (not variables)
   const validRecords = parsedEntries.filter(
-    (entry): entry is ParsedAdsTxtRecord => 
-      isAdsTxtRecord(entry) && entry.is_valid
+    (entry): entry is ParsedAdsTxtRecord => isAdsTxtRecord(entry) && entry.is_valid
   );
 
-  validRecords.forEach(record => {
+  validRecords.forEach((record) => {
     // Create composite key: domain (case-insensitive) + account_id + relationship
     const key = `${record.domain.toLowerCase()}|${record.account_id}|${record.account_type}`;
-    
+
     if (recordMap.has(key)) {
       // Found duplicate - create error for the duplicate line
       const originalRecord = recordMap.get(key)!;
-      
+
       // Get localized duplicate message
       const chromeLocale = chrome.i18n.getUILanguage();
       const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
-      
-      const duplicateMessage = locale === 'ja' 
-        ? `重複レコード: ${record.domain}, ${record.account_id}, ${record.account_type} (元の行: ${originalRecord.line_number})`
-        : `Duplicate record: ${record.domain}, ${record.account_id}, ${record.account_type} (original at line: ${originalRecord.line_number})`;
-      
+
+      const duplicateMessage =
+        locale === 'ja'
+          ? `重複レコード: ${record.domain}, ${record.account_id}, ${record.account_type} (元の行: ${originalRecord.line_number})`
+          : `Duplicate record: ${record.domain}, ${record.account_id}, ${record.account_type} (original at line: ${originalRecord.line_number})`;
+
       duplicates.push({
         line: record.line_number,
         content: record.raw_line,
@@ -379,10 +387,7 @@ const detectDuplicates = (parsedEntries: ParsedAdsTxtEntry[]): ErrorDetail[] => 
 /**
  * Process a variable entry from ads-txt-validator
  */
-const processVariableEntry = (
-  entry: ParsedAdsTxtVariable,
-  variables: SupportedVariables
-): void => {
+const processVariableEntry = (entry: ParsedAdsTxtVariable, variables: SupportedVariables): void => {
   switch (entry.variable_type) {
     case 'CONTACT':
       variables.contact = entry.value;
@@ -407,40 +412,43 @@ const processVariableEntry = (
 /**
  * Get localized message from validation key and parameters
  */
-const getLocalizedMessage = (
-  validationKey?: string,
-  params?: Record<string, any>
-): string => {
+const getLocalizedMessage = (validationKey?: string, params?: Record<string, any>): string => {
   if (!validationKey) return 'Unknown error';
-  
+
   // Extract placeholders array from params object
   let placeholders: string[] = [];
   if (params) {
     // If params has specific keys, use them in order
     if (typeof params === 'object' && params !== null) {
       // Check for common parameter names and extract values
-      const paramKeys = ['domain', 'account_id', 'publisher_domain', 'seller_domain', 'seller_type'];
+      const paramKeys = [
+        'domain',
+        'account_id',
+        'publisher_domain',
+        'seller_domain',
+        'seller_type',
+      ];
       placeholders = paramKeys
-        .filter(key => params[key] !== undefined)
-        .map(key => String(params[key]));
-      
+        .filter((key) => params[key] !== undefined)
+        .map((key) => String(params[key]));
+
       // If no specific keys found, use all values
       if (placeholders.length === 0) {
         placeholders = Object.values(params).map(String);
       }
     }
   }
-  
+
   // Detect current locale
   const chromeLocale = chrome.i18n.getUILanguage();
   const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
-  
+
   const validationMessage = createValidationMessage(
     validationKey,
     placeholders.length > 0 ? placeholders : undefined,
     locale
   );
-  
+
   return validationMessage?.message || validationKey;
 };
 
@@ -449,11 +457,11 @@ const getLocalizedMessage = (
  */
 const getHelpUrl = (validationKey?: string): string | undefined => {
   if (!validationKey) return undefined;
-  
+
   // Detect current locale
   const chromeLocale = chrome.i18n.getUILanguage();
   const locale = chromeLocale.startsWith('ja') ? 'ja' : 'en';
-  
+
   const validationMessage = createValidationMessage(validationKey, undefined, locale);
   return validationMessage?.helpUrl;
 };
