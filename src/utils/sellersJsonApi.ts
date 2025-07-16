@@ -1,3 +1,4 @@
+import { useDevApiKey } from '../config/devConfig';
 import type { Seller } from '../types/types';
 
 export interface SellersJsonApiConfig {
@@ -35,19 +36,21 @@ export interface SellersJsonBatchApiResponse {
     domain: string;
     requested_count: number;
     found_count: number;
-    results: Array<{
-      sellerId: string;
-      seller?: Seller;
+    sellers: Array<{
+      seller_id: string;
+      seller_type: string | null;
+      name: string | null;
+      domain: string;
       found: boolean;
-      source?: 'cache' | 'fresh';
-      error?: string;
     }>;
     metadata?: {
-      version: string;
+      version?: string;
       contact_email?: string;
       contact_address?: string;
       identifiers?: any;
       seller_count?: number;
+      status?: string;
+      error_message?: string;
     };
     cache?: {
       is_cached: boolean;
@@ -62,6 +65,7 @@ export interface SellersJsonBatchApiResponse {
 
 export class SellersJsonApi {
   private config: SellersJsonApiConfig;
+  private static readonly MAX_BATCH_SIZE = 30; // Maximum seller IDs per batch request
 
   constructor(config: SellersJsonApiConfig) {
     this.config = config;
@@ -89,14 +93,21 @@ export class SellersJsonApi {
 
       const finalUrl = params.toString() ? `${url}?${params.toString()}` : url;
 
+      const apiKey = await useDevApiKey();
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      if (apiKey) {
+        headers['x-api-key'] = apiKey;
+      }
+
       const response = await fetch(finalUrl, {
         method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers,
         // Set a reasonable timeout
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(30000),
       });
 
       if (!response.ok) {
@@ -152,28 +163,39 @@ export class SellersJsonApi {
       try {
         const batchResponse = await this.fetchSellersBatch(domain, sellerIds, force);
 
-        if (batchResponse.success && batchResponse.data?.results) {
+        if (batchResponse.success && batchResponse.data?.sellers) {
           // Create a map for quick lookup of results by sellerId
           const resultMap = new Map(
-            batchResponse.data.results.map((result) => [result.sellerId, result])
+            batchResponse.data.sellers.map((seller) => [seller.seller_id, seller])
           );
 
           // Place results in correct positions
           for (const { index, sellerId } of sellerData) {
-            const result = resultMap.get(sellerId);
-            if (result) {
+            const seller = resultMap.get(sellerId);
+            if (seller) {
               results[index] = {
-                success: result.found,
-                data: result.found
+                success: seller.found,
+                data: seller.found
                   ? {
                       domain,
-                      seller: result.seller,
-                      found: result.found,
-                      metadata: batchResponse.data.metadata,
+                      seller: {
+                        seller_id: seller.seller_id,
+                        seller_type: seller.seller_type as "PUBLISHER" | "INTERMEDIARY" | "BOTH" | undefined,
+                        name: seller.name || undefined,
+                        domain: seller.domain
+                      },
+                      found: seller.found,
+                      metadata: batchResponse.data.metadata ? {
+                        version: batchResponse.data.metadata.version || '',
+                        contact_email: batchResponse.data.metadata.contact_email,
+                        contact_address: batchResponse.data.metadata.contact_address,
+                        identifiers: batchResponse.data.metadata.identifiers,
+                        seller_count: batchResponse.data.metadata.seller_count,
+                      } : undefined,
                       cache: batchResponse.data.cache,
                     }
                   : undefined,
-                error: result.found ? undefined : result.error || 'Seller not found',
+                error: seller.found ? undefined : `Seller ${sellerId} not found`,
               };
             } else {
               results[index] = {
@@ -207,13 +229,106 @@ export class SellersJsonApi {
   }
 
   /**
-   * Fetches multiple sellers from a single domain using the batch API
+   * Fetches multiple sellers from a single domain using the batch API with chunking
    * @param domain - The domain to fetch from
    * @param sellerIds - Array of seller IDs to fetch
    * @param force - Whether to force refresh cache
-   * @returns Batch API response
+   * @returns Batch API response with combined results
    */
   async fetchSellersBatch(
+    domain: string,
+    sellerIds: string[],
+    force: boolean = false
+  ): Promise<SellersJsonBatchApiResponse> {
+    // If sellerIds is within the limit, use single batch request
+    if (sellerIds.length <= SellersJsonApi.MAX_BATCH_SIZE) {
+      return this.fetchSellersBatchSingle(domain, sellerIds, force);
+    }
+
+    // Split into chunks and process them
+    const chunks: string[][] = [];
+    for (let i = 0; i < sellerIds.length; i += SellersJsonApi.MAX_BATCH_SIZE) {
+      chunks.push(sellerIds.slice(i, i + SellersJsonApi.MAX_BATCH_SIZE));
+    }
+
+    try {
+      // Process all chunks in parallel
+      const chunkPromises = chunks.map(chunk => 
+        this.fetchSellersBatchSingle(domain, chunk, force)
+      );
+      
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      
+      // Combine results
+      const combinedSellers: Array<{
+        seller_id: string;
+        seller_type: string | null;
+        name: string | null;
+        domain: string;
+        found: boolean;
+      }> = [];
+      
+      let totalRequested = 0;
+      let totalFound = 0;
+      let combinedMetadata: any = null;
+      let combinedCache: any = null;
+      const errors: string[] = [];
+
+      for (const result of chunkResults) {
+        if (result.status === 'fulfilled' && result.value.success && result.value.data) {
+          combinedSellers.push(...result.value.data.sellers);
+          totalRequested += result.value.data.requested_count;
+          totalFound += result.value.data.found_count;
+          
+          // Use metadata and cache from the first successful response
+          if (!combinedMetadata && result.value.data.metadata) {
+            combinedMetadata = result.value.data.metadata;
+          }
+          if (!combinedCache && result.value.data.cache) {
+            combinedCache = result.value.data.cache;
+          }
+        } else if (result.status === 'fulfilled' && !result.value.success) {
+          errors.push(result.value.error || 'Unknown error');
+        } else if (result.status === 'rejected') {
+          errors.push(result.reason?.message || 'Request failed');
+        }
+      }
+
+      // Return combined result
+      if (combinedSellers.length > 0 || errors.length === 0) {
+        return {
+          success: true,
+          data: {
+            domain,
+            requested_count: totalRequested,
+            found_count: totalFound,
+            sellers: combinedSellers,
+            metadata: combinedMetadata,
+            cache: combinedCache,
+          }
+        };
+      } else {
+        return {
+          success: false,
+          error: `All batch requests failed: ${errors.join(', ')}`
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown batch API error',
+      };
+    }
+  }
+
+  /**
+   * Fetches multiple sellers from a single domain using a single batch API call
+   * @param domain - The domain to fetch from
+   * @param sellerIds - Array of seller IDs to fetch (should be <= MAX_BATCH_SIZE)
+   * @param force - Whether to force refresh cache
+   * @returns Batch API response
+   */
+  private async fetchSellersBatchSingle(
     domain: string,
     sellerIds: string[],
     force: boolean = false
@@ -221,18 +336,25 @@ export class SellersJsonApi {
     try {
       const url = `${this.config.baseUrl}/sellersjson/${domain}/sellers/batch`;
 
+      const apiKey = await useDevApiKey();
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      if (apiKey) {
+        headers['x-api-key'] = apiKey;
+      }
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           sellerIds,
           force,
         }),
-        // Set a reasonable timeout
-        signal: AbortSignal.timeout(15000), // Longer timeout for batch requests
+        // Set a reasonable timeout - shorter for smaller batches
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {

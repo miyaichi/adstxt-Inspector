@@ -32,3 +32,6 @@ venv/
 
 # GitHub Packages Authentication
 .npmrc
+
+# Development configuration (contains API keys)
+src/config/dev.ts

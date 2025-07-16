@@ -11,6 +11,8 @@ import { useState } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
+import { SellersJsonApi } from '../utils/sellersJsonApi';
+import { getApiConfig } from '../config/api';
 
 const logger = new Logger('useAdsSellers');
 
@@ -44,63 +46,49 @@ const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
  * @param adsTxtEntries
  * @returns SellerAnalysis
  */
-const fetchSellerAnalysisForDomain = async (
-  domain: string,
-  adsTxtEntries: AdsTxt[]
-): Promise<SellerAnalysis> => {
-  // Extract seller IDs from ads.txt entries
-  const sellerIds = adsTxtEntries.map((entry) => String(entry.publisherId));
-  const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
+/**
+ * Extract seller analysis from validated entries (crossCheckAdsTxtRecords results)
+ * @param domains
+ * @param adsTxtResult
+ * @returns SellerAnalysis[]
+ */
+const extractSellerAnalysisFromValidatedEntries = async (
+  domains: string[],
+  adsTxtResult: FetchAdsTxtResult
+): Promise<SellerAnalysis[]> => {
+  const { data: adsTxtEntriesAll, parsedEntries } = adsTxtResult;
 
-  // Use the new fetchSellers method with API-first approach
-  const sellersResults = await SellersJsonFetcher.fetchSellers(requests, FETCH_OPTIONS);
+  return domains.map((domain) => {
+    const entries = adsTxtEntriesAll.filter((entry) => entry.domain === domain);
+    
+    // Extract sellers from validated entries
+    const sellers: Seller[] = [];
+    if (parsedEntries) {
+      for (const parsedEntry of parsedEntries) {
+        if (isAdsTxtRecord(parsedEntry) && parsedEntry.domain === domain) {
+          // Check if this entry has seller information from crossCheckAdsTxtRecords
+          const sellerInfo = (parsedEntry as any).seller;
+          if (sellerInfo) {
+            sellers.push(sellerInfo);
+          }
+        }
+      }
+    }
 
-  // Extract successful sellers and any errors
-  const filteredSellers = sellersResults
-    .filter((result) => result.seller !== null)
-    .map((result) => result.seller!);
-
-  // Collect any errors from the results
-  const errors = sellersResults.filter((result) => result.error).map((result) => result.error!);
-
-  const error = errors.length > 0 ? errors.join('; ') : undefined;
-
-  return {
-    domain,
-    sellersJson: { data: filteredSellers, error },
-    adsTxtEntries,
-  };
+    return {
+      domain,
+      sellersJson: { data: sellers, error: undefined },
+      adsTxtEntries: entries,
+    };
+  });
 };
+
 
 export const useAdsSellers = (): UseAdsSellersReturn => {
   const [analyzing, setAnalyzing] = useState(false);
   const [adsTxtData, setAdsTxtData] = useState<FetchAdsTxtResult | null>(null);
   const [sellerAnalysis, setSellerAnalysis] = useState<SellerAnalysis[]>([]);
 
-  /**
-   * Retrive and analyze sellers.json for the specified domain list.
-   * @param domains
-   * @param adsTxtResult
-   * @returns SellerAnalysis[]
-   */
-  const analyzeSellersJson = async (
-    domains: string[],
-    adsTxtResult: FetchAdsTxtResult
-  ): Promise<SellerAnalysis[]> => {
-    const { data: adsTxtEntriesAll, variables } = adsTxtResult;
-
-    const analysisPromises = domains.map((domain) => {
-      const entries = adsTxtEntriesAll.filter((entry) => entry.domain === domain);
-      return fetchSellerAnalysisForDomain(domain, entries);
-    });
-
-    const results = await Promise.allSettled(analysisPromises);
-    return results
-      .filter(
-        (result): result is PromiseFulfilledResult<SellerAnalysis> => result.status === 'fulfilled'
-      )
-      .map((result) => result.value);
-  };
 
   /**
    * Retrive and analyze the ads.txt/app-ads.txt and sellers.json based on the specified URL.
@@ -117,91 +105,66 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       const domain = new URL(url).hostname;
       const adsTxtResult = await fetchAdsTxt(domain, appAdsTxt);
 
+      // Create SellersJsonProvider using SellersJsonApi
+      const sellersJsonProvider: SellersJsonProvider = {
+        async batchGetSellers(domain: string, sellerIds: string[]): Promise<BatchSellersResult> {
+          try {
+            // Use the batch API from SellersJsonApi
+            const apiConfig = await getApiConfig();
+            const sellersJsonApi = new SellersJsonApi(apiConfig);
+            const response = await sellersJsonApi.fetchSellersBatch(domain, sellerIds);
+
+            if (response.success && response.data) {
+              return {
+                domain: response.data.domain,
+                requested_count: response.data.requested_count,
+                found_count: response.data.found_count,
+                results: response.data.sellers.map((seller: any) => ({
+                  sellerId: seller.seller_id,
+                  seller: seller.found ? {
+                    seller_id: seller.seller_id,
+                    seller_type: seller.seller_type as "PUBLISHER" | "INTERMEDIARY" | "BOTH" | undefined,
+                    name: seller.name || undefined,
+                    domain: seller.domain
+                  } : null,
+                  found: seller.found,
+                  source: 'fresh' as const,
+                  error: seller.found ? undefined : `Seller ${seller.seller_id} not found`
+                })),
+                metadata: response.data.metadata || {},
+                cache: response.data.cache
+                  ? {
+                      ...response.data.cache,
+                      status: response.data.cache.status as 'error' | 'success' | 'stale',
+                    }
+                  : { is_cached: false, status: 'success' as const },
+              };
+            } else {
+              throw new Error(response.error || 'Unknown API error');
+            }
+          } catch (error) {
+            // Re-throw the error to let fetchSellerAnalysisForDomain handle the fallback
+            throw error;
+          }
+        },
+
+        async hasSellerJson(domain: string): Promise<boolean> {
+          // Always return true since we'll check existence through batch API
+          // If sellers.json doesn't exist, batch API will indicate it in metadata
+          return true;
+        },
+
+        async getMetadata(domain: string): Promise<SellersJsonMetadata> {
+          return {};
+        },
+
+        async getCacheInfo(domain: string): Promise<CacheInfo> {
+          return { is_cached: false, status: 'success' };
+        },
+      };
+
       // Perform cross-checking with ads-txt-validator if we have parsed entries
       if (adsTxtResult.parsedEntries) {
-        // Create SellersJsonProvider using SellersJsonApi
-        const sellersJsonProvider: SellersJsonProvider = {
-          async batchGetSellers(domain: string, sellerIds: string[]): Promise<BatchSellersResult> {
-            try {
-              // Use the batch API from SellersJsonApi
-              const response = await fetch('/api/sellers/batch', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  domain,
-                  sellerIds,
-                }),
-              });
-
-              if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
-              }
-
-              const data = await response.json();
-
-              if (data.success && data.data) {
-                return {
-                  domain: data.data.domain,
-                  requested_count: data.data.requested_count,
-                  found_count: data.data.found_count,
-                  results: data.data.results.map((result: any) => ({
-                    sellerId: result.sellerId,
-                    seller: result.seller,
-                    found: result.found,
-                    source: result.source || 'fresh',
-                    error: result.error,
-                  })),
-                  metadata: data.data.metadata || {},
-                  cache: data.data.cache || { is_cached: false, status: 'success' },
-                };
-              } else {
-                throw new Error(data.error || 'Unknown API error');
-              }
-            } catch (error) {
-              // Fallback to existing fetcher if API fails
-              logger.warn('API failed, falling back to direct fetch:', error);
-              const requests = sellerIds.map((sellerId) => ({ domain, sellerId }));
-              const results = await SellersJsonFetcher.fetchSellers(requests, FETCH_OPTIONS);
-
-              const batchResults = results.map((result) => ({
-                sellerId: result.sellerId,
-                seller: result.seller,
-                found: result.seller !== null,
-                source: 'fresh' as const,
-                error: result.error,
-              }));
-
-              return {
-                domain,
-                requested_count: sellerIds.length,
-                found_count: batchResults.filter((r) => r.found).length,
-                results: batchResults,
-                metadata: {},
-                cache: { is_cached: false, status: 'success' },
-              };
-            }
-          },
-
-          async hasSellerJson(domain: string): Promise<boolean> {
-            try {
-              const result = await SellersJsonFetcher.fetch(domain, FETCH_OPTIONS);
-              return result.data !== null;
-            } catch {
-              return false;
-            }
-          },
-
-          async getMetadata(domain: string): Promise<SellersJsonMetadata> {
-            return {};
-          },
-
-          async getCacheInfo(domain: string): Promise<CacheInfo> {
-            return { is_cached: false, status: 'success' };
-          },
-        };
-
         // Perform cross-checking
         const validatedEntries = await crossCheckAdsTxtRecords(
           domain,
@@ -217,8 +180,9 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       setAdsTxtData(adsTxtResult);
       logger.debug(appAdsTxt ? 'App-ads.txt' : 'Ads.txt', adsTxtResult);
 
+      // Extract seller analysis from crossCheckAdsTxtRecords results
       const sellerDomains = getUniqueDomains(adsTxtResult.data);
-      const analysis = await analyzeSellersJson(sellerDomains, adsTxtResult);
+      const analysis = await extractSellerAnalysisFromValidatedEntries(sellerDomains, adsTxtResult);
       setSellerAnalysis(analysis);
       logger.debug('Seller analysis:', analysis);
     } catch (error) {
