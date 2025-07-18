@@ -112,21 +112,16 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   const duplicateEntryCount = adsTxtData?.duplicates?.length || 0;
   const totalAdsTxtEntries = adsTxtData?.data.length || 0;
 
-  // Get verification data for all entries using clarified logic
-
-  // IMPORTANT: Don't calculate verification data if sellerAnalysis is empty
-  // This prevents showing incorrect 0 values during initial render
+  // Calculate verification data for all entries
+  // Note: Only calculate if sellerAnalysis has data to prevent showing incorrect 0 values
   const verificationData = (adsTxtData?.data && sellerAnalysis.length > 0) 
     ? adsTxtData.data.map((entry) => {
       const result = isVerifiedEntry(entry.domain, entry);
       
-      // Check if seller exists in sellers.json by looking at seller analysis data
-      // This should match the test program logic: check ALL API results, not just found ones
+      // Find seller analysis data for this domain
       const domainAnalysis = sellerAnalysis.find(analysis => analysis.domain === entry.domain);
       
-      // Look for this specific seller ID in the API response results (including not found ones)
-      
-      // Find the seller by ID (may be found or not found)
+      // Find the specific seller by ID in the API response
       const sellerData = domainAnalysis?.sellersJson?.data?.find(seller => 
         seller.seller_id === entry.publisherId
       );
@@ -134,34 +129,26 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
       // Check if seller exists in sellers.json (found flag should be true)
       const sellerExists = sellerData?.found === true;
       
-      
-      const verificationResult = {
+      return {
         entry,
         isVerified: result.isVerified,
-        // Check if there are any error reasons (those starting with "error_")
         hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
-        // Check if seller exists in sellers.json
         hasSellerInfo: sellerExists,
         reasons: result.reasons
       };
-      
-      
-      return verificationResult;
     }) : [];
 
-  // Count using clarified logic
+  // Calculate seller counts
   const existingSellerCount = verificationData.filter((data) => data.hasSellerInfo).length;
   const verifiedSellerCount = verificationData.filter((data) => data.isVerified).length;
   const alertSellerCount = verificationData.filter((data) => data.hasSellerInfo && !data.isVerified && data.hasNoErrors).length;
   const noErrorSellerCount = verifiedSellerCount + alertSellerCount;
   
 
-  const SellerExistingRate =
-    totalAdsTxtEntries === 0 ? 0 : (existingSellerCount / totalAdsTxtEntries) * 100;
-  const sellerVerificationRate =
-    totalAdsTxtEntries === 0 ? 0 : (verifiedSellerCount / totalAdsTxtEntries) * 100;
-  const noErrorSellerRate =
-    totalAdsTxtEntries === 0 ? 0 : (noErrorSellerCount / totalAdsTxtEntries) * 100;
+  // Calculate percentages
+  const sellerExistingRate = totalAdsTxtEntries === 0 ? 0 : (existingSellerCount / totalAdsTxtEntries) * 100;
+  const sellerVerificationRate = totalAdsTxtEntries === 0 ? 0 : (verifiedSellerCount / totalAdsTxtEntries) * 100;
+  const noErrorSellerRate = totalAdsTxtEntries === 0 ? 0 : (noErrorSellerCount / totalAdsTxtEntries) * 100;
 
   if (analyzing) {
     return (
@@ -308,12 +295,12 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Existing Sellers</span>
-              <span className="text-sm font-bold">{SellerExistingRate.toFixed(1)}%</span>
+              <span className="text-sm font-bold">{sellerExistingRate.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-blue-600 h-2 rounded-full"
-                style={{ width: `${SellerExistingRate}%` }}
+                style={{ width: `${sellerExistingRate}%` }}
               />
             </div>
             <div className="flex justify-between text-sm text-gray-600">
