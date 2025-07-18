@@ -169,5 +169,8 @@
   },
   "warning_confidential_seller": {
     "message": "セラー $1 は sellers.json で機密扱いとしてマークされています"
+  },
+  "error_entry_not_found": {
+    "message": "セラー $1 の検証結果エントリが見つかりません"
   }
 }

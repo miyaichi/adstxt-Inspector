@@ -169,5 +169,8 @@
   },
   "warning_confidential_seller": {
     "message": "Seller $1 is marked as confidential in sellers.json"
+  },
+  "error_entry_not_found": {
+    "message": "Entry for seller $1 not found in validation results"
   }
 }
