@@ -111,39 +111,57 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
   const syntaxErrorCount = adsTxtData?.errors?.length || 0;
   const duplicateEntryCount = adsTxtData?.duplicates?.length || 0;
   const totalAdsTxtEntries = adsTxtData?.data.length || 0;
-  const existingSellerCoun = sellerAnalysis.reduce(
-    (acc, analysis) => acc + (analysis.sellersJson?.data.length || 0),
-    0
-  );
 
-  // Get verification data for all entries
-  const verificationData =
-    adsTxtData?.data.map((entry) => {
+  // Get verification data for all entries using clarified logic
+
+  // IMPORTANT: Don't calculate verification data if sellerAnalysis is empty
+  // This prevents showing incorrect 0 values during initial render
+  const verificationData = (adsTxtData?.data && sellerAnalysis.length > 0) 
+    ? adsTxtData.data.map((entry) => {
       const result = isVerifiedEntry(entry.domain, entry);
-      return {
+      
+      // Check if seller exists in sellers.json by looking at seller analysis data
+      // This should match the test program logic: check ALL API results, not just found ones
+      const domainAnalysis = sellerAnalysis.find(analysis => analysis.domain === entry.domain);
+      
+      // Look for this specific seller ID in the API response results (including not found ones)
+      
+      // Find the seller by ID (may be found or not found)
+      const sellerData = domainAnalysis?.sellersJson?.data?.find(seller => 
+        seller.seller_id === entry.publisherId
+      );
+      
+      // Check if seller exists in sellers.json (found flag should be true)
+      const sellerExists = sellerData?.found === true;
+      
+      
+      const verificationResult = {
+        entry,
         isVerified: result.isVerified,
         // Check if there are any error reasons (those starting with "error_")
         hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
+        // Check if seller exists in sellers.json
+        hasSellerInfo: sellerExists,
+        reasons: result.reasons
       };
-    }) || [];
+      
+      
+      return verificationResult;
+    }) : [];
 
-  // Count verified sellers
+  // Count using clarified logic
+  const existingSellerCount = verificationData.filter((data) => data.hasSellerInfo).length;
   const verifiedSellerCount = verificationData.filter((data) => data.isVerified).length;
-
-  // Count non-verified but no-error sellers
-  const nonVerifiedNoErrorCount = verificationData.filter(
-    (data) => !data.isVerified && data.hasNoErrors
-  ).length;
-
-  // Total sellers with no errors (verified + non-verified with no errors)
-  const totalNoErrorCount = verifiedSellerCount + nonVerifiedNoErrorCount;
+  const alertSellerCount = verificationData.filter((data) => data.hasSellerInfo && !data.isVerified && data.hasNoErrors).length;
+  const noErrorSellerCount = verifiedSellerCount + alertSellerCount;
+  
 
   const SellerExistingRate =
-    totalAdsTxtEntries === 0 ? 0 : (existingSellerCoun / totalAdsTxtEntries) * 100;
+    totalAdsTxtEntries === 0 ? 0 : (existingSellerCount / totalAdsTxtEntries) * 100;
   const sellerVerificationRate =
     totalAdsTxtEntries === 0 ? 0 : (verifiedSellerCount / totalAdsTxtEntries) * 100;
   const noErrorSellerRate =
-    totalAdsTxtEntries === 0 ? 0 : (totalNoErrorCount / totalAdsTxtEntries) * 100;
+    totalAdsTxtEntries === 0 ? 0 : (noErrorSellerCount / totalAdsTxtEntries) * 100;
 
   if (analyzing) {
     return (
@@ -278,9 +296,9 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <span>
                 <span className="text-green-600">Verified: {verifiedSellerCount}</span>
                 {' + '}
-                <span className="text-yellow-600">Alert: {nonVerifiedNoErrorCount}</span>
+                <span className="text-yellow-600">Alert: {alertSellerCount}</span>
                 {' = '}
-                <span className="font-semibold">{totalNoErrorCount}</span>
+                <span className="font-semibold">{noErrorSellerCount}</span>
               </span>
               <span>Total: {totalAdsTxtEntries}</span>
             </div>
@@ -299,7 +317,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               />
             </div>
             <div className="flex justify-between text-sm text-gray-600">
-              <span>Existing: {existingSellerCoun}</span>
+              <span>Existing: {existingSellerCount}</span>
               <span>Total: {totalAdsTxtEntries}</span>
             </div>
           </div>

@@ -265,38 +265,50 @@ export class SellersJsonFetcher {
     // Try API first if configured
     if (apiClient) {
       try {
-        const apiResponses = await apiClient.fetchSellers(requests, options.bypassCache);
+        // Group requests by domain to make separate batch calls
+        const domainGroups = new Map<string, string[]>();
+        for (const req of requests) {
+          if (!domainGroups.has(req.domain)) {
+            domainGroups.set(req.domain, []);
+          }
+          domainGroups.get(req.domain)!.push(req.sellerId);
+        }
 
         const fallbackRequests: Array<{ domain: string; sellerId: string }> = [];
+        const apiPromises = Array.from(domainGroups.entries()).map(async ([domain, sellerIds]) => {
+          const response = await apiClient.fetchSellersBatch(domain, sellerIds, options.bypassCache);
 
-        for (let i = 0; i < requests.length; i++) {
-          const request = requests[i];
-          const apiResponse = apiResponses[i];
-
-          if (apiResponse.success && apiResponse.data?.seller) {
-            results.push({
-              domain: request.domain,
-              sellerId: request.sellerId,
-              seller: apiResponse.data.seller,
-              source: 'api',
-            });
-          } else if (
-            apiResponse.error?.includes('404') ||
-            apiResponse.error?.includes('not found')
-          ) {
-            // Seller definitely doesn't exist - no fallback needed
-            results.push({
-              domain: request.domain,
-              sellerId: request.sellerId,
-              seller: null,
-              source: 'api',
-              error: apiResponse.error,
-            });
+          if (response.success && response.data?.sellers) {
+            const sellerMap = new Map(response.data.sellers.map(s => [s.seller_id, s]));
+            for (const sellerId of sellerIds) {
+              const seller = sellerMap.get(sellerId);
+              if (seller?.found) {
+                results.push({
+                  domain,
+                  sellerId,
+                  seller: {
+                    seller_id: seller.seller_id,
+                    name: seller.name,
+                    domain: seller.domain,
+                    seller_type: seller.seller_type,
+                    is_confidential: seller.is_confidential ? 1 : 0,
+                  },
+                  source: 'api',
+                });
+              } else {
+                // API reported not found, add to fallback
+                fallbackRequests.push({ domain, sellerId });
+              }
+            }
           } else {
-            // API failed - add to fallback list
-            fallbackRequests.push(request);
+            // Entire batch call failed, add all to fallback
+            for (const sellerId of sellerIds) {
+              fallbackRequests.push({ domain, sellerId });
+            }
           }
-        }
+        });
+
+        await Promise.all(apiPromises);
 
         // Process fallback requests if any
         if (fallbackRequests.length > 0) {

@@ -30,19 +30,22 @@ export interface SellersJsonApiResponse {
   error?: string;
 }
 
+export interface BatchSellerEntry {
+  seller_id: string;
+  seller_type?: 'PUBLISHER' | 'INTERMEDIARY' | 'BOTH';
+  name?: string;
+  domain?: string;
+  found: boolean;
+  is_confidential?: boolean;
+}
+
 export interface SellersJsonBatchApiResponse {
   success: boolean;
   data?: {
     domain: string;
     requested_count: number;
     found_count: number;
-    sellers: Array<{
-      seller_id: string;
-      seller_type: string | null;
-      name: string | null;
-      domain: string;
-      found: boolean;
-    }>;
+    sellers: BatchSellerEntry[];
     metadata?: {
       version?: string;
       contact_email?: string;
@@ -72,180 +75,35 @@ export class SellersJsonApi {
   }
 
   /**
-   * Fetches a specific seller from the external API
-   * @param domain - The domain to fetch from
-   * @param sellerId - The seller ID to fetch
-   * @param force - Whether to force refresh cache
-   * @returns The API response
-   */
-  async fetchSeller(
-    domain: string,
-    sellerId: string,
-    force: boolean = false
-  ): Promise<SellersJsonApiResponse> {
-    try {
-      const url = `${this.config.baseUrl}/sellersjson/${domain}/seller/${sellerId}`;
-      const params = new URLSearchParams();
-
-      if (force) {
-        params.append('force', 'true');
-      }
-
-      const finalUrl = params.toString() ? `${url}?${params.toString()}` : url;
-
-      const apiKey = await useDevApiKey();
-      const headers: Record<string, string> = {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      };
-
-      if (apiKey) {
-        headers['x-api-key'] = apiKey;
-      }
-
-      const response = await fetch(finalUrl, {
-        method: 'GET',
-        headers,
-        // Set a reasonable timeout
-        signal: AbortSignal.timeout(30000),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return {
-          success: false,
-          error: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-        };
-      }
-
-      const data = await response.json();
-
-      return {
-        success: true,
-        data,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown API error',
-      };
-    }
-  }
-
-  /**
-   * Fetches multiple sellers from the external API using batch endpoint
-   * @param requests - Array of {domain, sellerId} objects
-   * @param force - Whether to force refresh cache
-   * @returns Array of API responses in the same order as requests
-   */
-  async fetchSellers(
-    requests: Array<{ domain: string; sellerId: string }>,
-    force: boolean = false
-  ): Promise<SellersJsonApiResponse[]> {
-    // Group requests by domain to use batch API efficiently
-    const domainGroups = new Map<string, Array<{ index: number; sellerId: string }>>();
-
-    for (let i = 0; i < requests.length; i++) {
-      const { domain, sellerId } = requests[i];
-      if (!domainGroups.has(domain)) {
-        domainGroups.set(domain, []);
-      }
-      domainGroups.get(domain)!.push({ index: i, sellerId });
-    }
-
-    // Initialize results array with correct length
-    const results: SellersJsonApiResponse[] = new Array(requests.length);
-
-    // Process each domain group with batch API
-    const promises = Array.from(domainGroups.entries()).map(async ([domain, sellerData]) => {
-      const sellerIds = sellerData.map((item) => item.sellerId);
-
-      try {
-        const batchResponse = await this.fetchSellersBatch(domain, sellerIds, force);
-
-        if (batchResponse.success && batchResponse.data?.sellers) {
-          // Create a map for quick lookup of results by sellerId
-          const resultMap = new Map(
-            batchResponse.data.sellers.map((seller) => [seller.seller_id, seller])
-          );
-
-          // Place results in correct positions
-          for (const { index, sellerId } of sellerData) {
-            const seller = resultMap.get(sellerId);
-            if (seller) {
-              results[index] = {
-                success: seller.found,
-                data: seller.found
-                  ? {
-                      domain,
-                      seller: {
-                        seller_id: seller.seller_id,
-                        seller_type: seller.seller_type as "PUBLISHER" | "INTERMEDIARY" | "BOTH" | undefined,
-                        name: seller.name || undefined,
-                        domain: seller.domain
-                      },
-                      found: seller.found,
-                      metadata: batchResponse.data.metadata ? {
-                        version: batchResponse.data.metadata.version || '',
-                        contact_email: batchResponse.data.metadata.contact_email,
-                        contact_address: batchResponse.data.metadata.contact_address,
-                        identifiers: batchResponse.data.metadata.identifiers,
-                        seller_count: batchResponse.data.metadata.seller_count,
-                      } : undefined,
-                      cache: batchResponse.data.cache,
-                    }
-                  : undefined,
-                error: seller.found ? undefined : `Seller ${sellerId} not found`,
-              };
-            } else {
-              results[index] = {
-                success: false,
-                error: 'Seller not found in batch response',
-              };
-            }
-          }
-        } else {
-          // If batch API fails, add error responses for all sellers in this domain
-          for (const { index } of sellerData) {
-            results[index] = {
-              success: false,
-              error: batchResponse.error || 'Batch API request failed',
-            };
-          }
-        }
-      } catch (error) {
-        // If batch request fails, add error responses for all sellers in this domain
-        for (const { index } of sellerData) {
-          results[index] = {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown batch API error',
-          };
-        }
-      }
-    });
-
-    await Promise.allSettled(promises);
-    return results;
-  }
-
-  /**
-   * Fetches multiple sellers from a single domain using the batch API with chunking
+   * Fetches multiple sellers from a single domain using the batch API with chunking.
+   * This is the primary method for fetching sellers, ensuring that all requested
+   * sellers are accounted for in the response, even if some API calls fail.
    * @param domain - The domain to fetch from
    * @param sellerIds - Array of seller IDs to fetch
    * @param force - Whether to force refresh cache
-   * @returns Batch API response with combined results
+   * @returns A single, consolidated batch API response
    */
   async fetchSellersBatch(
     domain: string,
     sellerIds: string[],
     force: boolean = false
   ): Promise<SellersJsonBatchApiResponse> {
-    // If sellerIds is within the limit, use single batch request
-    if (sellerIds.length <= SellersJsonApi.MAX_BATCH_SIZE) {
-      return this.fetchSellersBatchSingle(domain, sellerIds, force);
+    // If no seller IDs are provided, return an empty successful response
+    if (sellerIds.length === 0) {
+      return {
+        success: true,
+        data: {
+          domain,
+          requested_count: 0,
+          found_count: 0,
+          sellers: [],
+          metadata: {},
+          cache: { is_cached: false, status: 'success', last_updated: '', expires_at: '' },
+        },
+      };
     }
 
-    // Split into chunks and process them
+    // Split seller IDs into chunks that respect the API's batch size limit
     const chunks: string[][] = [];
     for (let i = 0; i < sellerIds.length; i += SellersJsonApi.MAX_BATCH_SIZE) {
       chunks.push(sellerIds.slice(i, i + SellersJsonApi.MAX_BATCH_SIZE));
@@ -253,34 +111,29 @@ export class SellersJsonApi {
 
     try {
       // Process all chunks in parallel
-      const chunkPromises = chunks.map(chunk => 
+      const chunkPromises = chunks.map(chunk =>
         this.fetchSellersBatchSingle(domain, chunk, force)
       );
       
       const chunkResults = await Promise.allSettled(chunkPromises);
       
-      // Combine results
-      const combinedSellers: Array<{
-        seller_id: string;
-        seller_type: string | null;
-        name: string | null;
-        domain: string;
-        found: boolean;
-      }> = [];
-      
-      let totalRequested = 0;
-      let totalFound = 0;
+      // Use a map to consolidate results and ensure each sellerId has an entry
+      const combinedSellerMap = new Map<string, BatchSellerEntry>();
+
       let combinedMetadata: any = null;
       let combinedCache: any = null;
       const errors: string[] = [];
 
+      // Process results from each chunk
       for (const result of chunkResults) {
-        if (result.status === 'fulfilled' && result.value.success && result.value.data) {
-          combinedSellers.push(...result.value.data.sellers);
-          totalRequested += result.value.data.requested_count;
-          totalFound += result.value.data.found_count;
+        if (result.status === 'fulfilled' && result.value.success && result.value.data?.sellers) {
+          // If a chunk is successful, update the map with the seller data
+          for (const seller of result.value.data.sellers) {
+            // Batch API returns all sellers (both found and not found)
+            combinedSellerMap.set(seller.seller_id, seller);
+          }
           
-          // Use metadata and cache from the first successful response
+          // Capture metadata and cache info from the first successful response
           if (!combinedMetadata && result.value.data.metadata) {
             combinedMetadata = result.value.data.metadata;
           }
@@ -288,45 +141,71 @@ export class SellersJsonApi {
             combinedCache = result.value.data.cache;
           }
         } else if (result.status === 'fulfilled' && !result.value.success) {
-          errors.push(result.value.error || 'Unknown error');
+          // Collect errors from failed API calls
+          errors.push(result.value.error || `A batch request for domain ${domain} failed.`);
         } else if (result.status === 'rejected') {
-          errors.push(result.reason?.message || 'Request failed');
+          // Collect errors from rejected promises
+          errors.push(result.reason?.message || `A batch request for domain ${domain} was rejected.`);
         }
       }
 
-      // Return combined result
-      if (combinedSellers.length > 0 || errors.length === 0) {
+      // Ensure all requested seller IDs have entries, even if some chunks failed
+      sellerIds.forEach(id => {
+        if (!combinedSellerMap.has(id)) {
+          combinedSellerMap.set(id, {
+            seller_id: id,
+            found: false,
+            name: undefined,
+            seller_type: undefined,
+            domain: undefined,
+            is_confidential: undefined,
+          });
+        }
+      });
+
+      // Convert the map back to an array, preserving the original order of sellerIds
+      const combinedSellers = sellerIds.map(id => combinedSellerMap.get(id)!);
+      const foundCount = combinedSellers.filter(s => s.found).length;
+
+      // If there were errors but some data was still fetched, return success true with partial data.
+      // The caller can inspect individual entries' `found` status.
+      // Only return success: false if all chunks failed and we have no data.
+      if (foundCount > 0 || errors.length < chunkResults.length) {
         return {
           success: true,
           data: {
             domain,
-            requested_count: totalRequested,
-            found_count: totalFound,
+            requested_count: sellerIds.length,
+            found_count: foundCount,
             sellers: combinedSellers,
             metadata: combinedMetadata,
             cache: combinedCache,
-          }
+          },
+          // Optionally include a partial error message if some chunks failed
+          error: errors.length > 0 ? `Partial failure: ${errors.join('; ')}` : undefined,
         };
       } else {
+        // All chunks failed
         return {
           success: false,
-          error: `All batch requests failed: ${errors.join(', ')}`
+          error: `All batch requests for ${domain} failed: ${errors.join('; ')}`,
         };
       }
     } catch (error) {
+      // Catch any unexpected errors during the chunking process
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown batch API error',
+        error: error instanceof Error ? error.message : 'Unknown error in fetchSellersBatch',
       };
     }
   }
 
   /**
-   * Fetches multiple sellers from a single domain using a single batch API call
+   * Fetches a single batch of sellers. This is a private helper method.
    * @param domain - The domain to fetch from
-   * @param sellerIds - Array of seller IDs to fetch (should be <= MAX_BATCH_SIZE)
+   * @param sellerIds - Array of seller IDs (must be within MAX_BATCH_SIZE)
    * @param force - Whether to force refresh cache
-   * @returns Batch API response
+   * @returns A raw batch API response
    */
   private async fetchSellersBatchSingle(
     domain: string,
@@ -342,6 +221,7 @@ export class SellersJsonApi {
         'Content-Type': 'application/json',
       };
 
+      // 開発環境でのみx-api-keyを使用、本番環境ではoriginで認証
       if (apiKey) {
         headers['x-api-key'] = apiKey;
       }
@@ -350,27 +230,48 @@ export class SellersJsonApi {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          sellerIds,
-          force,
+          sellerIds: sellerIds,
+          force: force,
         }),
-        // Set a reasonable timeout - shorter for smaller batches
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(60000), // 60-second timeout for API call
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({})); // Try to parse error, but don't fail if body is empty
         return {
           success: false,
-          error: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          error: errorData.message || `API request failed with status ${response.status}: ${response.statusText}`,
         };
       }
 
       const data = await response.json();
 
-      return {
-        success: true,
-        data,
-      };
+      // Convert the batch API response to our expected format
+      if (data && data.success && data.data && Array.isArray(data.data.results)) {
+        return {
+          success: true,
+          data: {
+            domain: domain,
+            requested_count: data.data.requested_count,
+            found_count: data.data.found_count,
+            sellers: data.data.results.map((result: any) => ({
+              seller_id: result.sellerId,
+              seller_type: result.seller?.seller_type,
+              name: result.seller?.name,
+              domain: result.seller?.domain,
+              found: result.found,
+              is_confidential: result.seller?.is_confidential,
+            })),
+            metadata: data.data.metadata || {},
+            cache: data.data.cache || { is_cached: false, status: 'success', last_updated: '', expires_at: '' },
+          },
+        };
+      } else {
+        return {
+          success: false,
+          error: data?.error || 'Invalid API response format.',
+        };
+      }
     } catch (error) {
       return {
         success: false,

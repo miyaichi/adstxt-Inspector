@@ -19,6 +19,7 @@ export interface Seller {
   domain?: string;
   comment?: string;
   ext?: any;
+  found?: boolean; // Add found flag to track existence in sellers.json
 }
 
 // Sellers JSON type
