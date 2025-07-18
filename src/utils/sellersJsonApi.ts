@@ -111,12 +111,12 @@ export class SellersJsonApi {
 
     try {
       // Process all chunks in parallel
-      const chunkPromises = chunks.map(chunk =>
+      const chunkPromises = chunks.map((chunk) =>
         this.fetchSellersBatchSingle(domain, chunk, force)
       );
-      
+
       const chunkResults = await Promise.allSettled(chunkPromises);
-      
+
       // Use a map to consolidate results and ensure each sellerId has an entry
       const combinedSellerMap = new Map<string, BatchSellerEntry>();
 
@@ -132,7 +132,7 @@ export class SellersJsonApi {
             // Batch API returns all sellers (both found and not found)
             combinedSellerMap.set(seller.seller_id, seller);
           }
-          
+
           // Capture metadata and cache info from the first successful response
           if (!combinedMetadata && result.value.data.metadata) {
             combinedMetadata = result.value.data.metadata;
@@ -145,12 +145,14 @@ export class SellersJsonApi {
           errors.push(result.value.error || `A batch request for domain ${domain} failed.`);
         } else if (result.status === 'rejected') {
           // Collect errors from rejected promises
-          errors.push(result.reason?.message || `A batch request for domain ${domain} was rejected.`);
+          errors.push(
+            result.reason?.message || `A batch request for domain ${domain} was rejected.`
+          );
         }
       }
 
       // Ensure all requested seller IDs have entries, even if some chunks failed
-      sellerIds.forEach(id => {
+      sellerIds.forEach((id) => {
         if (!combinedSellerMap.has(id)) {
           combinedSellerMap.set(id, {
             seller_id: id,
@@ -164,8 +166,8 @@ export class SellersJsonApi {
       });
 
       // Convert the map back to an array, preserving the original order of sellerIds
-      const combinedSellers = sellerIds.map(id => combinedSellerMap.get(id)!);
-      const foundCount = combinedSellers.filter(s => s.found).length;
+      const combinedSellers = sellerIds.map((id) => combinedSellerMap.get(id)!);
+      const foundCount = combinedSellers.filter((s) => s.found).length;
 
       // If there were errors but some data was still fetched, return success true with partial data.
       // The caller can inspect individual entries' `found` status.
@@ -240,7 +242,9 @@ export class SellersJsonApi {
         const errorData = await response.json().catch(() => ({})); // Try to parse error, but don't fail if body is empty
         return {
           success: false,
-          error: errorData.message || `API request failed with status ${response.status}: ${response.statusText}`,
+          error:
+            errorData.message ||
+            `API request failed with status ${response.status}: ${response.statusText}`,
         };
       }
 
@@ -263,7 +267,12 @@ export class SellersJsonApi {
               is_confidential: result.seller?.is_confidential,
             })),
             metadata: data.data.metadata || {},
-            cache: data.data.cache || { is_cached: false, status: 'success', last_updated: '', expires_at: '' },
+            cache: data.data.cache || {
+              is_cached: false,
+              status: 'success',
+              last_updated: '',
+              expires_at: '',
+            },
           },
         };
       } else {

@@ -114,41 +114,49 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
 
   // Calculate verification data for all entries
   // Note: Only calculate if sellerAnalysis has data to prevent showing incorrect 0 values
-  const verificationData = (adsTxtData?.data && sellerAnalysis.length > 0) 
-    ? adsTxtData.data.map((entry) => {
-      const result = isVerifiedEntry(entry.domain, entry);
-      
-      // Find seller analysis data for this domain
-      const domainAnalysis = sellerAnalysis.find(analysis => analysis.domain === entry.domain);
-      
-      // Find the specific seller by ID in the API response
-      const sellerData = domainAnalysis?.sellersJson?.data?.find(seller => 
-        seller.seller_id === entry.publisherId
-      );
-      
-      // Check if seller exists in sellers.json (found flag should be true)
-      const sellerExists = sellerData?.found === true;
-      
-      return {
-        entry,
-        isVerified: result.isVerified,
-        hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
-        hasSellerInfo: sellerExists,
-        reasons: result.reasons
-      };
-    }) : [];
+  const verificationData =
+    adsTxtData?.data && sellerAnalysis.length > 0
+      ? adsTxtData.data.map((entry) => {
+          const result = isVerifiedEntry(entry.domain, entry);
+
+          // Find seller analysis data for this domain
+          const domainAnalysis = sellerAnalysis.find(
+            (analysis) => analysis.domain === entry.domain
+          );
+
+          // Find the specific seller by ID in the API response
+          const sellerData = domainAnalysis?.sellersJson?.data?.find(
+            (seller) => seller.seller_id === entry.publisherId
+          );
+
+          // Check if seller exists in sellers.json (found flag should be true)
+          const sellerExists = sellerData?.found === true;
+
+          return {
+            entry,
+            isVerified: result.isVerified,
+            hasNoErrors: !result.reasons.some((reason) => reason.key.startsWith('error_')),
+            hasSellerInfo: sellerExists,
+            reasons: result.reasons,
+          };
+        })
+      : [];
 
   // Calculate seller counts
   const existingSellerCount = verificationData.filter((data) => data.hasSellerInfo).length;
   const verifiedSellerCount = verificationData.filter((data) => data.isVerified).length;
-  const alertSellerCount = verificationData.filter((data) => data.hasSellerInfo && !data.isVerified && data.hasNoErrors).length;
+  const alertSellerCount = verificationData.filter(
+    (data) => data.hasSellerInfo && !data.isVerified && data.hasNoErrors
+  ).length;
   const noErrorSellerCount = verifiedSellerCount + alertSellerCount;
-  
 
   // Calculate percentages
-  const sellerExistingRate = totalAdsTxtEntries === 0 ? 0 : (existingSellerCount / totalAdsTxtEntries) * 100;
-  const sellerVerificationRate = totalAdsTxtEntries === 0 ? 0 : (verifiedSellerCount / totalAdsTxtEntries) * 100;
-  const noErrorSellerRate = totalAdsTxtEntries === 0 ? 0 : (noErrorSellerCount / totalAdsTxtEntries) * 100;
+  const sellerExistingRate =
+    totalAdsTxtEntries === 0 ? 0 : (existingSellerCount / totalAdsTxtEntries) * 100;
+  const sellerVerificationRate =
+    totalAdsTxtEntries === 0 ? 0 : (verifiedSellerCount / totalAdsTxtEntries) * 100;
+  const noErrorSellerRate =
+    totalAdsTxtEntries === 0 ? 0 : (noErrorSellerCount / totalAdsTxtEntries) * 100;
 
   if (analyzing) {
     return (

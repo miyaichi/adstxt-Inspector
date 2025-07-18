@@ -62,11 +62,11 @@ const extractSellerAnalysisFromValidatedEntries = async (
   const analysisResults = await Promise.all(
     domains.map(async (domain) => {
       const entries = adsTxtEntriesAll.filter((entry) => entry.domain === domain);
-      
+
       try {
         // Get seller IDs for this domain from ads.txt entries
-        const sellerIds = entries.map(entry => entry.publisherId);
-        
+        const sellerIds = entries.map((entry) => entry.publisherId);
+
         if (sellerIds.length === 0) {
           return {
             domain,
@@ -77,10 +77,10 @@ const extractSellerAnalysisFromValidatedEntries = async (
 
         // Fetch sellers using the provider
         const batchResult = await sellersJsonProvider.batchGetSellers(domain, sellerIds);
-        
+
         // Extract sellers from the batch result
         // NOTE: Include ALL results, not just found ones, to match test program logic
-        const sellers: Seller[] = (batchResult.results || []).map(result => {
+        const sellers: Seller[] = (batchResult.results || []).map((result) => {
           const sellerData = result.seller;
           return {
             seller_id: result.sellerId,
@@ -100,7 +100,10 @@ const extractSellerAnalysisFromValidatedEntries = async (
       } catch (error) {
         return {
           domain,
-          sellersJson: { data: [], error: error instanceof Error ? error.message : 'Unknown error' },
+          sellersJson: {
+            data: [],
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
           adsTxtEntries: entries,
         };
       }
@@ -110,12 +113,10 @@ const extractSellerAnalysisFromValidatedEntries = async (
   return analysisResults;
 };
 
-
 export const useAdsSellers = (): UseAdsSellersReturn => {
   const [analyzing, setAnalyzing] = useState(false);
   const [adsTxtData, setAdsTxtData] = useState<FetchAdsTxtResult | null>(null);
   const [sellerAnalysis, setSellerAnalysis] = useState<SellerAnalysis[]>([]);
-
 
   /**
    * Retrive and analyze the ads.txt/app-ads.txt and sellers.json based on the specified URL.
@@ -145,23 +146,27 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
               domain: response.data.domain,
               requested_count: response.data.requested_count,
               found_count: response.data.found_count,
-              results: response.data.sellers.map(seller => ({
+              results: response.data.sellers.map((seller) => ({
                 sellerId: seller.seller_id,
-                seller: seller.found ? {
-                  seller_id: seller.seller_id,
-                  seller_type: seller.seller_type,
-                  name: seller.name,
-                  domain: seller.domain,
-                  is_confidential: seller.is_confidential ? 1 : 0,
-                } : null,
+                seller: seller.found
+                  ? {
+                      seller_id: seller.seller_id,
+                      seller_type: seller.seller_type,
+                      name: seller.name,
+                      domain: seller.domain,
+                      is_confidential: seller.is_confidential ? 1 : 0,
+                    }
+                  : null,
                 found: seller.found,
                 source: 'fresh', // Or determine based on cache status
               })),
               metadata: response.data.metadata || {},
-              cache: response.data.cache ? {
-                ...response.data.cache,
-                status: response.data.cache.status as 'error' | 'success' | 'stale'
-              } : { is_cached: false, status: 'success' },
+              cache: response.data.cache
+                ? {
+                    ...response.data.cache,
+                    status: response.data.cache.status as 'error' | 'success' | 'stale',
+                  }
+                : { is_cached: false, status: 'success' },
             };
           } else {
             // If the API call fails, return a result that indicates failure for all sellers
@@ -169,7 +174,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
               domain,
               requested_count: sellerIds.length,
               found_count: 0,
-              results: sellerIds.map(id => ({
+              results: sellerIds.map((id) => ({
                 sellerId: id,
                 seller: null,
                 found: false,
@@ -214,7 +219,11 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
 
       // Extract seller analysis from crossCheckAdsTxtRecords results
       const sellerDomains = getUniqueDomains(adsTxtResult.data);
-      const analysis = await extractSellerAnalysisFromValidatedEntries(sellerDomains, adsTxtResult, sellersJsonProvider);
+      const analysis = await extractSellerAnalysisFromValidatedEntries(
+        sellerDomains,
+        adsTxtResult,
+        sellersJsonProvider
+      );
       setSellerAnalysis(analysis);
       logger.debug('Seller analysis:', analysis);
     } catch (error) {
@@ -230,34 +239,61 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
    * @param entry
    * @returns ValidityResult
    */
-  const isVerifiedEntry = useCallback((domain: string, entry: AdsTxt): ValidityResult => {
-    // Find the corresponding parsed entry from ads-txt-validator
-    const parsedEntries = adsTxtData?.parsedEntries || [];
-    const matchingEntry = parsedEntries.find((parsed) => {
-      if (!isAdsTxtRecord(parsed)) return false;
-      return (
-        parsed.domain === entry.domain &&
-        parsed.account_id === entry.publisherId &&
-        parsed.relationship === entry.relationship
-      );
-    });
+  const isVerifiedEntry = useCallback(
+    (domain: string, entry: AdsTxt): ValidityResult => {
+      // Find the corresponding parsed entry from ads-txt-validator
+      const parsedEntries = adsTxtData?.parsedEntries || [];
+      const matchingEntry = parsedEntries.find((parsed) => {
+        if (!isAdsTxtRecord(parsed)) return false;
+        return (
+          parsed.domain === entry.domain &&
+          parsed.account_id === entry.publisherId &&
+          parsed.relationship === entry.relationship
+        );
+      });
 
-    if (!matchingEntry || !isAdsTxtRecord(matchingEntry)) {
-      return {
-        isVerified: false,
-        reasons: [{ key: 'error_entry_not_found', placeholders: [entry.publisherId] }],
-      };
-    }
+      if (!matchingEntry || !isAdsTxtRecord(matchingEntry)) {
+        return {
+          isVerified: false,
+          reasons: [{ key: 'error_entry_not_found', placeholders: [entry.publisherId] }],
+        };
+      }
 
-    const reasons: { key: string; placeholders: string[] }[] = [];
+      const reasons: { key: string; placeholders: string[] }[] = [];
 
-    // Check if there are validation warnings or errors
-    if (matchingEntry.has_warning && matchingEntry.all_warnings) {
-      // Process all validation warnings from ads-txt-validator
-      matchingEntry.all_warnings.forEach((warning) => {
-        // Extract placeholders array from params object
+      // Check if there are validation warnings or errors
+      if (matchingEntry.has_warning && matchingEntry.all_warnings) {
+        // Process all validation warnings from ads-txt-validator
+        matchingEntry.all_warnings.forEach((warning) => {
+          // Extract placeholders array from params object
+          let placeholders: string[] = [];
+          if (warning.params) {
+            const paramKeys = [
+              'domain',
+              'account_id',
+              'publisher_domain',
+              'seller_domain',
+              'seller_type',
+            ];
+            placeholders = paramKeys
+              .filter((key) => warning.params![key] !== undefined)
+              .map((key) => String(warning.params![key]));
+
+            // If no specific keys found, use all values
+            if (placeholders.length === 0) {
+              placeholders = Object.values(warning.params).map(String);
+            }
+          }
+
+          reasons.push({
+            key: warning.key,
+            placeholders: placeholders,
+          });
+        });
+      } else if (matchingEntry.validation_key && matchingEntry.has_warning) {
+        // Handle single warning case
         let placeholders: string[] = [];
-        if (warning.params) {
+        if (matchingEntry.warning_params) {
           const paramKeys = [
             'domain',
             'account_id',
@@ -266,85 +302,61 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
             'seller_type',
           ];
           placeholders = paramKeys
-            .filter((key) => warning.params![key] !== undefined)
-            .map((key) => String(warning.params![key]));
+            .filter((key) => matchingEntry.warning_params![key] !== undefined)
+            .map((key) => String(matchingEntry.warning_params![key]));
 
           // If no specific keys found, use all values
           if (placeholders.length === 0) {
-            placeholders = Object.values(warning.params).map(String);
+            placeholders = Object.values(matchingEntry.warning_params).map(String);
           }
         }
 
         reasons.push({
-          key: warning.key,
+          key: matchingEntry.validation_key,
           placeholders: placeholders,
         });
-      });
-    } else if (matchingEntry.validation_key && matchingEntry.has_warning) {
-      // Handle single warning case
-      let placeholders: string[] = [];
-      if (matchingEntry.warning_params) {
-        const paramKeys = [
-          'domain',
-          'account_id',
-          'publisher_domain',
-          'seller_domain',
-          'seller_type',
-        ];
-        placeholders = paramKeys
-          .filter((key) => matchingEntry.warning_params![key] !== undefined)
-          .map((key) => String(matchingEntry.warning_params![key]));
+      }
 
-        // If no specific keys found, use all values
-        if (placeholders.length === 0) {
-          placeholders = Object.values(matchingEntry.warning_params).map(String);
+      // An entry is verified if it has seller information (indicating successful sellers.json lookup)
+      // and doesn't have any error-type warnings
+
+      // Check if corresponding seller exists in seller analysis data
+      const domainAnalysis = sellerAnalysis.find((analysis) => analysis.domain === domain);
+      const sellerData = domainAnalysis?.sellersJson?.data?.find(
+        (seller) => seller.seller_id === entry.publisherId
+      );
+      // Use found flag to determine if seller exists in sellers.json
+      const sellerExists = sellerData?.found === true;
+
+      const hasErrorWarnings = reasons.some((reason) => reason.key.startsWith('error_'));
+
+      // Clarified verification logic
+      let isFullyVerified = false;
+
+      if (sellerExists && !hasErrorWarnings) {
+        // Default to verified if seller exists and no error-level warnings
+        isFullyVerified = true;
+
+        // Check for confidential status (this makes it not fully verified but still no errors)
+        if (sellerData && sellerData.is_confidential === 1) {
+          isFullyVerified = false;
+          // Add warning for confidential seller if not already present
+          if (!reasons.some((r) => r.key === 'warning_confidential_seller')) {
+            reasons.push({
+              key: 'warning_confidential_seller',
+              placeholders: [entry.publisherId],
+            });
+          }
         }
       }
 
-      reasons.push({
-        key: matchingEntry.validation_key,
-        placeholders: placeholders,
-      });
-    }
-
-    // An entry is verified if it has seller information (indicating successful sellers.json lookup)
-    // and doesn't have any error-type warnings
-    
-    // Check if corresponding seller exists in seller analysis data
-    const domainAnalysis = sellerAnalysis.find(analysis => analysis.domain === domain);
-    const sellerData = domainAnalysis?.sellersJson?.data?.find(seller => 
-      seller.seller_id === entry.publisherId
-    );
-    // Use found flag to determine if seller exists in sellers.json
-    const sellerExists = sellerData?.found === true;
-    
-    const hasErrorWarnings = reasons.some((reason) => reason.key.startsWith('error_'));
-    
-    // Clarified verification logic
-    let isFullyVerified = false;
-    
-    if (sellerExists && !hasErrorWarnings) {
-      // Default to verified if seller exists and no error-level warnings
-      isFullyVerified = true;
-      
-      // Check for confidential status (this makes it not fully verified but still no errors)
-      if (sellerData && sellerData.is_confidential === 1) {
-        isFullyVerified = false;
-        // Add warning for confidential seller if not already present
-        if (!reasons.some(r => r.key === 'warning_confidential_seller')) {
-          reasons.push({
-            key: 'warning_confidential_seller',
-            placeholders: [entry.publisherId]
-          });
-        }
-      }
-    }
-
-    return {
-      isVerified: isFullyVerified,
-      reasons,
-    };
-  }, [adsTxtData, sellerAnalysis]);
+      return {
+        isVerified: isFullyVerified,
+        reasons,
+      };
+    },
+    [adsTxtData, sellerAnalysis]
+  );
 
   return {
     analyzing,

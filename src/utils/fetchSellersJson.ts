@@ -276,10 +276,14 @@ export class SellersJsonFetcher {
 
         const fallbackRequests: Array<{ domain: string; sellerId: string }> = [];
         const apiPromises = Array.from(domainGroups.entries()).map(async ([domain, sellerIds]) => {
-          const response = await apiClient.fetchSellersBatch(domain, sellerIds, options.bypassCache);
+          const response = await apiClient.fetchSellersBatch(
+            domain,
+            sellerIds,
+            options.bypassCache
+          );
 
           if (response.success && response.data?.sellers) {
-            const sellerMap = new Map(response.data.sellers.map(s => [s.seller_id, s]));
+            const sellerMap = new Map(response.data.sellers.map((s) => [s.seller_id, s]));
             for (const sellerId of sellerIds) {
               const seller = sellerMap.get(sellerId);
               if (seller?.found) {
