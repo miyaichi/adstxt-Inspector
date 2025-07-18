@@ -8,9 +8,10 @@ export const loadDevConfig = async () => {
   }
 
   try {
-    // 開発設定ファイルを動的にインポート
-    const { devConfig } = await import('./dev');
-    return devConfig;
+    // 開発設定ファイルを動的にインポート（TypeScriptの静的解析を回避）
+    const devPath = './dev';
+    const devModule = await import(devPath);
+    return devModule.devConfig;
   } catch (error) {
     console.warn('開発設定ファイルが見つかりません:', error);
     return null;
