@@ -166,5 +166,8 @@
   },
   "error_unknown_error": {
     "message": "不明なエラーが発生しました"
+  },
+  "warning_confidential_seller": {
+    "message": "セラー $1 は sellers.json で機密扱いとしてマークされています"
   }
 }

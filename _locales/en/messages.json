@@ -166,5 +166,8 @@
   },
   "error_unknown_error": {
     "message": "Unknown error occurred"
+  },
+  "warning_confidential_seller": {
+    "message": "Seller $1 is marked as confidential in sellers.json"
   }
 }
