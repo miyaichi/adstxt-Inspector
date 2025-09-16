@@ -1,18 +1,15 @@
 import {
   BatchSellersResult,
-  CacheInfo,
-  createValidationMessage,
   crossCheckAdsTxtRecords,
   isAdsTxtRecord,
-  SellersJsonMetadata,
-  SellersJsonProvider,
+  SellersJsonProvider
 } from '@miyaichi/ads-txt-validator';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { getApiConfig } from '../config/api';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
-import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
+import { type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
 import { SellersJsonApi } from '../utils/sellersJsonApi';
-import { getApiConfig } from '../config/api';
 
 const logger = new Logger('useAdsSellers');
 
@@ -41,12 +38,6 @@ interface UseAdsSellersReturn {
 const FETCH_OPTIONS = { timeout: 5000, retries: 1 };
 
 /**
- * Retrive the sellers.json for the specified domain and narrow down the ssearch using the corresponding ads.txt entries.
- * @param domain
- * @param adsTxtEntries
- * @returns SellerAnalysis
- */
-/**
  * Extract seller analysis from validated entries (crossCheckAdsTxtRecords results)
  * @param domains
  * @param adsTxtResult
@@ -64,8 +55,8 @@ const extractSellerAnalysisFromValidatedEntries = async (
       const entries = adsTxtEntriesAll.filter((entry) => entry.domain === domain);
 
       try {
-        // Get seller IDs for this domain from ads.txt entries
-        const sellerIds = entries.map((entry) => entry.publisherId);
+        // Get unique seller IDs for this domain from ads.txt entries
+        const sellerIds = [...new Set(entries.map((entry) => entry.publisherId))];
 
         if (sellerIds.length === 0) {
           return {
@@ -111,7 +102,7 @@ const extractSellerAnalysisFromValidatedEntries = async (
   );
 
   return analysisResults;
-};
+};;
 
 export const useAdsSellers = (): UseAdsSellersReturn => {
   const [analyzing, setAnalyzing] = useState(false);
