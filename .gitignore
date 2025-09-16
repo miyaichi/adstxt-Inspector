@@ -35,3 +35,6 @@ venv/
 
 # Development configuration (contains API keys)
 src/config/dev.ts
+
+# Serena
+.serena/
