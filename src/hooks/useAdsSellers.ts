@@ -2,9 +2,10 @@ import {
   BatchSellersResult,
   crossCheckAdsTxtRecords,
   isAdsTxtRecord,
+  ParsedAdsTxtRecord,
   SellersJsonProvider
 } from '@miyaichi/ads-txt-validator';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { getApiConfig } from '../config/api';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { type Seller } from '../utils/fetchSellersJson';
@@ -108,6 +109,27 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   const [analyzing, setAnalyzing] = useState(false);
   const [adsTxtData, setAdsTxtData] = useState<FetchAdsTxtResult | null>(null);
   const [sellerAnalysis, setSellerAnalysis] = useState<SellerAnalysis[]>([]);
+
+  const parsedEntryIndex = useMemo(() => {
+    const map = new Map<string, ParsedAdsTxtRecord>();
+    (adsTxtData?.parsedEntries || []).forEach((entry) => {
+      if (!isAdsTxtRecord(entry)) {
+        return;
+      }
+      const key = [
+        entry.domain,
+        entry.account_id,
+        entry.relationship,
+        entry.certification_authority_id ?? '',
+      ].join('::');
+
+      if (!map.has(key)) {
+        map.set(key, entry);
+      }
+    });
+
+    return map;
+  }, [adsTxtData?.parsedEntries]);
 
   /**
    * Retrive and analyze the ads.txt/app-ads.txt and sellers.json based on the specified URL.
@@ -233,15 +255,13 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
   const isVerifiedEntry = useCallback(
     (domain: string, entry: AdsTxt): ValidityResult => {
       // Find the corresponding parsed entry from ads-txt-validator
-      const parsedEntries = adsTxtData?.parsedEntries || [];
-      const matchingEntry = parsedEntries.find((parsed) => {
-        if (!isAdsTxtRecord(parsed)) return false;
-        return (
-          parsed.domain === entry.domain &&
-          parsed.account_id === entry.publisherId &&
-          parsed.relationship === entry.relationship
-        );
-      });
+      const key = [
+        entry.domain,
+        entry.publisherId,
+        entry.relationship,
+        entry.certificationAuthorityId ?? '',
+      ].join('::');
+      const matchingEntry = parsedEntryIndex.get(key);
 
       if (!matchingEntry || !isAdsTxtRecord(matchingEntry)) {
         return {
