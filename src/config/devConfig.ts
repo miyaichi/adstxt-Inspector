@@ -1,16 +1,15 @@
+declare const __DEV_BUILD__: boolean;
+
 // 開発環境設定の読み込み処理
 export const loadDevConfig = async () => {
-  // 開発環境判定
-  const isDev = !('update_url' in chrome.runtime.getManifest());
+  const isDevExtension = !('update_url' in chrome.runtime.getManifest());
 
-  if (!isDev) {
+  if (!isDevExtension || !__DEV_BUILD__) {
     return null;
   }
 
   try {
-    // 開発設定ファイルを動的にインポート（TypeScriptの静的解析を回避）
-    const devPath = './dev';
-    const devModule = await import(devPath);
+    const devModule = await import(/* webpackChunkName: "dev-config" */ './dev');
     return devModule.devConfig;
   } catch (error) {
     console.warn('開発設定ファイルが見つかりません:', error);
