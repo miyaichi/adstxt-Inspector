@@ -9,8 +9,8 @@ export const loadDevConfig = async () => {
   }
 
   try {
-    // Dynamic import that webpack can handle gracefully
-    const devModule = await import(/* webpackChunkName: "dev-config" */ /* webpackMode: "weak" */ './dev');
+    // Use require for dynamic import to avoid TypeScript resolution issues
+    const devModule = await eval('import("./dev")');
     return devModule.devConfig;
   } catch (error) {
     console.warn('開発設定ファイルが見つかりません:', error);
