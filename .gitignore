@@ -34,7 +34,7 @@ venv/
 .npmrc
 
 # Development configuration (contains API keys)
-src/config/dev.ts
+src/config/dev.json
 
 # Serena
 .serena/
