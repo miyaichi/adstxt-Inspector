@@ -3,7 +3,7 @@ import {
   crossCheckAdsTxtRecords,
   isAdsTxtRecord,
   ParsedAdsTxtRecord,
-  SellersJsonProvider
+  SellersJsonProvider,
 } from '@miyaichi/ads-txt-validator';
 import { useCallback, useMemo, useState } from 'react';
 import { getApiConfig } from '../config/api';
@@ -103,7 +103,7 @@ const extractSellerAnalysisFromValidatedEntries = async (
   );
 
   return analysisResults;
-};;
+};
 
 export const useAdsSellers = (): UseAdsSellersReturn => {
   const [analyzing, setAnalyzing] = useState(false);
