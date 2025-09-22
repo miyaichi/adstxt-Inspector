@@ -103,15 +103,24 @@ export class SellersJsonFetcher {
     const { timeout, retries, retryDelay } = options;
     let lastError: Error | null = null;
 
-    // Retry logic
+    // Retry logic with exponential backoff
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        // Wait before retrying
+        // Wait before retrying with exponential backoff
         if (attempt > 0) {
-          await this.delay(retryDelay);
+          const backoffDelay = retryDelay * Math.pow(2, attempt - 1);
+          await this.delay(Math.min(backoffDelay, 10000)); // Cap at 10 seconds
         }
 
-        const data = await this.performFetch(url, timeout);
+        // Create timeout promise for better control
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error(`Request timed out after ${timeout}ms`)), timeout);
+        });
+
+        const fetchPromise = this.performFetch(url, timeout);
+        
+        // Race between fetch and timeout
+        const data = await Promise.race([fetchPromise, timeoutPromise]);
 
         if (!this.isValidSellersJson(data)) {
           return { domain, error: 'Invalid sellers.json format' };
@@ -128,9 +137,17 @@ export class SellersJsonFetcher {
           return { domain, error: 'Invalid JSON format' };
         }
 
+        // Handle timeout errors
+        if ((error as Error).message.includes('timed out')) {
+          console.warn(`Attempt ${attempt + 1}/${retries + 1} timed out for ${domain}`);
+          if (attempt === retries) {
+            break;
+          }
+          continue;
+        }
+
         if (error instanceof DOMException && error.name === 'AbortError') {
           lastError = new Error(`Request timed out after ${timeout}ms`);
-          // Continue retrying for timeouts unless we're at the last attempt
           if (attempt === retries) {
             break;
           }
@@ -150,7 +167,7 @@ export class SellersJsonFetcher {
 
     return {
       domain,
-      error: `Error fetching sellers.json: ${lastError?.message || 'Unknown error'}`,
+      error: `Error fetching sellers.json after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`,
     };
   }
 
@@ -262,6 +279,35 @@ export class SellersJsonFetcher {
       error?: string;
     }> = [];
 
+    // Check API health before processing if API client is available
+    if (apiClient) {
+      try {
+        // Import HealthCheckApi dynamically to avoid circular dependencies
+        const { HealthCheckApi } = await import('./sellersJsonApi');
+        const healthApi = new HealthCheckApi(apiClient['config']);
+        
+        const healthStatus = await healthApi.checkHealth();
+        
+        // If API is unhealthy, use fallback immediately
+        if (healthStatus.status === 'unhealthy') {
+          console.warn('API health check failed, using fallback method');
+          return await this.processFallbackRequests(requests, options);
+        }
+        
+        // Adjust timeout based on health status
+        const healthBasedTimeout = healthStatus.status === 'degraded' ? 
+          Math.max(30000, healthStatus.metrics.response_time_avg * 2) : 15000;
+        
+        // Override timeout if health check suggests longer timeout
+        const finalTimeout = Math.max(options.timeout || 5000, healthBasedTimeout);
+        options = { ...options, timeout: finalTimeout };
+        
+        console.log(`[HealthCheck] API health: ${healthStatus.status}, response time: ${healthStatus.response_time_ms}ms, using timeout: ${finalTimeout}ms`);
+      } catch (error) {
+        console.warn('Health check failed, proceeding with default timeout:', error);
+      }
+    }
+
     // Try API first if configured
     if (apiClient) {
       try {
@@ -275,44 +321,58 @@ export class SellersJsonFetcher {
         }
 
         const fallbackRequests: Array<{ domain: string; sellerId: string }> = [];
+        
+        // Process API requests with timeout handling
         const apiPromises = Array.from(domainGroups.entries()).map(async ([domain, sellerIds]) => {
-          const response = await apiClient.fetchSellersBatch(
-            domain,
-            sellerIds,
-            options.bypassCache
-          );
+          try {
+            // Wrap API call with timeout
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new Error('API request timeout')), options.timeout || 15000);
+            });
+            
+            const response = await Promise.race([
+              apiClient.fetchSellersBatch(domain, sellerIds, options.bypassCache || false),
+              timeoutPromise
+            ]);
 
-          if (response.success && response.data?.sellers) {
-            const sellerMap = new Map(response.data.sellers.map((s) => [s.seller_id, s]));
-            for (const sellerId of sellerIds) {
-              const seller = sellerMap.get(sellerId);
-              if (seller?.found) {
-                results.push({
-                  domain,
-                  sellerId,
-                  seller: {
-                    seller_id: seller.seller_id,
-                    name: seller.name,
-                    domain: seller.domain,
-                    seller_type: seller.seller_type,
-                    is_confidential: seller.is_confidential ? 1 : 0,
-                  },
-                  source: 'api',
-                });
-              } else {
-                // API reported not found, add to fallback
+            if (response.success && response.data?.sellers) {
+              const sellerMap = new Map(response.data.sellers.map((s) => [s.seller_id, s]));
+              for (const sellerId of sellerIds) {
+                const seller = sellerMap.get(sellerId);
+                if (seller?.found) {
+                  results.push({
+                    domain,
+                    sellerId,
+                    seller: {
+                      seller_id: seller.seller_id,
+                      name: seller.name,
+                      domain: seller.domain,
+                      seller_type: seller.seller_type,
+                      is_confidential: seller.is_confidential ? 1 : 0,
+                    },
+                    source: 'api',
+                  });
+                } else {
+                  // API reported not found, add to fallback
+                  fallbackRequests.push({ domain, sellerId });
+                }
+              }
+            } else {
+              // Entire batch call failed, add all to fallback
+              for (const sellerId of sellerIds) {
                 fallbackRequests.push({ domain, sellerId });
               }
             }
-          } else {
-            // Entire batch call failed, add all to fallback
+          } catch (error) {
+            // API call failed (timeout or other error), add to fallback
+            console.warn(`API call failed for domain ${domain}:`, error);
             for (const sellerId of sellerIds) {
               fallbackRequests.push({ domain, sellerId });
             }
           }
         });
 
-        await Promise.all(apiPromises);
+        await Promise.allSettled(apiPromises);
 
         // Process fallback requests if any
         if (fallbackRequests.length > 0) {
@@ -322,12 +382,147 @@ export class SellersJsonFetcher {
 
         return results;
       } catch (error) {
+        console.warn('API processing failed completely, using fallback:', error);
         // API completely failed, fallback for all requests
       }
     }
 
     // Fallback for all requests
     return await this.processFallbackRequests(requests, options);
+  }
+
+  /**
+   * Fetches multiple sellers from multiple domains using parallel processing
+   * This method is optimized for handling large batches across multiple domains
+   * @param requests - Array of {domain, sellerId} requests
+   * @param options - Fetch options with parallel processing settings
+   * @returns Array of seller results with improved performance
+   */
+  static async fetchSellersParallel(
+    requests: Array<{ domain: string; sellerId: string }>,
+    options: FetchSellersJsonOptions & {
+      maxConcurrent?: number;
+      failFast?: boolean;
+      returnPartial?: boolean;
+    } = {}
+  ): Promise<
+    Array<{
+      domain: string;
+      sellerId: string;
+      seller: Seller | null;
+      source: 'api-parallel' | 'api' | 'fallback';
+      error?: string;
+      processingTimeMs?: number;
+    }>
+  > {
+    const apiClient = await this.getApiClient();
+    
+    if (!apiClient || requests.length === 0) {
+      return await this.processFallbackRequests(requests, options);
+    }
+
+    // Check if parallel processing is recommended
+    try {
+      const { HealthCheckApi } = await import('./sellersJsonApi');
+      const healthApi = new HealthCheckApi(apiClient['config']);
+      const stats = await healthApi.getStats();
+      
+      // Use parallel processing only if recommended and we have multiple domains
+      const domainCount = new Set(requests.map(r => r.domain)).size;
+      const shouldUseParallel = stats.recommendations.use_parallel && domainCount > 1;
+      
+      if (!shouldUseParallel) {
+        console.log('Parallel processing not recommended, using standard batch processing');
+        return await this.fetchSellers(requests, options);
+      }
+    } catch (error) {
+      console.warn('Failed to get recommendations, proceeding with parallel processing:', error);
+    }
+
+    try {
+      // Group requests by domain
+      const domainGroups = new Map<string, string[]>();
+      for (const req of requests) {
+        if (!domainGroups.has(req.domain)) {
+          domainGroups.set(req.domain, []);
+        }
+        domainGroups.get(req.domain)!.push(req.sellerId);
+      }
+
+      // Convert to parallel API format
+      const parallelRequests = Array.from(domainGroups.entries()).map(([domain, sellerIds]) => ({
+        domain,
+        sellerIds,
+      }));
+
+      // Use parallel API
+      const { SellersJsonApi } = await import('./sellersJsonApi');
+      const api = apiClient as any; // Type assertion since we know the structure
+      
+      if (typeof api.fetchSellersParallel === 'function') {
+        const parallelResponse = await api.fetchSellersParallel(parallelRequests, {
+          max_concurrent: options.maxConcurrent || 5,
+          fail_fast: options.failFast || false,
+          return_partial: options.returnPartial !== false,
+          force: false, // Always use cache for better performance
+        });
+
+        if (parallelResponse.success && parallelResponse.data) {
+          const results: Array<{
+            domain: string;
+            sellerId: string;
+            seller: Seller | null;
+            source: 'api-parallel' | 'api' | 'fallback';
+            error?: string;
+            processingTimeMs?: number;
+          }> = [];
+
+          // Process parallel results
+          for (const domainResult of parallelResponse.data.results) {
+            const domainProcessingTime = domainResult.processing_time_ms;
+            
+            for (const sellerResult of domainResult.results) {
+              const seller = sellerResult.found && sellerResult.seller ? {
+                seller_id: sellerResult.seller.seller_id,
+                name: sellerResult.seller.name,
+                domain: sellerResult.seller.domain,
+                seller_type: sellerResult.seller.seller_type as 'PUBLISHER' | 'INTERMEDIARY' | 'BOTH' | undefined,
+                is_confidential: sellerResult.seller.is_confidential ? (1 as const) : (0 as const),
+              } : null;
+
+              results.push({
+                domain: domainResult.domain,
+                sellerId: sellerResult.seller_id,
+                seller,
+                source: 'api-parallel',
+                processingTimeMs: domainProcessingTime,
+              });
+            }
+          }
+
+          // Handle any missing requests (domains that failed)
+          const processedSellerIds = new Set(results.map(r => `${r.domain}:${r.sellerId}`));
+          const missingRequests = requests.filter(r => 
+            !processedSellerIds.has(`${r.domain}:${r.sellerId}`)
+          );
+
+          if (missingRequests.length > 0) {
+            const fallbackResults = await this.processFallbackRequests(missingRequests, options);
+            results.push(...fallbackResults.map(r => ({ ...r, source: 'fallback' as const })));
+          }
+
+          return results;
+        }
+      }
+
+      // Fallback to standard processing if parallel API is not available
+      console.log('Parallel API not available, falling back to standard processing');
+      return await this.fetchSellers(requests, options);
+
+    } catch (error) {
+      console.warn('Parallel processing failed, falling back to standard processing:', error);
+      return await this.fetchSellers(requests, options);
+    }
   }
 
   /**
