@@ -1,6 +1,6 @@
 import { createValidationMessage } from '@miyaichi/ads-txt-validator';
 import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useDeferredValue, useMemo, useState } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { DownloadCsvSellersJson } from './DownloadSellersJson';
@@ -21,6 +21,9 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
   isVerifiedEntry,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  // Defer the search term value to keep the UI responsive during typing
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+
   const [selectedDomain, setSelectedDomain] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({
     sellerType: '',
@@ -79,12 +82,12 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
           ...analysis.sellersJson,
           data:
             analysis.sellersJson?.data.filter((seller) => {
-              // Search filter
-              const matchesSearch = searchTerm
-                ? seller.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  String(seller.seller_id)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  seller.domain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  seller.comment?.toLowerCase().includes(searchTerm.toLowerCase())
+              // Search filter - use deferred value
+              const matchesSearch = deferredSearchTerm
+                ? seller.name?.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+                String(seller.seller_id)?.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+                seller.domain?.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+                seller.comment?.toLowerCase().includes(deferredSearchTerm.toLowerCase())
                 : true;
 
               // Seller type filter
@@ -119,7 +122,7 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
       totalEntries,
       filteredCount,
     };
-  }, [sellerAnalysis, searchTerm, selectedDomain, selectedFilters]);
+  }, [sellerAnalysis, deferredSearchTerm, selectedDomain, selectedFilters]);
 
   const handleFilterChange = (filterKey: string, value: string) => {
     setSelectedFilters((prev) => ({
@@ -160,6 +163,19 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
       </div>
     );
   }
+
+  // Create a lookup map for ads.txt entries: key = "domain::publisher_id"
+  // This avoids O(N*M) complexity in the rendering loop
+  const adsTxtLookup = useMemo(() => {
+    const map = new Map<string, AdsTxt>();
+    sellerAnalysis.forEach((analysis) => {
+      analysis.adsTxtEntries.forEach((entry) => {
+        // Use composite key to handle multiple domains
+        map.set(`${analysis.domain}::${entry.publisherId}`, entry);
+      });
+    });
+    return map;
+  }, [sellerAnalysis]);
 
   return (
     <div className="panel-section">
@@ -254,8 +270,9 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                   <div className="space-y-4">
                     {analysis.sellersJson?.data.map((seller, index) => {
                       // Find corresponding ads.txt entry for validation styling
-                      const correspondingEntry = analysis.adsTxtEntries.find(
-                        (entry) => entry.publisherId === seller.seller_id
+                      // Optimized: Use lookup map (O(1)) instead of array.find (O(N))
+                      const correspondingEntry = adsTxtLookup.get(
+                        `${analysis.domain}::${seller.seller_id}`
                       );
                       const validity = correspondingEntry
                         ? isVerifiedEntry(analysis.domain, correspondingEntry)
@@ -264,15 +281,14 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                       return (
                         <div
                           key={`${seller.seller_id}-${index}`}
-                          className={`entry-card ${
-                            validity?.isVerified
-                              ? 'border-green-200 bg-green-50'
-                              : validity?.reasons?.some((reason) => reason.key.startsWith('error_'))
-                                ? 'border-red-200 bg-red-50'
-                                : validity?.reasons && validity.reasons.length > 0
-                                  ? 'border-yellow-200 bg-yellow-50'
-                                  : ''
-                          }`}
+                          className={`entry-card ${validity?.isVerified
+                            ? 'border-green-200 bg-green-50'
+                            : validity?.reasons?.some((reason) => reason.key.startsWith('error_'))
+                              ? 'border-red-200 bg-red-50'
+                              : validity?.reasons && validity.reasons.length > 0
+                                ? 'border-yellow-200 bg-yellow-50'
+                                : ''
+                            }`}
                         >
                           <div className="entry-card-content">
                             <div className="entry-card-header">
@@ -295,13 +311,12 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                                     }
                                   >
                                     <span
-                                      className={`tag ${
-                                        ['PUBLISHER', 'BOTH'].includes(
-                                          seller.seller_type.toUpperCase()
-                                        )
-                                          ? 'tag-blue'
-                                          : 'tag-gray'
-                                      }`}
+                                      className={`tag ${['PUBLISHER', 'BOTH'].includes(
+                                        seller.seller_type.toUpperCase()
+                                      )
+                                        ? 'tag-blue'
+                                        : 'tag-gray'
+                                        }`}
                                     >
                                       {seller.seller_type.toUpperCase()}
                                     </span>
@@ -319,8 +334,9 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                                 )}
                                 {(() => {
                                   // Find corresponding ads.txt entry for validation
-                                  const correspondingEntry = analysis.adsTxtEntries.find(
-                                    (entry) => entry.publisherId === seller.seller_id
+                                  // Optimized: Use lookup map (O(1)) instead of array.find (O(N))
+                                  const correspondingEntry = adsTxtLookup.get(
+                                    `${analysis.domain}::${seller.seller_id}`
                                   );
                                   if (correspondingEntry) {
                                     const validity = isVerifiedEntry(
@@ -342,8 +358,9 @@ export const SellersPanel: React.FC<SellersPanelProps> = ({
                             )}
                             {(() => {
                               // Find corresponding ads.txt entry for validation
-                              const correspondingEntry = analysis.adsTxtEntries.find(
-                                (entry) => entry.publisherId === seller.seller_id
+                              // Optimized: Use lookup map (O(1)) instead of array.find (O(N))
+                              const correspondingEntry = adsTxtLookup.get(
+                                `${analysis.domain}::${seller.seller_id}`
                               );
                               if (correspondingEntry) {
                                 const validity = isVerifiedEntry(

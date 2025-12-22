@@ -163,12 +163,12 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
                 sellerId: seller.seller_id,
                 seller: seller.found
                   ? {
-                      seller_id: seller.seller_id,
-                      seller_type: seller.seller_type,
-                      name: seller.name,
-                      domain: seller.domain,
-                      is_confidential: seller.is_confidential ? 1 : 0,
-                    }
+                    seller_id: seller.seller_id,
+                    seller_type: seller.seller_type,
+                    name: seller.name,
+                    domain: seller.domain,
+                    is_confidential: seller.is_confidential ? 1 : 0,
+                  }
                   : null,
                 found: seller.found,
                 source: 'fresh', // Or determine based on cache status
@@ -176,9 +176,9 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
               metadata: response.data.metadata || {},
               cache: response.data.cache
                 ? {
-                    ...response.data.cache,
-                    status: response.data.cache.status as 'error' | 'success' | 'stale',
-                  }
+                  ...response.data.cache,
+                  status: response.data.cache.status as 'error' | 'success' | 'stale',
+                }
                 : { is_cached: false, status: 'success' },
             };
           } else {
@@ -245,6 +245,20 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       setAnalyzing(false);
     }
   };
+
+  // Create a lookup map for sellers: key = "domain::seller_id"
+  const sellerLookup = useMemo(() => {
+    const map = new Map<string, Seller>();
+    sellerAnalysis.forEach((analysis) => {
+      if (analysis.sellersJson && analysis.sellersJson.data) {
+        analysis.sellersJson.data.forEach((seller) => {
+          const key = `${analysis.domain}::${seller.seller_id}`;
+          map.set(key, seller);
+        });
+      }
+    });
+    return map;
+  }, [sellerAnalysis]);
 
   /**
    * Validate whether the specified ads.txt/app-ads.txt entry is valid using ads-txt-validator
@@ -331,11 +345,10 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       // An entry is verified if it has seller information (indicating successful sellers.json lookup)
       // and doesn't have any error-type warnings
 
-      // Check if corresponding seller exists in seller analysis data
-      const domainAnalysis = sellerAnalysis.find((analysis) => analysis.domain === domain);
-      const sellerData = domainAnalysis?.sellersJson?.data?.find(
-        (seller) => seller.seller_id === entry.publisherId
-      );
+      // Check if corresponding seller exists in seller analysis data using lookup map (O(1))
+      const sellerKey = `${domain}::${entry.publisherId}`;
+      const sellerData = sellerLookup.get(sellerKey);
+
       // Use found flag to determine if seller exists in sellers.json
       const sellerExists = sellerData?.found === true;
 
@@ -366,7 +379,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         reasons,
       };
     },
-    [adsTxtData, sellerAnalysis]
+    [adsTxtData, sellerLookup, parsedEntryIndex] // Updated dependencies
   );
 
   return {

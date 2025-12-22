@@ -1,6 +1,6 @@
 import { createValidationMessage } from '@miyaichi/ads-txt-validator';
 import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useDeferredValue, useMemo, useState } from 'react';
 import type { ValidityResult } from '../../hooks/useAdsSellers';
 import type { AdsTxt, FetchAdsTxtResult } from '../../utils/fetchAdsTxt';
 import { commentErrorAdsTxtLines } from '../../utils/fetchAdsTxt';
@@ -24,6 +24,9 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
   duplicateCheck,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  // Defer the search term value to keep the UI responsive during typing
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+
   const [selectedDomain, setSelectedDomain] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({
     relationship: '',
@@ -83,13 +86,13 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
 
         // Entry filtering
         const filteredEntries = entries.filter((entry) => {
-          // Search filter
-          const matchesSearch = searchTerm
-            ? entry.publisherId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              entry.domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              (entry.certificationAuthorityId || '')
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
+          // Search filter - use deferred value
+          const matchesSearch = deferredSearchTerm
+            ? entry.publisherId.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+            entry.domain.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+            (entry.certificationAuthorityId || '')
+              .toLowerCase()
+              .includes(deferredSearchTerm.toLowerCase())
             : true;
 
           // Relationship filter
@@ -123,7 +126,7 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
       totalEntries,
       filteredCount,
     };
-  }, [adsTxtData, searchTerm, selectedDomain, selectedFilters, isVerifiedEntry]);
+  }, [adsTxtData, deferredSearchTerm, selectedDomain, selectedFilters, isVerifiedEntry]);
 
   const handleFilterChange = (filterKey: string, value: string) => {
     setSelectedFilters((prev) => ({
@@ -338,13 +341,12 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                 return (
                   <div
                     key={`${domain}-${index}`}
-                    className={`entry-card ${
-                      validity.isVerified
-                        ? 'border-green-200 bg-green-50'
-                        : validity.reasons.some((reason) => reason.key.startsWith('error_'))
-                          ? 'border-red-200 bg-red-50'
-                          : 'border-yellow-200 bg-yellow-50'
-                    }`}
+                    className={`entry-card ${validity.isVerified
+                      ? 'border-green-200 bg-green-50'
+                      : validity.reasons.some((reason) => reason.key.startsWith('error_'))
+                        ? 'border-red-200 bg-red-50'
+                        : 'border-yellow-200 bg-yellow-50'
+                      }`}
                   >
                     <div className="entry-card-content">
                       <div className="entry-card-header">
@@ -365,9 +367,8 @@ export const AdsTxtPanel: React.FC<AdsTxtPanelProps> = ({
                             }
                           >
                             <span
-                              className={`tag ${
-                                entry.relationship === 'DIRECT' ? 'tag-blue' : 'tag-gray'
-                              }`}
+                              className={`tag ${entry.relationship === 'DIRECT' ? 'tag-blue' : 'tag-gray'
+                                }`}
                             >
                               {entry.relationship}
                             </span>
