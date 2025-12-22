@@ -1,4 +1,4 @@
-import { createValidationMessage } from '@miyaichi/ads-txt-validator';
+import { createValidationMessage } from 'adstxt-validator';
 import { Check, CircleAlert, Download, ExternalLink } from 'lucide-react';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 import type { SellerAnalysis, ValidityResult } from '../../hooks/useAdsSellers';

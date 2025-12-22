@@ -4,7 +4,7 @@ import {
   isAdsTxtRecord,
   ParsedAdsTxtRecord,
   SellersJsonProvider,
-} from '@miyaichi/ads-txt-validator';
+} from 'adstxt-validator';
 import { useCallback, useMemo, useState } from 'react';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
 import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
