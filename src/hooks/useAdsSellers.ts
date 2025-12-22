@@ -6,11 +6,9 @@ import {
   SellersJsonProvider,
 } from '@miyaichi/ads-txt-validator';
 import { useCallback, useMemo, useState } from 'react';
-import { getApiConfig } from '../config/api';
 import { AdsTxt, fetchAdsTxt, FetchAdsTxtResult, getUniqueDomains } from '../utils/fetchAdsTxt';
-import { type Seller } from '../utils/fetchSellersJson';
+import { SellersJsonFetcher, type Seller } from '../utils/fetchSellersJson';
 import { Logger } from '../utils/logger';
-import { SellersJsonApi } from '../utils/sellersJsonApi';
 
 const logger = new Logger('useAdsSellers');
 
@@ -146,69 +144,49 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
       const domain = new URL(url).hostname;
       const adsTxtResult = await fetchAdsTxt(domain, appAdsTxt);
 
-      // Create SellersJsonProvider using the robust SellersJsonApi
-      const apiConfig = await getApiConfig();
-      const sellersJsonApi = new SellersJsonApi(apiConfig);
+      // Create SellersJsonProvider using local fetcher
+      // No more API Client initialization needed
       const sellersJsonProvider: SellersJsonProvider = {
         async batchGetSellers(domain: string, sellerIds: string[]): Promise<BatchSellersResult> {
-          const response = await sellersJsonApi.fetchSellersBatch(domain, sellerIds);
+          // Use fetchSellersParallel but for a single domain which handles caching and concurrency
+          const requests = sellerIds.map(id => ({ domain, sellerId: id }));
+          const results = await SellersJsonFetcher.fetchSellersParallel(requests);
 
-          if (response.success && response.data) {
-            // Transform the API response to the BatchSellersResult format
-            return {
-              domain: response.data.domain,
-              requested_count: response.data.requested_count,
-              found_count: response.data.found_count,
-              results: response.data.sellers.map((seller) => ({
-                sellerId: seller.seller_id,
-                seller: seller.found
-                  ? {
-                    seller_id: seller.seller_id,
-                    seller_type: seller.seller_type,
-                    name: seller.name,
-                    domain: seller.domain,
-                    is_confidential: seller.is_confidential ? 1 : 0,
-                  }
-                  : null,
-                found: seller.found,
-                source: 'fresh', // Or determine based on cache status
-              })),
-              metadata: response.data.metadata || {},
-              cache: response.data.cache
-                ? {
-                  ...response.data.cache,
-                  status: response.data.cache.status as 'error' | 'success' | 'stale',
-                }
-                : { is_cached: false, status: 'success' },
-            };
-          } else {
-            // If the API call fails, return a result that indicates failure for all sellers
-            return {
-              domain,
-              requested_count: sellerIds.length,
-              found_count: 0,
-              results: sellerIds.map((id) => ({
-                sellerId: id,
-                seller: null,
-                found: false,
-                source: 'fresh',
-                error: response.error || 'API call failed without specific error',
-              })),
-              metadata: {},
-              cache: { is_cached: false, status: 'error' },
-            };
-          }
+          // Map back to BatchSellersResult format
+          const sellers = results.map(r => ({
+            sellerId: r.sellerId,
+            seller: r.seller ? {
+              seller_id: r.seller.seller_id,
+              seller_type: r.seller.seller_type,
+              name: r.seller.name,
+              domain: r.seller.domain,
+              is_confidential: (r.seller.is_confidential ? 1 : 0) as 0 | 1,
+            } : null,
+            found: !!r.seller,
+            source: 'fresh' as const,
+            error: r.error
+          }));
+
+          const foundCount = sellers.filter(s => s.found).length;
+
+          return {
+            domain,
+            requested_count: sellerIds.length,
+            found_count: foundCount,
+            results: sellers,
+            metadata: {},
+            cache: { is_cached: false, status: 'success' }
+          };
         },
-        hasSellerJson: async (domain: string) => {
-          // This can be simplified as fetchSellersBatch will indicate existence
-          return true;
+        async hasSellerJson(domain: string): Promise<boolean> {
+          const result = await SellersJsonFetcher.fetch(domain);
+          return !result.error && !!result.data;
         },
-        getMetadata: async (domain: string) => {
-          // Metadata is now part of the batch response, this could be deprecated
+        async getMetadata(domain: string) {
+          // Metadata is not readily available in local fetch without parsing full file
           return {};
         },
-        getCacheInfo: async (domain: string) => {
-          // Cache info is also in the batch response
+        async getCacheInfo(domain: string) {
           return { is_cached: false, status: 'success' };
         },
       };
@@ -379,7 +357,7 @@ export const useAdsSellers = (): UseAdsSellersReturn => {
         reasons,
       };
     },
-    [adsTxtData, sellerLookup, parsedEntryIndex] // Updated dependencies
+    [adsTxtData, sellerLookup, parsedEntryIndex]
   );
 
   return {
