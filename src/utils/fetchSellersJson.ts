@@ -114,6 +114,9 @@ export class SellersJsonFetcher {
   private static async getFromCache(domain: string): Promise<FetchSellersJsonResult | null> {
     const cached = await SellersJsonCache.get(domain);
     if (cached) {
+      if ('isInvalid' in cached.data) {
+        return { domain, error: cached.data.error, cached: true };
+      }
       return { domain, data: cached.data, cached: true };
     }
     return null;
@@ -166,14 +169,19 @@ export class SellersJsonFetcher {
           try {
             data = JSON.parse(text);
           } catch (e) {
-            return { domain, error: 'Invalid JSON format' };
+            const errorMsg = 'Invalid JSON format';
+            // Cache the invalid response (negative cache)
+            await SellersJsonCache.set(domain, { error: errorMsg, isInvalid: true });
+            return { domain, error: errorMsg };
           }
 
           if (!this.isValidSellersJson(data)) {
-            return { domain, error: 'Invalid sellers.json format' };
+            const errorMsg = 'Invalid sellers.json format';
+            // Cache the invalid response (negative cache)
+            await SellersJsonCache.set(domain, { error: errorMsg, isInvalid: true });
+            return { domain, error: errorMsg };
           }
 
-          // Cache the valid response
           await SellersJsonCache.set(domain, data);
 
           return { domain, data };
@@ -188,6 +196,12 @@ export class SellersJsonFetcher {
           error instanceof SyntaxError ||
           (error instanceof Error && error.message.includes('Invalid'))
         ) {
+          break;
+        }
+
+        // Handle HTTP 404 or other client errors by caching them
+        if (error instanceof Error && (error.message.includes('HTTP 40') || error.message.includes('404'))) {
+          await SellersJsonCache.set(domain, { error: error.message, isInvalid: true });
           break;
         }
 
