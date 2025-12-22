@@ -209,9 +209,15 @@ export class SellersJsonFetcher {
       }
     }
 
+    const errorMessage = `Failed to fetch after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`;
+
+    // Cache persistent network failures (DNS, SSL, Timout, etc.) to improve performance
+    // This handles net::ERR_NAME_NOT_RESOLVED, net::ERR_CONNECTION_TIME_OUT etc.
+    await SellersJsonCache.set(domain, { error: errorMessage, isInvalid: true });
+
     return {
       domain,
-      error: `Failed to fetch after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`,
+      error: errorMessage,
     };
   }
 

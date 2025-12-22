@@ -39,51 +39,48 @@ async function runPerfTest() {
   const { SellersJsonFetcher } = await import('./src/utils/fetchSellersJson');
   const { fetchAdsTxt, getUniqueDomains } = await import('./src/utils/fetchAdsTxt');
 
-  console.log('Starting legacy vs new performance check simulation...');
-
   const targetDomain = 'asahi.com';
+  console.log(`Target: ${targetDomain}`);
 
-  // 1. Fetch Ads.txt
-  console.log(`\nFetching ads.txt for ${targetDomain}...`);
-  const startAdsTxt = performance.now();
+  // Fetch Ads.txt First (Common for both passes)
   const adsTxtResult = await fetchAdsTxt(targetDomain, false);
-  const endAdsTxt = performance.now();
-
-  console.log(`Ads.txt fetch completed in ${(endAdsTxt - startAdsTxt).toFixed(2)}ms`);
-  console.log(`Found ${adsTxtResult.data.length} entries.`);
-
   if (adsTxtResult.data.length === 0) {
     console.error('No ads.txt entries found. Exiting test.');
     return;
   }
-
-  // 2. Extract unique seller domains
   const uniqueDomains = getUniqueDomains(adsTxtResult.data);
-  console.log(`\nIdentified ${uniqueDomains.length} unique seller domains to check.`);
+  console.log(`Identified ${uniqueDomains.length} unique seller domains.`);
 
-  // 3. Fetch Sellers.json (Parallel)
-  console.log(`Fetching sellers.json for all domains (limit 5 concurrent)...`);
-  const startSellers = performance.now();
+  // Define run pass function
+  const runPass = async (passName: string) => {
+    console.log(`\n=== ${passName} ===`);
+    const start = performance.now();
 
-  const promises = uniqueDomains.map(async (domain) => {
-    // We just want to ensure the sellers.json is fetched.
-    const entry = adsTxtResult.data.find(e => e.domain === domain);
-    if (!entry) return;
+    // Simulate parallel fetching logic
+    const promises = uniqueDomains.map(async (domain) => {
+      const entry = adsTxtResult.data.find(e => e.domain === domain);
+      if (!entry) return;
+      const request = { domain: domain, sellerId: entry.publisherId };
+      return SellersJsonFetcher.fetchSellersParallel([request]);
+    });
 
-    // Create a request. Note we don't mock fetch so it will make real requests.
-    const request = { domain: domain, sellerId: entry.publisherId };
-    return SellersJsonFetcher.fetchSellersParallel([request]);
-  });
+    await Promise.all(promises);
+    const end = performance.now();
+    const duration = end - start;
+    console.log(`Completed in ${duration.toFixed(2)}ms`);
+    return duration;
+  };
 
-  await Promise.all(promises);
+  // Pass 1: Cold Start
+  const time1 = await runPass('Pass 1: Cold Start (Initial Fetch)');
 
-  const endSellers = performance.now();
-  console.log(`Sellers.json fetch phase completed in ${(endSellers - startSellers).toFixed(2)}ms`);
+  // Pass 2: Warm Cache
+  const time2 = await runPass('Pass 2: Warm Cache (With Negative Caching)');
 
-  console.log('\n--- Performance Summary ---');
-  console.log(`Ads.txt Parsing: ${(endAdsTxt - startAdsTxt).toFixed(2)}ms`);
-  console.log(`Sellers.json Processing (${uniqueDomains.length} domains): ${(endSellers - startSellers).toFixed(2)}ms`);
-  console.log(`Total Time: ${(endSellers - startAdsTxt).toFixed(2)}ms`);
+  console.log('\n=== Summary ===');
+  console.log(`Cold Start: ${time1.toFixed(2)}ms`);
+  console.log(`Warm Cache: ${time2.toFixed(2)}ms`);
+  console.log(`Speedup: ${(time1 / time2).toFixed(1)}x`);
 }
 
 runPerfTest().catch(console.error);
