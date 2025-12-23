@@ -1,6 +1,6 @@
 {
   "name": "adstxt-inspector",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Chrome Extension with Background, Content Script, and Side Panel",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
-    "@miyaichi/ads-txt-validator": "^1.2.3",
+    "adstxt-validator": "^1.2.5",
     "lucide-react": "^0.475.0",
     "psl": "^1.15.0",
     "react": "^19.0.0",

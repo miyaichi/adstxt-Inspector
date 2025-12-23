@@ -1,14 +1,16 @@
 import { CacheEntry, SellersJson } from '../types/types';
 
+export type CachedSellersData = SellersJson | { error: string; isInvalid: true };
+
 export class SellersJsonCache {
   private static readonly TTL = 24 * 60 * 60 * 1000; // 24 hours
   private static readonly CACHE_KEY_PREFIX = 'sellers_json_';
 
-  static async get(domain: string): Promise<CacheEntry<SellersJson> | null> {
+  static async get(domain: string): Promise<CacheEntry<CachedSellersData> | null> {
     try {
       const key = this.getCacheKey(domain);
       const result = await chrome.storage.local.get(key);
-      const cached = result[key] as CacheEntry<SellersJson> | undefined;
+      const cached = result[key] as CacheEntry<CachedSellersData> | undefined;
 
       if (!cached) return null;
 
@@ -25,10 +27,10 @@ export class SellersJsonCache {
     }
   }
 
-  static async set(domain: string, data: SellersJson): Promise<void> {
+  static async set(domain: string, data: CachedSellersData): Promise<void> {
     try {
       const key = this.getCacheKey(domain);
-      const entry: CacheEntry<SellersJson> = {
+      const entry: CacheEntry<CachedSellersData> = {
         data,
         timestamp: Date.now(),
       };

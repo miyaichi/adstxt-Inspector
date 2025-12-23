@@ -8,7 +8,7 @@ import {
   ParsedAdsTxtRecord,
   ParsedAdsTxtVariable,
   Severity,
-} from '@miyaichi/ads-txt-validator';
+} from 'adstxt-validator';
 import * as psl from 'psl';
 import { fetchFromUrls } from './fetchFromUrls';
 
